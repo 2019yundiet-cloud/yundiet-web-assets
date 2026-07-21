@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_16__) {
+  if (window.__YD_FOOTER_V3_17__) {
     return;
   }
-  window.__YD_FOOTER_V3_16__ = true;
+  window.__YD_FOOTER_V3_17__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.16', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.17', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1264,7 +1264,8 @@
         .then(function() { cartSubtotalLoading = false; scheduleRender(false); });
     }
 
-    var priceLabel = function(p) { return p === null ? '선택 후 금액 반영' : p ? (p > 0 ? '+ ' : '- ') + money(Math.abs(p)) : '추가금 없음'; };
+    /* 순수단백은 '선택 후 금액 반영' 문구 미표기 (소유자 지시 2026-07-21) */
+    var priceLabel = function(p) { return p === null ? (cfg.family === 'soonsu' ? '' : '선택 후 금액 반영') : p ? (p > 0 ? '+ ' : '- ') + money(Math.abs(p)) : '추가금 없음'; };
     var saucePattern = /볼케이노|양념치킨|블랙\s*알리오|블랙알리오|데리야끼|바베큐/;
     var hasSeparateSauce = function(name) { return !/\(소스X\)/.test(name) && saucePattern.test(name); };
 
@@ -2040,7 +2041,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.16] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.17] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
