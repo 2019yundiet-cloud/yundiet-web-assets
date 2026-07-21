@@ -1415,6 +1415,11 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 
+  /* 파생 제품 탭: 탭 수에 맞춰 균등 분할 */
+  #yd-bs-root .yd-bs-category-grid.is-derived {
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  }
+
   /* 추가상품 100g당 가격 태그: 빨간색 (소유자 지시 2026-07-21) */
   #yd-bs-root .yd-bs-unit-badge {
     background: #e8442e !important;

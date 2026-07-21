@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_17__) {
+  if (window.__YD_FOOTER_V3_18__) {
     return;
   }
-  window.__YD_FOOTER_V3_17__ = true;
+  window.__YD_FOOTER_V3_18__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.17', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.18', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1291,6 +1291,46 @@
         return '<button class="yd-bs-category ' + (activeTab === i ? 'is-selected' : '') + '" data-category="' + i + '" aria-pressed="' + (activeTab === i) + '"><strong>' + (i + 1) + '</strong><span>' + escT(g.label) + '</span><b>' + g.items.length + '종 · 선택 ' + counts[i] + '개</b></button>';
       }).join('') + '</div>';
     }
+    /* 단일 그룹 조합상품(1117류): 제품명 기준 가상 탭 파생 — 제품 먼저 고르고 용량을 고르는 2단 선택.
+       이름에서 [태그]·중량·개입수를 걷어낸 키가 2~4종이고 한 종이라도 용량 변형이 2개 이상일 때만 적용 */
+    function deriveProductGroups(items) {
+      var keyOf = function(name) {
+        return normalizeT(String(name)
+          .replace(/[\uD800-\uDFFF]/g, ' ')
+          .replace(/\[[^\]]*\]/g, ' ')
+          .replace(/\b(?:BEST|NEW|HOT|MD)\b/gi, ' ')
+          .replace(/\d+(?:\.\d+)?\s*(?:g|kg|팩|개입|개|입)/gi, ' ')
+          .replace(/[\-·]/g, ' '));
+      };
+      /* 탭 표시용 짧은 라벨: 괄호 제거, 혼합 세트(+)는 '세트' */
+      var labelOf = function(key) {
+        var t = normalizeT(key.replace(/\([^)]*\)/g, ' '));
+        return /\+/.test(t) ? '세트' : t;
+      };
+      var order = [], map = {};
+      for (var i = 0; i < items.length; i++) {
+        var k = keyOf(items[i][0]);
+        if (!k) { return null; }
+        if (!map[k]) { map[k] = []; order.push(k); }
+        map[k].push(items[i]);
+      }
+      if (order.length < 2 || order.length > 4 || order.length === items.length) { return null; }
+      var hasVariant = order.some(function(k) { return map[k].length >= 2; });
+      if (!hasVariant) { return null; }
+      return order.map(function(k) { return { label: labelOf(k), items: map[k] }; });
+    }
+    function derivedTabs(s, groups) {
+      var counts = groups.map(function(g) {
+        return g.items.reduce(function(sum, it) {
+          var found = s.req.find(function(x) { return x.label === it[0]; });
+          return sum + (found ? found.qty : 0);
+        }, 0);
+      });
+      var anyWide = groups.some(function(g) { return g.label.length > 3; });
+      return '<div class="yd-bs-category-grid is-derived" role="group" aria-label="제품 선택">' + groups.map(function(g, i) {
+        return '<button class="yd-bs-category ' + (activeTab === i ? 'is-selected' : '') + '" data-category="' + i + '" aria-pressed="' + (activeTab === i) + '"><strong' + (anyWide ? ' class="is-wide"' : '') + '>' + escT(g.label) + '</strong><span>용량 선택</span><b>' + g.items.length + '종 · 선택 ' + counts[i] + '개</b></button>';
+      }).join('') + '</div>';
+    }
     function menuCards(items, s, tag) {
       var toggled = selectedToggleNames();
       return '<div class="yd-bs-menu-grid">' + items.map(function(pair) {
@@ -1360,9 +1400,15 @@
           var mains = s.cat.groups.filter(function(g) { return g.main; });
           if (mains.length > prevMainsLen && prevMainsLen > 0) activeTab = mains.length - 1;
           prevMainsLen = mains.length;
-          if (activeTab === null || activeTab >= mains.length) activeTab = 0;
-          var group = mains[activeTab];
-          body = groupTabs(s, mains) + (group ? menuCards(group.items, s, '') : '<div class="yd-bs-empty">옵션을 불러오는 중입니다…</div>');
+          var derived = mains.length === 1 ? deriveProductGroups(mains[0].items) : null;
+          if (derived) {
+            if (activeTab === null || activeTab >= derived.length) activeTab = 0;
+            body = derivedTabs(s, derived) + menuCards(derived[activeTab].items, s, '');
+          } else {
+            if (activeTab === null || activeTab >= mains.length) activeTab = 0;
+            var group = mains[activeTab];
+            body = groupTabs(s, mains) + (group ? menuCards(group.items, s, '') : '<div class="yd-bs-empty">옵션을 불러오는 중입니다…</div>');
+          }
         }
         html = '<div class="yd-bs-step yd-bs-step-1"><div class="yd-bs-step-meta"><span class="yd-bs-badge">필수 선택</span><span class="yd-bs-step-count">STEP 1 / 3</span></div><h3>' + escT(cfg.headline) + '</h3><p class="yd-bs-lead">' + escT(cfg.lead) + '</p>' + body + minNotice(s) + '</div>';
       }
@@ -2041,7 +2087,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.17] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.18] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
