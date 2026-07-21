@@ -1468,8 +1468,9 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     cursor: default;
   }
 
-  /* 파생 제품 탭: 탭 수에 맞춰 균등 분할 */
-  #yd-bs-root .yd-bs-category-grid.is-derived {
+  /* 파생 제품 탭·비3개 그룹 탭: 탭 수에 맞춰 균등 분할 (2개면 5:5) */
+  #yd-bs-root .yd-bs-category-grid.is-derived,
+  #yd-bs-root .yd-bs-category-grid.is-fit {
     grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   }
 

@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_25__) {
+  if (window.__YD_FOOTER_V3_26__) {
     return;
   }
-  window.__YD_FOOTER_V3_25__ = true;
+  window.__YD_FOOTER_V3_26__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.25', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.26', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1071,7 +1071,7 @@
     var normalizeT = function(s){ return String(s||'').replace(/ /g,' ').replace(/\s+/g,' ').trim(); };
     var numberFrom = function(s){ return Number(String(s||'').replace(/[^0-9-]/g,'')) || 0; };
 
-    var step = 1, activeTab = null, cartPopup = false, bootAttempts = 0, rafId = 0, followupTimer = 0;
+    var step = 1, activeTab = null, cartPopup = false, bootAttempts = 0, rafId = 0, followupTimer = 0, prevLv1Sel = '';
     var wrapLabels = [], prevMainsLen = 0;
     var flowBooted = false, bootWatcher = null, bootLoadedAt = 0;
     var cartSubtotal = 0, cartSubtotalReady = false, cartSubtotalLoading = false;
@@ -1279,9 +1279,17 @@
       };
       return '<div class="yd-bs-category-grid" role="group" aria-label="라인 선택">' + btn('S', 'S', '단백밥 도시락') + btn('L', 'L', '단백밥 도시락') + btn('P', 'PREMIUM', '프리미엄 도시락') + '</div>';
     }
+    /* 네이티브 그룹 라벨 → 고객용 표기 (소유자 지시 2026-07-21) */
+    function displayGroupLabel(label) {
+      var t = normalizeT(label);
+      if (/옵션\s*선택/.test(t)) return '메뉴선택';
+      if (/세트\s*구성/.test(t)) return '수량선택';
+      return t;
+    }
     function groupTabs(s, mains, pendingLabels) {
       pendingLabels = pendingLabels || [];
-      if (mains.length + pendingLabels.length < 2) return '';
+      var tabCount = mains.length + pendingLabels.length;
+      if (tabCount < 2) return '';
       var counts = mains.map(function(g) {
         return g.items.reduce(function(sum, it) {
           var found = s.req.find(function(x) { return x.label === it[0]; });
@@ -1289,13 +1297,14 @@
         }, 0);
       });
       var html = mains.map(function(g, i) {
-        return '<button class="yd-bs-category ' + (activeTab === i ? 'is-selected' : '') + '" data-category="' + i + '" aria-pressed="' + (activeTab === i) + '"><strong>' + (i + 1) + '</strong><span>' + escT(g.label) + '</span><b>' + g.items.length + '종 · 선택 ' + counts[i] + '개</b></button>';
+        return '<button class="yd-bs-category ' + (activeTab === i ? 'is-selected' : '') + '" data-category="' + i + '" aria-pressed="' + (activeTab === i) + '"><strong>' + (i + 1) + '</strong><span>' + escT(displayGroupLabel(g.label)) + '</span><b>' + g.items.length + '종 · 선택 ' + counts[i] + '개</b></button>';
       }).join('');
       /* 조합형 2단: 아직 열리지 않은 다음 그룹을 대기 탭으로 미리 보여준다 (소유자 지시 2026-07-21) */
       html += pendingLabels.map(function(label, j) {
-        return '<button class="yd-bs-category is-pending-tab" disabled aria-disabled="true"><strong>' + (mains.length + j + 1) + '</strong><span>' + escT(label) + '</span><b>이전 탭 선택 후</b></button>';
+        return '<button class="yd-bs-category is-pending-tab" disabled aria-disabled="true"><strong>' + (mains.length + j + 1) + '</strong><span>' + escT(displayGroupLabel(label)) + '</span><b>이전 탭 선택 후</b></button>';
       }).join('');
-      return '<div class="yd-bs-category-grid" role="group" aria-label="구성 선택">' + html + '</div>';
+      /* 탭이 3개가 아니면(2개 등) 개수에 맞춰 균등 분할 — 2개면 5:5 */
+      return '<div class="yd-bs-category-grid' + (tabCount === 3 ? '' : ' is-fit') + '" role="group" aria-label="구성 선택">' + html + '</div>';
     }
     /* 단일 그룹 조합상품(1117류): 제품명 기준 가상 탭 파생 — 제품 먼저 고르고 용량을 고르는 2단 선택.
        이름에서 [태그]·중량·개입수를 걷어낸 키가 2~4종이고 한 종이라도 용량 변형이 2개 이상일 때만 적용 */
@@ -1419,6 +1428,14 @@
           var mains = s.cat.groups.filter(function(g) { return g.main; });
           if (mains.length > prevMainsLen && prevMainsLen > 0) activeTab = mains.length - 1;
           prevMainsLen = mains.length;
+          /* 조합형: 1그룹 선택을 바꾸면(다른 옵션 재선택) 마지막 그룹으로 자동 이동 (소유자 버그 리포트 2026-07-21) */
+          if (mains.length >= 2) {
+            var lv1Now = mains[0].items.map(function(it) { return it[0]; }).filter(function(n) {
+              return selectedToggleNames().has(normalizeT(n));
+            }).join('|');
+            if (lv1Now && prevLv1Sel && lv1Now !== prevLv1Sel) { activeTab = mains.length - 1; }
+            prevLv1Sel = lv1Now || prevLv1Sel;
+          }
           var derived = mains.length === 1 ? deriveProductGroups(mains[0].items) : null;
           if (derived) {
             if (activeTab === null || activeTab >= derived.length) activeTab = 0;
@@ -2123,7 +2140,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.25] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.26] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
