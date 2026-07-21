@@ -1415,6 +1415,12 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 
+  /* 추가상품 100g당 가격 태그: 빨간색 (소유자 지시 2026-07-21) */
+  #yd-bs-root .yd-bs-unit-badge {
+    background: #e8442e !important;
+    color: #fff !important;
+  }
+
   /* 카테고리 탭(S/L/PREMIUM) 라벨 안정화: 중앙 정렬 + 높이 고정 + 긴 라벨 자동 축소 (소유자 지시 2026-07-21) */
   #yd-bs-root .yd-bs-category {
     text-align: center;
