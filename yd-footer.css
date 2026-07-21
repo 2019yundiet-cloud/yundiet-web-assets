@@ -1,7 +1,7 @@
 
   /* ── 배송 카드 (홈/상세페이지) ── */
   .yd-ship-card {
-    background: #2a341e;
+    background: #3b4024;
     border-radius: 16px;
     padding: 18px 20px 16px;
     margin: 12px 15px;
@@ -81,7 +81,7 @@
     top: 50%;
     transform: translate(-50%, -50%);
     background: #fff;
-    color: #2a341e;
+    color: #3b4024;
     border-radius: 999px;
     padding: 5px 14px;
     font-size: 13px;
@@ -141,7 +141,7 @@
     flex: 0 0 auto;
     padding: 4px 10px;
     border-radius: 999px;
-    background: #2a341e;
+    background: #3b4024;
     color: #fff;
     font-size: 12px;
     font-weight: 700;
@@ -336,6 +336,15 @@
     position:fixed; inset:0; z-index:2147482000; width:100%; height:100dvh; pointer-events:none; color:var(--yd-ink);
     font-family:"Pretendard","SUIT","Noto Sans KR","Apple SD Gothic Neo",-apple-system,BlinkMacSystemFont,sans-serif;}
 .yd-bs-native-source{position:absolute!important; width:1px!important; height:1px!important; overflow:hidden!important; clip-path:inset(50%)!important; opacity:.001!important; pointer-events:none!important;}
+/* v3.13: JS 부팅 전 깜빡임 제거 — 플로우 대상 네이티브 UI를 CSS로 즉시 차단.
+   플로우 미적용 판정 시 html.yd-bs-native-visible 부여로 원래 스타일 복원(셀렉터 해제 방식) */
+html:not(.yd-bs-native-visible) #prod_options,
+html:not(.yd-bs-native-visible) #prod_selected_options,
+html:not(.yd-bs-native-visible) #prod_detail .categorize-mobile.buy_btns,
+html:not(.yd-bs-native-visible) #prod_detail .buy_btns,
+html:not(.yd-bs-native-visible) #prod_detail a.btn.defualt-cart,
+html:not(.yd-bs-native-visible) #prod_detail .defualt-cart,
+html:not(.yd-bs-native-visible) #prod_detail .today_arrival_wrap{position:absolute!important; width:1px!important; height:1px!important; overflow:hidden!important; clip-path:inset(50%)!important; opacity:.001!important; pointer-events:none!important;}
 body.yd-bs-lock{overflow:hidden!important;}
 body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important; visibility:hidden!important; opacity:0!important; pointer-events:none!important;}
 .yd-bs-dock, .yd-bs-backdrop, .yd-bs-sheet{pointer-events:auto;}

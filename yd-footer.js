@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_12__) {
+  if (window.__YD_FOOTER_V3_13__) {
     return;
   }
-  window.__YD_FOOTER_V3_12__ = true;
+  window.__YD_FOOTER_V3_13__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.12', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.13', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1073,7 +1073,7 @@
 
     var step = 1, activeTab = null, cartPopup = false, bootAttempts = 0, rafId = 0, followupTimer = 0;
     var wrapLabels = [], prevMainsLen = 0;
-    var flowBooted = false, bootWatcher = null;
+    var flowBooted = false, bootWatcher = null, bootLoadedAt = 0;
     var cartSubtotal = 0, cartSubtotalReady = false, cartSubtotalLoading = false;
     var pendingNames = new Set();
 
@@ -1485,6 +1485,12 @@
       }
     });
     document.addEventListener('keydown', function(event) { if (event.key === 'Escape' && root.classList.contains('is-open') && !cartPopup) closeSheet(); });
+    /* 안전망: 10초가 지나도 플로우가 없으면(스크립트 오류 등) 네이티브 UI 복원 */
+    window.setTimeout(function() {
+      if (!document.getElementById('yd-bs-root')) {
+        document.documentElement.classList.add('yd-bs-native-visible');
+      }
+    }, 10000);
 
     function initialiseFlow() {
       var source = document.querySelector('#prod_detail .goods_wrapper');
@@ -1498,10 +1504,15 @@
           bootWatcher = new MutationObserver(function() { initialiseFlow(); });
           bootWatcher.observe(document.documentElement, { childList: true, subtree: true });
         }
-        if (bootAttempts < 240) { setTimeout(initialiseFlow, 30); return; }
+        /* 로드 완료 후 1.5초 내 옵션이 없으면 옵션 없는 상품으로 조기 판정 (네이티브 UI 복원) */
+        var loadDone = document.readyState === 'complete';
+        if (loadDone && !bootLoadedAt) { bootLoadedAt = Date.now(); }
+        var noOptionProduct = loadDone && bootLoadedAt && (Date.now() - bootLoadedAt > 1500) && !document.querySelector('#prod_options a');
+        if (bootAttempts < 240 && !noOptionProduct) { setTimeout(initialiseFlow, 30); return; }
         if (bootWatcher) bootWatcher.disconnect();
-        /* 옵션 없는 상품(단일 구매형 등) — 플로우 미적용, 흔적 없이 제거 */
+        /* 옵션 없는 상품(단일 구매형 등) — 플로우 미적용, 흔적 없이 제거 + 네이티브 복원 */
         root.remove();
+        document.documentElement.classList.add('yd-bs-native-visible');
         ydMark('optionFlow', true, '옵션 없는 상품 — 네이티브 유지');
         return;
       }
@@ -2019,7 +2030,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.12] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.13] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
