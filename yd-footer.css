@@ -1422,6 +1422,33 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 
+  /* 완료 카드 하단 선택 목록 (단백밥 외) */
+  #yd-bs-root .yd-bs-min-picked {
+    margin: 9px 0 0;
+    padding: 9px 0 0;
+    list-style: none;
+    border-top: 1px solid rgba(194, 78, 42, 0.18);
+  }
+  #yd-bs-root .yd-bs-min-picked li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 2px 0;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  #yd-bs-root .yd-bs-min-picked li span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+  }
+  #yd-bs-root .yd-bs-min-picked li b {
+    flex: none;
+  }
+
   /* 조합형 대기 탭: 흐리게 + 클릭 불가 */
   #yd-bs-root .yd-bs-category.is-pending-tab {
     opacity: 0.55;

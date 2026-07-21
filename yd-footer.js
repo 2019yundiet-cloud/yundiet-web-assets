@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_21__) {
+  if (window.__YD_FOOTER_V3_22__) {
     return;
   }
-  window.__YD_FOOTER_V3_21__ = true;
+  window.__YD_FOOTER_V3_22__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.21', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.22', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1353,7 +1353,11 @@
       if (cfg.min > 1) {
         return '<div class="yd-bs-min ' + (s.reqQty >= cfg.min ? 'is-ok' : '') + '" aria-live="polite">' + (s.reqQty >= cfg.min ? '최소 수량을 충족했습니다. 총 ' + s.reqQty + '개' : '현재 ' + s.reqQty + '개 · ' + (cfg.min - s.reqQty) + '개 더 선택해 주세요.') + '</div>';
       }
-      return '<div class="yd-bs-min ' + (s.reqQty >= 1 ? 'is-ok' : '') + '" aria-live="polite">' + (s.reqQty >= 1 ? '상품 선택 완료 · 총 ' + s.reqQty + '개' : cfg.unit + ' 상품을 1개 이상 선택해 주세요.') + '</div>';
+      /* 단백밥 외 상품: 완료 카드 하단에 담은 상품을 간단히 나열 (소유자 지시 2026-07-21) */
+      var picked = s.req.filter(function(x) { return x.qty > 0; }).map(function(x) {
+        return '<li><span>' + escT(x.label) + '</span><b>×' + x.qty + '</b></li>';
+      }).join('');
+      return '<div class="yd-bs-min ' + (s.reqQty >= 1 ? 'is-ok' : '') + '" aria-live="polite">' + (s.reqQty >= 1 ? '상품 선택 완료 · 총 ' + s.reqQty + '개' + (picked ? '<ul class="yd-bs-min-picked">' + picked + '</ul>' : '') : cfg.unit + ' 상품을 1개 이상 선택해 주세요.') + '</div>';
     }
     function reviewCategoryOf(label) {
       if (cfg.scheme === 'size') return categoryLabel(categoryOf(label));
@@ -2112,7 +2116,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.21] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.22] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
