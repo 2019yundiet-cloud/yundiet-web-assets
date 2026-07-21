@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_20__) {
+  if (window.__YD_FOOTER_V3_21__) {
     return;
   }
-  window.__YD_FOOTER_V3_20__ = true;
+  window.__YD_FOOTER_V3_21__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.20', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.21', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1391,8 +1391,10 @@
       }).join('') + '</div>';
     }
     function stepContent(s) {
-      var progress = '<div class="yd-bs-progress" role="list" aria-label="옵션 선택 진행 단계">' + [1, 2, 3].map(function(n) {
-        return '<span role="listitem" aria-label="' + n + '단계" ' + (n === step ? 'aria-current="step"' : '') + ' class="' + (n <= step ? 'is-active' : '') + '"></span>';
+      var stepNames = ['옵션 선택', '추가상품', '최종확인'];
+      var progress = '<div class="yd-bs-progress" role="tablist" aria-label="옵션 선택 진행 단계">' + [1, 2, 3].map(function(n) {
+        var reachable = n <= step || s.reqQty >= cfg.min;
+        return '<button type="button" data-step="' + n + '" role="tab" aria-selected="' + (n === step) + '" ' + (reachable ? '' : 'disabled') + ' class="' + (n <= step ? 'is-active ' : '') + (n === step ? 'is-current' : '') + '"><i></i><em>' + n + ' ' + stepNames[n - 1] + '</em></button>';
       }).join('') + '</div>';
       var html = '';
       if (step === 1) {
@@ -1492,6 +1494,15 @@
     root.addEventListener('click', function(event) {
       var target = event.target.closest('button,a');
       if (!target || !root.contains(target)) return;
+      var stepBtn = target.closest('.yd-bs-progress button');
+      if (stepBtn && !stepBtn.disabled) {
+        var toStep = parseInt(stepBtn.dataset.step, 10);
+        if (toStep >= 1 && toStep <= 3 && toStep !== step) {
+          step = toStep; cartPopup = false; render();
+          var psc = root.querySelector('.yd-bs-scroll'); if (psc) psc.scrollTop = 0;
+        }
+        return;
+      }
       if (target.matches('.yd-bs-review-btn')) {
         var revTab = Array.from(document.querySelectorAll('a')).find(function(a) {
           var s = (a.textContent || '') + (a.getAttribute('href') || '') + (a.getAttribute('onclick') || '') + (a.className || '');
@@ -2101,7 +2112,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.20] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.21] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

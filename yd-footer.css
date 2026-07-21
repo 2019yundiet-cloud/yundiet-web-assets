@@ -365,8 +365,14 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 .yd-bs-close{flex:none; min-width:56px; min-height:44px; border:0; border-radius:12px; color:#5f685f; background:#f4f6f3; font-size:14px; font-weight:800; cursor:pointer;}
 .yd-bs-scroll{padding:24px 26px 28px; overflow:auto; overscroll-behavior:contain; min-height:220px;}
 .yd-bs-progress{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:22px;}
-.yd-bs-progress span{height:4px; border-radius:99px; background:#e2e6e0;}
-.yd-bs-progress span.is-active{background:var(--yd-green);}
+.yd-bs-progress button{display:block; padding:0; border:0; background:none; cursor:pointer; text-align:left;}
+.yd-bs-progress button:disabled{cursor:default;}
+.yd-bs-progress button i{display:block; height:7px; border-radius:99px; background:#e2e6e0;}
+.yd-bs-progress button.is-active i{background:var(--yd-green);}
+.yd-bs-progress button em{display:block; margin-top:6px; font-style:normal; font-size:12px; font-weight:750; color:#a7ada4; letter-spacing:-.02em; white-space:nowrap;}
+.yd-bs-progress button.is-active em{color:var(--yd-green);}
+.yd-bs-progress button.is-current em{font-weight:900;}
+.yd-bs-progress button:disabled em{opacity:.75;}
 .yd-bs-step-meta{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;}
 .yd-bs-badge{display:inline-flex; align-items:center; min-height:26px; padding:0 10px; border-radius:7px; background:#f9e7e5; color:#a63f36; font-size:12px; font-weight:800;}
 .yd-bs-step-count{color:var(--yd-muted); font-size:11px; font-weight:800; letter-spacing:.12em;}
@@ -500,7 +506,8 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     font-size:16px;}
 .yd-bs-scroll{padding:32px 34px 38px;}
 .yd-bs-progress{gap:12px; margin-bottom:32px;}
-.yd-bs-progress span{height:5px; background:#e0e4de;}
+.yd-bs-progress button i{height:8px; background:#e0e4de;}
+.yd-bs-progress button.is-active i{background:var(--yd-green);}
 .yd-bs-step-meta{margin-bottom:20px;}
 .yd-bs-badge{min-height:32px; padding:0 12px; border-radius:9px; background:#f7e7e4; color:#9c3d33; font-size:13px;}
 .yd-bs-step-count{color:#303532; font-size:13px; letter-spacing:.11em;}
