@@ -1415,6 +1415,33 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 
+  /* 카테고리 탭(S/L/PREMIUM) 라벨 안정화: 중앙 정렬 + 높이 고정 + 긴 라벨 자동 축소 (소유자 지시 2026-07-21) */
+  #yd-bs-root .yd-bs-category {
+    text-align: center;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  #yd-bs-root .yd-bs-category strong {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 27px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  #yd-bs-root .yd-bs-category strong.is-wide {
+    font-size: 15px;
+    letter-spacing: -0.03em;
+  }
+  @media (min-width: 768px) {
+    #yd-bs-root .yd-bs-category strong {
+      height: 31px;
+    }
+    #yd-bs-root .yd-bs-category strong.is-wide {
+      font-size: 21px;
+    }
+  }
+
   /* ⑥ 도크: 리뷰보기(4) : 옵션보기(6), 텍스트 크기 통일 */
   #yd-bs-root .yd-bs-dock {
     display: flex;
