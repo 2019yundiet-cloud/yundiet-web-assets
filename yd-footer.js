@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_19__) {
+  if (window.__YD_FOOTER_V3_20__) {
     return;
   }
-  window.__YD_FOOTER_V3_19__ = true;
+  window.__YD_FOOTER_V3_20__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.19', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.20', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1413,12 +1413,13 @@
           } else {
             if (activeTab === null || activeTab >= mains.length) activeTab = 0;
             var group = mains[activeTab];
-            /* 조합형: 부팅 때 캐시한 셀렉트 라벨 중 아직 그룹으로 안 열린 것을 대기 탭으로 */
+            /* 조합형: 부팅 때 캐시한 셀렉트 라벨 중 아직 그룹으로 안 열린 것을 전부 대기 탭으로 (3단 이상 지원) */
             var pendingLabels = [];
-            if (mains.length === 1) {
-              var known = s.cat.groups.map(function(g) { return normalizeT(g.label); });
-              var nextLabel = normalizeT((wrapLabels[1] || '').replace(/[\u25A0-\u25FF\u2600-\u27BF\uFE0F\uD800-\uDFFF]/g, ' '));
-              if (nextLabel && known.indexOf(nextLabel) === -1) pendingLabels.push(nextLabel);
+            var known = s.cat.groups.map(function(g) { return normalizeT(g.label); });
+            var cleanLabel = function(t) { return normalizeT(String(t || '').replace(/[\u25A0-\u25FF\u2600-\u27BF\uFE0F\uD800-\uDFFF]/g, ' ')); };
+            for (var wi = mains.length; wi < wrapLabels.length && pendingLabels.length < 3; wi++) {
+              var lbl = cleanLabel(wrapLabels[wi]);
+              if (lbl && known.indexOf(lbl) === -1 && pendingLabels.indexOf(lbl) === -1) pendingLabels.push(lbl);
             }
             body = groupTabs(s, mains, pendingLabels) + (group ? menuCards(group.items, s, '') : '<div class="yd-bs-empty">옵션을 불러오는 중입니다…</div>');
           }
@@ -2100,7 +2101,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.19] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.20] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
