@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_24__) {
+  if (window.__YD_FOOTER_V3_25__) {
     return;
   }
-  window.__YD_FOOTER_V3_24__ = true;
+  window.__YD_FOOTER_V3_25__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.24', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.25', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -536,7 +536,7 @@
         var text = box.textContent || '';
         if (/<\s*(img|p|br|div|span)[\s>/]/i.test(text)) {
           box.style.display = 'none';
-          ydMark('brokenSummaryHidden');
+          ydMark('brokenSummaryHidden', true, '요약설명 원문 노출 상품 숨김 처리');
         }
         box.dataset.ydSummaryChecked = '1';
       });
@@ -2123,7 +2123,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.24] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.25] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
