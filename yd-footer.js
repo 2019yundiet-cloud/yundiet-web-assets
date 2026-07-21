@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_13__) {
+  if (window.__YD_FOOTER_V3_14__) {
     return;
   }
-  window.__YD_FOOTER_V3_13__ = true;
+  window.__YD_FOOTER_V3_14__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.13', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.14', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1934,7 +1934,7 @@
     ensureObserver('reviewModalHeight', applyAll);
   }
 
-  /* ═══ 비회원 장바구니 카카오 배너 ═══ */
+  /* ═══ 비회원 장바구니 주문하기 버튼 (구 카카오 배너 자리) ═══ */
   function bindCartKakaoBanner() {
     const CONFIG_BANNER = {
       bannerLink: CONFIG.KAKAO_CHAT_URL,
@@ -1961,6 +1961,8 @@
         return;
       }
 
+      /* 소유자 지시(2026-07-21): 카카오 배너 → 주문하기 버튼.
+         클릭 시 네이티브 주문 흐름을 태워 imweb이 회원가입/로그인 → 결제로 안내한다 */
       const banner = document.createElement('div');
       banner.id = 'agp-persistent-banner';
       banner.style.cssText = [
@@ -1968,11 +1970,11 @@
         'bottom:95px',
         'left:5%',
         'width:90%',
-        'height:43px',
+        'height:47px',
         'z-index:10001',
-        'background-color:#FFEB00',
+        'background-color:#3b4024',
         'border-radius:15px',
-        'box-shadow:0 2px 8px rgba(0,0,0,0.15)',
+        'box-shadow:0 2px 10px rgba(0,0,0,0.22)',
         'overflow:hidden',
         'display:flex',
         'align-items:center',
@@ -1980,8 +1982,7 @@
       ].join(';');
 
       const anchor = document.createElement('a');
-      anchor.href = CONFIG_BANNER.bannerLink;
-      anchor.target = '_blank';
+      anchor.href = '/shop_payment';
       anchor.style.cssText = [
         'display:flex',
         'align-items:center',
@@ -1989,11 +1990,20 @@
         'width:100%',
         'height:100%',
         'text-decoration:none',
-        'color:#333',
-        'font-weight:bold',
-        'font-size:14px'
+        'color:#fff',
+        'font-weight:800',
+        'font-size:16px',
+        'letter-spacing:-0.02em'
       ].join(';');
-      anchor.textContent = '카카오 채널 추가하고 18,000원 쿠폰받기 >';
+      anchor.textContent = '주문하기';
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        var native = Array.prototype.slice.call(document.querySelectorAll('button')).filter(function(b) {
+          return /^주문하기/.test((b.textContent || '').trim());
+        })[0];
+        if (native) { native.click(); return; }
+        window.location.href = '/shop_payment';
+      });
 
       banner.appendChild(anchor);
       document.body.appendChild(banner);
@@ -2030,7 +2040,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.13] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.14] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
