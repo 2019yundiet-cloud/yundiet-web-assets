@@ -1422,31 +1422,44 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 
-  /* 완료 카드 하단 선택 목록 (단백밥 외) */
-  #yd-bs-root .yd-bs-min-picked {
-    margin: 9px 0 0;
-    padding: 9px 0 0;
-    list-style: none;
-    border-top: 1px solid rgba(194, 78, 42, 0.18);
+  /* 담은 상품 독립 카드 (단백밥 외, 1단계 전용) */
+  #yd-bs-root .yd-bs-picked-card {
+    margin-top: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--yd-line);
+    border-radius: 14px;
+    background: #fff;
   }
-  #yd-bs-root .yd-bs-min-picked li {
+  #yd-bs-root .yd-bs-picked-card h4 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 850;
+    letter-spacing: -0.02em;
+  }
+  #yd-bs-root .yd-bs-picked-card ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  #yd-bs-root .yd-bs-picked-card li {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 10px;
-    padding: 2px 0;
-    font-size: 12px;
+    padding: 3px 0;
+    font-size: 13px;
     font-weight: 700;
   }
-  #yd-bs-root .yd-bs-min-picked li span {
+  #yd-bs-root .yd-bs-picked-card li span {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     text-align: left;
   }
-  #yd-bs-root .yd-bs-min-picked li b {
+  #yd-bs-root .yd-bs-picked-card li b {
     flex: none;
+    color: var(--yd-green);
   }
 
   /* 조합형 대기 탭: 흐리게 + 클릭 불가 */

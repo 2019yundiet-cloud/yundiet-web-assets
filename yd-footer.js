@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_23__) {
+  if (window.__YD_FOOTER_V3_24__) {
     return;
   }
-  window.__YD_FOOTER_V3_23__ = true;
+  window.__YD_FOOTER_V3_24__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.23', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.24', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1353,12 +1353,18 @@
       if (cfg.min > 1) {
         return '<div class="yd-bs-min ' + (s.reqQty >= cfg.min ? 'is-ok' : '') + '" aria-live="polite">' + (s.reqQty >= cfg.min ? '최소 수량을 충족했습니다. 총 ' + s.reqQty + '개' : '현재 ' + s.reqQty + '개 · ' + (cfg.min - s.reqQty) + '개 더 선택해 주세요.') + '</div>';
       }
-      /* 단백밥 외 상품: 완료 카드 하단에 담은 상품을 간단히 나열 (소유자 지시 2026-07-21) */
-      var picked = s.req.filter(function(x) { return x.qty > 0; }).map(function(x) {
+      return '<div class="yd-bs-min ' + (s.reqQty >= 1 ? 'is-ok' : '') + '" aria-live="polite">' + (s.reqQty >= 1 ? '상품 선택 완료 · 총 ' + s.reqQty + '개' : cfg.unit + ' 상품을 1개 이상 선택해 주세요.') + '</div>';
+    }
+    /* 단백밥 외 상품: 담은 상품을 별도 카드로 표시 — 1단계에서만 노출 (소유자 지시 2026-07-21) */
+    function pickedCard(s) {
+      if (cfg.min > 1) { return ''; }
+      var items = s.req.filter(function(x) { return x.qty > 0; });
+      if (!items.length) { return ''; }
+      var rows = items.map(function(x) {
         var shown = normalizeT(String(x.label).replace(/[\u25A0-\u25FF\u2600-\u27BF\uFE0F\uD800-\uDFFF]/g, ' '));
         return '<li><span>' + escT(shown) + '</span><b>×' + x.qty + '</b></li>';
       }).join('');
-      return '<div class="yd-bs-min ' + (s.reqQty >= 1 ? 'is-ok' : '') + '" aria-live="polite">' + (s.reqQty >= 1 ? '상품 선택 완료 · 총 ' + s.reqQty + '개' + (picked ? '<ul class="yd-bs-min-picked">' + picked + '</ul>' : '') : cfg.unit + ' 상품을 1개 이상 선택해 주세요.') + '</div>';
+      return '<div class="yd-bs-picked-card" aria-label="담은 상품"><h4>담은 상품</h4><ul>' + rows + '</ul></div>';
     }
     function reviewCategoryOf(label) {
       if (cfg.scheme === 'size') return categoryLabel(categoryOf(label));
@@ -1369,7 +1375,7 @@
         return '<div class="yd-bs-review-row"><div><span class="yd-bs-review-category">' + escT(catText) + '</span><div class="yd-bs-review-name">' + escT(x.label) + '</div><div class="yd-bs-review-price">' + escT(x.priceText) + '</div></div><div class="yd-bs-qty"><button data-minus="' + escT(x.label) + '" aria-label="' + escT(x.label) + ' 수량 줄이기">−</button><strong aria-live="polite">' + x.qty + '</strong><button data-plus="' + escT(x.label) + '" aria-label="' + escT(x.label) + ' 수량 늘리기">＋</button></div><button class="yd-bs-remove" data-remove="' + escT(x.label) + '" aria-label="' + escT(x.label) + ' 삭제">삭제</button></div>';
       };
       return '<section class="yd-bs-review-section"><h4>' + escT(cfg.unit) + ' ' + s.reqQty + '개</h4><div class="yd-bs-review-list">' + (s.req.length ? s.req.map(function(x) { return rowHtml(x, reviewCategoryOf(x.label)); }).join('') : '<div class="yd-bs-empty">아직 선택한 메뉴가 없습니다.</div>') + '</div></section>' +
-        '<section class="yd-bs-review-section"><h4>추가상품 ' + s.optQty + '개</h4><div class="yd-bs-review-list">' + (s.opt.length ? s.opt.map(function(x) { return rowHtml(x, '선택 상품'); }).join('') : '<div class="yd-bs-empty">선택한 추가상품이 없습니다.</div>') + '</div></section>' + minNotice(s);
+        '<section class="yd-bs-review-section"><h4>추가상품 ' + s.optQty + '개</h4><div class="yd-bs-review-list">' + (s.opt.length ? s.opt.map(function(x) { return rowHtml(x, '선택 상품'); }).join('') : '<div class="yd-bs-empty">선택한 추가상품이 없습니다.</div>') + '</div></section>';
     }
     function unitPricePer100g(name, price) {
       var match = String(name).match(/(\d+)\s*g\s*[*×xX]\s*(\d+)\s*개/i);
@@ -1431,7 +1437,7 @@
             body = groupTabs(s, mains, pendingLabels) + (group ? menuCards(group.items, s, '') : '<div class="yd-bs-empty">옵션을 불러오는 중입니다…</div>');
           }
         }
-        html = '<div class="yd-bs-step yd-bs-step-1"><div class="yd-bs-step-meta"><span class="yd-bs-badge">필수 선택</span><span class="yd-bs-step-count">STEP 1 / 3</span></div><h3>' + escT(cfg.headline) + '</h3><p class="yd-bs-lead">' + escT(cfg.lead) + '</p>' + body + minNotice(s) + '</div>';
+        html = '<div class="yd-bs-step yd-bs-step-1"><div class="yd-bs-step-meta"><span class="yd-bs-badge">필수 선택</span><span class="yd-bs-step-count">STEP 1 / 3</span></div><h3>' + escT(cfg.headline) + '</h3><p class="yd-bs-lead">' + escT(cfg.lead) + '</p>' + body + minNotice(s) + pickedCard(s) + '</div>';
       }
       if (step === 2) html = '<div class="yd-bs-step yd-bs-step-2"><div class="yd-bs-step-meta"><span class="yd-bs-badge">선택 사항</span><span class="yd-bs-step-count">STEP 2 / 3</span></div><h3>이 상품도 추천해요</h3><p class="yd-bs-lead">필요한 상품은 + 버튼으로 수량을 늘릴 수 있으며 선택하지 않아도 다음으로 넘어갈 수 있습니다.</p>' + addonsHtml(s) + '</div>';
       if (step === 3) html = '<div class="yd-bs-step yd-bs-step-3"><div class="yd-bs-step-meta"><span class="yd-bs-badge">최종 확인</span><span class="yd-bs-step-count">STEP 3 / 3</span></div><h3>선택한 상품을 확인해 주세요.</h3><p class="yd-bs-lead">장바구니에 담기기 전 메뉴와 수량, 추가상품을 마지막으로 확인하고 수정할 수 있습니다.</p>' + reviewHtml(s) + '</div>';
@@ -2117,7 +2123,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.23] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.24] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
