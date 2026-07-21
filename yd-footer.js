@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_18__) {
+  if (window.__YD_FOOTER_V3_19__) {
     return;
   }
-  window.__YD_FOOTER_V3_18__ = true;
+  window.__YD_FOOTER_V3_19__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.18', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.19', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1279,17 +1279,23 @@
       };
       return '<div class="yd-bs-category-grid" role="group" aria-label="라인 선택">' + btn('S', 'S', '단백밥 도시락') + btn('L', 'L', '단백밥 도시락') + btn('P', 'PREMIUM', '프리미엄 도시락') + '</div>';
     }
-    function groupTabs(s, mains) {
-      if (mains.length < 2) return '';
+    function groupTabs(s, mains, pendingLabels) {
+      pendingLabels = pendingLabels || [];
+      if (mains.length + pendingLabels.length < 2) return '';
       var counts = mains.map(function(g) {
         return g.items.reduce(function(sum, it) {
           var found = s.req.find(function(x) { return x.label === it[0]; });
           return sum + (found ? found.qty : 0);
         }, 0);
       });
-      return '<div class="yd-bs-category-grid" role="group" aria-label="구성 선택">' + mains.map(function(g, i) {
+      var html = mains.map(function(g, i) {
         return '<button class="yd-bs-category ' + (activeTab === i ? 'is-selected' : '') + '" data-category="' + i + '" aria-pressed="' + (activeTab === i) + '"><strong>' + (i + 1) + '</strong><span>' + escT(g.label) + '</span><b>' + g.items.length + '종 · 선택 ' + counts[i] + '개</b></button>';
-      }).join('') + '</div>';
+      }).join('');
+      /* 조합형 2단: 아직 열리지 않은 다음 그룹을 대기 탭으로 미리 보여준다 (소유자 지시 2026-07-21) */
+      html += pendingLabels.map(function(label, j) {
+        return '<button class="yd-bs-category is-pending-tab" disabled aria-disabled="true"><strong>' + (mains.length + j + 1) + '</strong><span>' + escT(label) + '</span><b>이전 탭 선택 후</b></button>';
+      }).join('');
+      return '<div class="yd-bs-category-grid" role="group" aria-label="구성 선택">' + html + '</div>';
     }
     /* 단일 그룹 조합상품(1117류): 제품명 기준 가상 탭 파생 — 제품 먼저 고르고 용량을 고르는 2단 선택.
        이름에서 [태그]·중량·개입수를 걷어낸 키가 2~4종이고 한 종이라도 용량 변형이 2개 이상일 때만 적용 */
@@ -1407,7 +1413,14 @@
           } else {
             if (activeTab === null || activeTab >= mains.length) activeTab = 0;
             var group = mains[activeTab];
-            body = groupTabs(s, mains) + (group ? menuCards(group.items, s, '') : '<div class="yd-bs-empty">옵션을 불러오는 중입니다…</div>');
+            /* 조합형: 부팅 때 캐시한 셀렉트 라벨 중 아직 그룹으로 안 열린 것을 대기 탭으로 */
+            var pendingLabels = [];
+            if (mains.length === 1) {
+              var known = s.cat.groups.map(function(g) { return normalizeT(g.label); });
+              var nextLabel = normalizeT((wrapLabels[1] || '').replace(/[\u25A0-\u25FF\u2600-\u27BF\uFE0F\uD800-\uDFFF]/g, ' '));
+              if (nextLabel && known.indexOf(nextLabel) === -1) pendingLabels.push(nextLabel);
+            }
+            body = groupTabs(s, mains, pendingLabels) + (group ? menuCards(group.items, s, '') : '<div class="yd-bs-empty">옵션을 불러오는 중입니다…</div>');
           }
         }
         html = '<div class="yd-bs-step yd-bs-step-1"><div class="yd-bs-step-meta"><span class="yd-bs-badge">필수 선택</span><span class="yd-bs-step-count">STEP 1 / 3</span></div><h3>' + escT(cfg.headline) + '</h3><p class="yd-bs-lead">' + escT(cfg.lead) + '</p>' + body + minNotice(s) + '</div>';
@@ -2087,7 +2100,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.18] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.19] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

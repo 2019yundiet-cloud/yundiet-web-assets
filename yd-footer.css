@@ -1415,6 +1415,12 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 
+  /* 조합형 대기 탭: 흐리게 + 클릭 불가 */
+  #yd-bs-root .yd-bs-category.is-pending-tab {
+    opacity: 0.55;
+    cursor: default;
+  }
+
   /* 파생 제품 탭: 탭 수에 맞춰 균등 분할 */
   #yd-bs-root .yd-bs-category-grid.is-derived {
     grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
