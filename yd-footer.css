@@ -1422,7 +1422,8 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 
-  /* 담은 상품 카드 행: 윗줄 상품명 중앙정렬 / 아랫줄 수량·삭제 (소유자 지시 2026-07-21) */
+  /* 담은 상품 카드·3단계 확인 행: 윗줄 상품명 중앙정렬 / 아랫줄 수량·삭제 (소유자 지시 2026-07-21) */
+  #yd-bs-root .yd-bs-step-3 .yd-bs-review-row,
   #yd-bs-root .yd-bs-picked-card .yd-bs-review-row {
     display: grid;
     grid-template-columns: auto auto;
@@ -1432,20 +1433,40 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     column-gap: 12px;
     row-gap: 11px;
   }
+  #yd-bs-root .yd-bs-step-3 .yd-bs-review-row > div:first-child,
   #yd-bs-root .yd-bs-picked-card .yd-bs-review-row > div:first-child {
     grid-area: name;
     justify-self: stretch;
     text-align: center;
   }
+  #yd-bs-root .yd-bs-step-3 .yd-bs-review-name,
   #yd-bs-root .yd-bs-picked-card .yd-bs-review-name {
     white-space: normal;
     text-align: center;
   }
+  #yd-bs-root .yd-bs-step-3 .yd-bs-review-row .yd-bs-qty,
   #yd-bs-root .yd-bs-picked-card .yd-bs-review-row .yd-bs-qty {
     grid-area: qty;
   }
+  #yd-bs-root .yd-bs-step-3 .yd-bs-review-row .yd-bs-remove,
   #yd-bs-root .yd-bs-picked-card .yd-bs-review-row .yd-bs-remove {
     grid-area: remove;
+  }
+
+  /* 3단계 전용 뒤로가기(액션 버튼 바로 위) */
+  #yd-bs-root .yd-bs-step3-backrow {
+    margin: 0 0 10px;
+  }
+  #yd-bs-root .yd-bs-back-mini,
+  #yd-bs-root .yd-bs-back.yd-bs-back-mini {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--yd-line);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--yd-ink);
+    font-size: 14px;
+    font-weight: 750;
   }
 
   /* 담은 상품 독립 카드 (단백밥 외, 1단계 전용) */
