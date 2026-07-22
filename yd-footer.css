@@ -1422,6 +1422,32 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 
+  /* 담은 상품 카드 행: 윗줄 상품명 중앙정렬 / 아랫줄 수량·삭제 (소유자 지시 2026-07-21) */
+  #yd-bs-root .yd-bs-picked-card .yd-bs-review-row {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-areas: "name name" "qty remove";
+    justify-content: center;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 11px;
+  }
+  #yd-bs-root .yd-bs-picked-card .yd-bs-review-row > div:first-child {
+    grid-area: name;
+    justify-self: stretch;
+    text-align: center;
+  }
+  #yd-bs-root .yd-bs-picked-card .yd-bs-review-name {
+    white-space: normal;
+    text-align: center;
+  }
+  #yd-bs-root .yd-bs-picked-card .yd-bs-review-row .yd-bs-qty {
+    grid-area: qty;
+  }
+  #yd-bs-root .yd-bs-picked-card .yd-bs-review-row .yd-bs-remove {
+    grid-area: remove;
+  }
+
   /* 담은 상품 독립 카드 (단백밥 외, 1단계 전용) */
   #yd-bs-root .yd-bs-picked-card {
     margin-top: 12px;

@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_27__) {
+  if (window.__YD_FOOTER_V3_28__) {
     return;
   }
-  window.__YD_FOOTER_V3_27__ = true;
+  window.__YD_FOOTER_V3_28__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.27', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.28', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1367,8 +1367,9 @@
     /* 단백밥 외 상품: 1·2단계에서 담은 상품을 3단계와 같은 UX(수량 조절·삭제)로 확인 (소유자 지시 2026-07-21) */
     function pickedCard(s) {
       if (cfg.min > 1) { return ''; }
-      var rows = s.req.filter(function(x) { return x.qty > 0; }).map(function(x) { return reviewRowHtml(x, reviewCategoryOf(x.label)); })
-        .concat(s.opt.filter(function(x) { return x.qty > 0; }).map(function(x) { return reviewRowHtml(x, '선택 상품'); }))
+      var cleanShown = function(label) { return normalizeT(String(label).replace(/[\u25A0-\u25FF\u2600-\u27BF\uFE0F\uD800-\uDFFF]/g, ' ')); };
+      var rows = s.req.filter(function(x) { return x.qty > 0; }).map(function(x) { return reviewRowHtml(x, reviewCategoryOf(x.label), cleanShown(x.label)); })
+        .concat(s.opt.filter(function(x) { return x.qty > 0; }).map(function(x) { return reviewRowHtml(x, '선택 상품', cleanShown(x.label)); }))
         .join('');
       if (!rows) { return ''; }
       return '<div class="yd-bs-picked-card" aria-label="담은 상품"><h4>담은 상품</h4><div class="yd-bs-review-list">' + rows + '</div></div>';
@@ -1377,9 +1378,10 @@
       if (cfg.scheme === 'size') return categoryLabel(categoryOf(label));
       return cfg.unit;
     }
-    /* 3단계 확인 행 — 수량 조절·삭제 포함 (1·2단계 담은상품 카드에서도 재사용) */
-    function reviewRowHtml(x, catText) {
-      return '<div class="yd-bs-review-row"><div><span class="yd-bs-review-category">' + escT(catText) + '</span><div class="yd-bs-review-name">' + escT(x.label) + '</div><div class="yd-bs-review-price">' + escT(x.priceText) + '</div></div><div class="yd-bs-qty"><button data-minus="' + escT(x.label) + '" aria-label="' + escT(x.label) + ' 수량 줄이기">−</button><strong aria-live="polite">' + x.qty + '</strong><button data-plus="' + escT(x.label) + '" aria-label="' + escT(x.label) + ' 수량 늘리기">＋</button></div><button class="yd-bs-remove" data-remove="' + escT(x.label) + '" aria-label="' + escT(x.label) + ' 삭제">삭제</button></div>';
+    /* 3단계 확인 행 — 수량 조절·삭제 포함 (1·2단계 담은상품 카드에서도 재사용).
+       shownLabel: 표시용 라벨(장식 정리본) — data 속성은 반드시 원본 x.label 유지 */
+    function reviewRowHtml(x, catText, shownLabel) {
+      return '<div class="yd-bs-review-row"><div><span class="yd-bs-review-category">' + escT(catText) + '</span><div class="yd-bs-review-name">' + escT(shownLabel || x.label) + '</div><div class="yd-bs-review-price">' + escT(x.priceText) + '</div></div><div class="yd-bs-qty"><button data-minus="' + escT(x.label) + '" aria-label="' + escT(x.label) + ' 수량 줄이기">−</button><strong aria-live="polite">' + x.qty + '</strong><button data-plus="' + escT(x.label) + '" aria-label="' + escT(x.label) + ' 수량 늘리기">＋</button></div><button class="yd-bs-remove" data-remove="' + escT(x.label) + '" aria-label="' + escT(x.label) + ' 삭제">삭제</button></div>';
     }
     function reviewHtml(s) {
       return '<section class="yd-bs-review-section"><h4>' + escT(cfg.unit) + ' ' + s.reqQty + '개</h4><div class="yd-bs-review-list">' + (s.req.length ? s.req.map(function(x) { return reviewRowHtml(x, reviewCategoryOf(x.label)); }).join('') : '<div class="yd-bs-empty">아직 선택한 메뉴가 없습니다.</div>') + '</div></section>' +
@@ -2139,7 +2141,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.27] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.28] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
