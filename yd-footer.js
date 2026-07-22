@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_30__) {
+  if (window.__YD_FOOTER_V3_31__) {
     return;
   }
-  window.__YD_FOOTER_V3_30__ = true;
+  window.__YD_FOOTER_V3_31__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.30', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.31', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1522,11 +1522,17 @@
     /* 담기 완료 후 동작: 'close' = 팝업까지 닫기, 'pay' = 결제 위치(장바구니)로 이동.
        ⚠️ iframe에서는 닫는 순간 진행 중 요청이 끊기므로, 반드시 담김이 확인된 뒤에만 닫는다 */
     var afterAddMode = 'close';
-    var cartCountBefore = null;
-    var fetchCartCount = function() {
+    var cartStateBefore = null;
+    /* 항목 수 + 총액을 함께 본다 — 같은 상품 재담기는 수량 합산이라 항목 수가 안 늘어난다(실측) */
+    var fetchCartState = function() {
       return fetch(CONFIG.CART_API, { credentials: 'same-origin', cache: 'no-store' })
         .then(function(r) { return r.json(); })
-        .then(function(j) { return j && j.data && j.data.meta ? Number(j.data.meta.total_normal_cart_item_count) : null; })
+        .then(function(j) {
+          if (!j || !j.data) return null;
+          var meta = j.data.meta || {};
+          var sum = j.data.cart_price_summary || {};
+          return { count: Number(meta.total_normal_cart_item_count) || 0, price: Number(sum.product_price) || 0 };
+        })
         .catch(function() { return null; });
     };
     var finishCartAdd = function() {
@@ -1550,10 +1556,9 @@
     var pollCartAdded = function(round) {
       round = round || 0;
       dismissNativeCartModal();
-      fetchCartCount().then(function(now) {
-        if (now !== null && cartCountBefore !== null && now > cartCountBefore) {
-          addingCart = false; closeSheet(); finishCartAdd(); return;
-        }
+      fetchCartState().then(function(now) {
+        var confirmed = now && cartStateBefore && (now.count > cartStateBefore.count || now.price > cartStateBefore.price);
+        if (confirmed) { addingCart = false; closeSheet(); finishCartAdd(); return; }
         if (round < 40) { setTimeout(function() { pollCartAdded(round + 1); }, 300); return; }
         /* 담김 미확인: 닫지 않고 버튼을 복구해 재시도 유도 */
         addingCart = false; render();
@@ -1568,9 +1573,9 @@
                    document.querySelector('#prod_detail a._btn_cart');
       if (!native) return;
       afterAddMode = mode; cartPopup = false; addingCart = true; render();
-      /* 기준 수량을 먼저 확보한 뒤 담기 실행 (레이스 방지) */
-      fetchCartCount().then(function(n) {
-        cartCountBefore = n;
+      /* 기준 상태(항목 수+총액)를 먼저 확보한 뒤 담기 실행 (레이스 방지) */
+      fetchCartState().then(function(n) {
+        cartStateBefore = n || { count: 0, price: 0 };
         native.click(); pollCartAdded(0);
       });
     };
@@ -2194,7 +2199,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.30] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.31] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
