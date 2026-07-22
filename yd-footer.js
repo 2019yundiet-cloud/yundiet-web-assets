@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_29__) {
+  if (window.__YD_FOOTER_V3_30__) {
     return;
   }
-  window.__YD_FOOTER_V3_29__ = true;
+  window.__YD_FOOTER_V3_30__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.29', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.30', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1490,7 +1490,7 @@
       var previousScroll = scrollEl ? scrollEl.scrollTop : 0;
       var s = flowState();
       var sheetOpen = root.classList.contains('is-open');
-      root.innerHTML = '<div class="yd-bs-dock"><button class="yd-bs-review-btn" type="button">리뷰보기</button><button class="yd-bs-open"><span>옵션 보기</span></button></div><button class="yd-bs-backdrop" aria-label="옵션 창 닫기"></button><section class="yd-bs-sheet" role="dialog" aria-modal="true" aria-hidden="' + (sheetOpen ? 'false' : 'true') + '" aria-label="상품 옵션 선택"><div class="yd-bs-grab"></div><header class="yd-bs-head"><div class="yd-bs-head-text"><span class="yd-bs-mode">' + escT(cfg.title) + '</span><h2>상품 옵션 선택</h2></div><button class="yd-bs-close" aria-label="옵션 창 닫기">닫기</button></header><div class="yd-bs-scroll">' + (sheetOpen ? shippingGauge(s) : '') + stepContent(s) + '</div><footer class="yd-bs-foot">' + '<div class="yd-bs-total" aria-live="polite"><span>' + escT(cfg.unit) + ' ' + s.reqQty + '개 · 추가상품 ' + s.optQty + '개</span><strong>' + escT(s.total) + '</strong></div>' + (step === 3 ? '<div class="yd-bs-step3-backrow"><button class="yd-bs-back yd-bs-back-mini">뒤로가기</button></div><div class="yd-bs-actions"><button class="yd-bs-back yd-bs-cart-add" ' + (canNext(s) ? '' : 'disabled') + '>장바구니 담기</button><button class="yd-bs-primary" ' + (canNext(s) ? '' : 'disabled') + '>바로 결제하기</button></div>' : '<div class="yd-bs-actions"><button class="yd-bs-back" ' + (step === 1 ? 'disabled' : '') + '>이전으로 돌아가기</button><button class="yd-bs-primary" ' + (canNext(s) ? '' : 'disabled') + '>' + primaryLabel() + '</button></div>') + '</footer></section>' + cartChoice();
+      root.innerHTML = '<div class="yd-bs-dock"><button class="yd-bs-review-btn" type="button">리뷰보기</button><button class="yd-bs-open"><span>옵션 보기</span></button></div><button class="yd-bs-backdrop" aria-label="옵션 창 닫기"></button><section class="yd-bs-sheet" role="dialog" aria-modal="true" aria-hidden="' + (sheetOpen ? 'false' : 'true') + '" aria-label="상품 옵션 선택"><div class="yd-bs-grab"></div><header class="yd-bs-head"><div class="yd-bs-head-text"><span class="yd-bs-mode">' + escT(cfg.title) + '</span><h2>상품 옵션 선택</h2></div><button class="yd-bs-close" aria-label="옵션 창 닫기">닫기</button></header><div class="yd-bs-scroll">' + (sheetOpen ? shippingGauge(s) : '') + stepContent(s) + '</div><footer class="yd-bs-foot">' + '<div class="yd-bs-total" aria-live="polite"><span>' + escT(cfg.unit) + ' ' + s.reqQty + '개 · 추가상품 ' + s.optQty + '개</span><strong>' + escT(s.total) + '</strong></div>' + (step === 3 ? '<div class="yd-bs-step3-backrow"><button class="yd-bs-back yd-bs-back-mini" ' + (addingCart ? 'disabled' : '') + '>뒤로가기</button></div><div class="yd-bs-actions"><button class="yd-bs-back yd-bs-cart-add" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode === 'close' ? '담는 중…' : '장바구니 담기') + '</button><button class="yd-bs-primary" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode === 'pay' ? '결제로 이동 중…' : '바로 결제하기') + '</button></div>' : '<div class="yd-bs-actions"><button class="yd-bs-back" ' + (step === 1 ? 'disabled' : '') + '>이전으로 돌아가기</button><button class="yd-bs-primary" ' + (canNext(s) ? '' : 'disabled') + '>' + primaryLabel() + '</button></div>') + '</footer></section>' + cartChoice();
       root.classList.toggle('is-cart-result', cartPopup);
       var scroll = root.querySelector('.yd-bs-scroll');
       if (scroll) scroll.scrollTop = previousScroll;
@@ -1519,8 +1519,16 @@
       document.body.classList.add('yd-bs-lock', 'yd-bs-cart-choice-active');
       try { if (IS_IFRAME && window.parent.__ydSetModalClose) window.parent.__ydSetModalClose(false); } catch (err) {}
     };
-    /* 담기 완료 후 동작: 'close' = 팝업까지 닫기, 'pay' = 결제 위치(장바구니)로 이동 */
+    /* 담기 완료 후 동작: 'close' = 팝업까지 닫기, 'pay' = 결제 위치(장바구니)로 이동.
+       ⚠️ iframe에서는 닫는 순간 진행 중 요청이 끊기므로, 반드시 담김이 확인된 뒤에만 닫는다 */
     var afterAddMode = 'close';
+    var cartCountBefore = null;
+    var fetchCartCount = function() {
+      return fetch(CONFIG.CART_API, { credentials: 'same-origin', cache: 'no-store' })
+        .then(function(r) { return r.json(); })
+        .then(function(j) { return j && j.data && j.data.meta ? Number(j.data.meta.total_normal_cart_item_count) : null; })
+        .catch(function() { return null; });
+    };
     var finishCartAdd = function() {
       dismissNativeCartModal();
       [250, 600, 1200, 2000].forEach(function(ms) { setTimeout(dismissNativeCartModal, ms); });
@@ -1534,23 +1542,37 @@
       try { if (IS_IFRAME && window.parent.__ydRemoveModal) { window.parent.__ydRemoveModal(); return; } } catch (err) {}
       try { if (IS_IFRAME && window.parent.__ydSetModalClose) window.parent.__ydSetModalClose(true); } catch (err) {}
     };
-    var waitForNativeCartResult = function(attempt) {
-      attempt = attempt || 0;
-      var modal = document.getElementById('shop_detail_add_cart_alarm');
-      var visible = modal && (modal.classList.contains('in') || getComputedStyle(modal).display !== 'none');
-      var success = visible && /담았습니다|건강담기/.test(normalizeT(modal.textContent));
-      if (success) { finishCartAdd(); return; }
-      if (attempt < 40) { setTimeout(function() { waitForNativeCartResult(attempt + 1); }, 100); return; }
-      finishCartAdd();
+    /* 담김 확증 폴링: API 수량 증가(확실) 또는 1초 경과 후 .in 성공모달(같은 상품 합산 케이스).
+       확증 전에는 절대 iframe/페이지를 닫거나 이동하지 않는다 — 진행 중 담기 요청이 끊긴다 */
+    /* 확증은 장바구니 API 수량 증가만 신뢰한다 — 네이티브 성공팝업(.in)은 서버 확정 전에 뜨는 오탐이 실측됨.
+       대기 중에는 시트를 유지하고 버튼을 '담는 중…'으로 바꿔 사용자에게 진행을 보여준다 */
+    var addingCart = false;
+    var pollCartAdded = function(round) {
+      round = round || 0;
+      dismissNativeCartModal();
+      fetchCartCount().then(function(now) {
+        if (now !== null && cartCountBefore !== null && now > cartCountBefore) {
+          addingCart = false; closeSheet(); finishCartAdd(); return;
+        }
+        if (round < 40) { setTimeout(function() { pollCartAdded(round + 1); }, 300); return; }
+        /* 담김 미확인: 닫지 않고 버튼을 복구해 재시도 유도 */
+        addingCart = false; render();
+      });
     };
     var performCartAdd = function(mode) {
+      if (addingCart) return;
       var s = flowState();
       if (!canNext(s)) return;
       var native = document.querySelector('#prod_detail a._btn_cart[onclick*="addCart"]') ||
                    document.querySelector('a.btn.cart.opt._btn_cart') ||
                    document.querySelector('#prod_detail a._btn_cart');
       if (!native) return;
-      afterAddMode = mode; cartPopup = false; closeSheet(); native.click(); waitForNativeCartResult(0);
+      afterAddMode = mode; cartPopup = false; addingCart = true; render();
+      /* 기준 수량을 먼저 확보한 뒤 담기 실행 (레이스 방지) */
+      fetchCartCount().then(function(n) {
+        cartCountBefore = n;
+        native.click(); pollCartAdded(0);
+      });
     };
 
     root.addEventListener('click', function(event) {
@@ -2172,7 +2194,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.29] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.30] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
