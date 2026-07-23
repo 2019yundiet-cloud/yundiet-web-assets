@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_31__) {
+  if (window.__YD_FOOTER_V3_32__) {
     return;
   }
-  window.__YD_FOOTER_V3_31__ = true;
+  window.__YD_FOOTER_V3_32__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.31', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.32', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1076,6 +1076,7 @@
     var flowBooted = false, bootWatcher = null, bootLoadedAt = 0;
     var cartSubtotal = 0, cartSubtotalReady = false, cartSubtotalLoading = false;
     var pendingNames = new Set();
+    var pendingQty = new Map(); /* 낙관 표시용 목표 수량 — 네이티브가 목표에 도달할 때까지 유지 */
 
     var root = document.createElement('section');
     root.id = 'yd-bs-root';
@@ -1172,7 +1173,12 @@
     function flowState() {
       var cat = buildCatalog();
       var all = rowsOf();
-      all.forEach(function(x) { pendingNames.delete(x.label); });
+      all.forEach(function(x) {
+        var t = pendingQty.get(x.label);
+        if (t === undefined) { pendingNames.delete(x.label); return; }
+        if (x.qty === t) { pendingQty.delete(x.label); pendingNames.delete(x.label); }
+        else { x.qty = t; }
+      });
       var isMain = function(x) { var info = cat.itemInfo.get(x.label); return info ? info.main : x.nativeRequired; };
       var req = all.filter(isMain), opt = all.filter(function(x) { return !isMain(x); });
       var totalEl = document.querySelector('#prod_selected_options .total_price');
@@ -1232,10 +1238,12 @@
     }
     function markPending(name, trigger, nextQty) {
       pendingNames.add(name);
+      if (Number.isFinite(nextQty)) pendingQty.set(name, Math.max(0, nextQty));
       showPendingSelection(name, nextQty);
       trigger();
       scheduleRender(true);
-      setTimeout(function() { if (pendingNames.delete(name)) scheduleRender(false); }, 150);
+      /* 안전망: 네이티브가 1.5초 내 목표에 못 오면 낙관 표시 해제(실상태로 복귀) */
+      setTimeout(function() { if (pendingNames.delete(name)) { pendingQty.delete(name); scheduleRender(false); } }, 1500);
     }
     function changeQty(item, dir) {
       var links = item.row.querySelectorAll('.option_btn_tools a');
@@ -1360,6 +1368,7 @@
         var name = pair[0], price = pair[1];
         var found = s.req.find(function(x) { return x.label === name; });
         var q = found ? found.qty : 0, pending = pendingNames.has(name) || (!q && toggled.has(name));
+        if (!found && pendingQty.has(name)) q = pendingQty.get(name);
         return '<div class="yd-bs-menu-card ' + ((q || pending) ? 'is-selected ' : '') + (pending ? 'is-pending' : '') + '" aria-busy="' + pending + '">' +
           (tag ? '<span class="yd-bs-line-tag" aria-hidden="true">' + tag + '</span>' : '') +
           '<button class="yd-bs-menu-main" data-pick="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-menu-name' + copyFitClass(name) + '">' + escT(name) + '</span><span class="yd-bs-menu-meta"><span class="yd-bs-menu-price">' + priceLabel(price) + '</span>' + (hasSeparateSauce(name) ? '<span class="yd-bs-menu-note">· 소스는 별도 제공됩니다</span>' : '') + '</span></button>' +
@@ -1415,6 +1424,7 @@
           var name = pair[0], price = pair[1];
           var found = s.opt.find(function(x) { return x.label === name; });
           var q = found ? found.qty : 0, pending = pendingNames.has(name), unit = proteinGroup ? unitPricePer100g(name, price) : null;
+          if (!found && pendingQty.has(name)) q = pendingQty.get(name);
           return '<div class="yd-bs-addon-choice ' + ((q || pending) ? 'is-selected ' : '') + (pending ? 'is-pending' : '') + '" aria-busy="' + pending + '"><button class="yd-bs-addon-main" data-addon="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-check" aria-hidden="true"></span><span class="yd-bs-addon-copy"><strong class="' + copyFitClass(name).trim() + '">' + escT(name) + '</strong><span class="yd-bs-addon-meta"><em>' + priceLabel(price) + '</em>' + (unit ? '<span class="yd-bs-unit-badge">100g당 ' + money(unit) + '</span>' : '') + '</span></span></button>' +
             (q ? '<span class="yd-bs-qty-mini"><button data-minus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 줄이기">−</button><strong aria-live="polite">' + q + '</strong><button data-plus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 늘리기">＋</button></span>' : '<button class="yd-bs-addon-plus" data-addon="' + escT(name) + '" aria-label="' + escT(name) + ' 추가">＋</button>') + '</div>';
         }).join('') + '</div></section>';
@@ -1539,8 +1549,9 @@
       dismissNativeCartModal();
       [250, 600, 1200, 2000].forEach(function(ms) { setTimeout(dismissNativeCartModal, ms); });
       if (afterAddMode === 'pay') {
-        try { (window.top || window).location.href = '/shop_cart'; }
-        catch (err) { window.location.href = '/shop_cart'; }
+        /* yd_autopay=1: 장바구니 도착 즉시 네이티브 주문하기를 자동 클릭해 결제 단계로 직행 */
+        try { (window.top || window).location.href = '/shop_cart?yd_autopay=1'; }
+        catch (err) { window.location.href = '/shop_cart?yd_autopay=1'; }
         return;
       }
       cartPopup = false; step = 1; render();
@@ -1804,10 +1815,25 @@
       });
     }
 
+    /* 바로 결제하기 직행: ?yd_autopay=1로 도착하면 주문하기를 1회 자동 클릭 (게스트는 로그인→결제 복귀) */
+    var autoPayDone = false;
+    function tryAutoPay() {
+      if (autoPayDone || !/[?&]yd_autopay=1/.test(window.location.search)) return;
+      var btn = null;
+      qsa('button').forEach(function(b) {
+        if (!btn && /^주문하기/.test((b.textContent || '').trim())) btn = b;
+      });
+      if (!btn) return;
+      autoPayDone = true;
+      try { window.history.replaceState(null, '', window.location.pathname); } catch (err) {}
+      btn.click();
+    }
+
     function run() {
       hideItemDetailRows();
       applyOrderButton();
       polishCartControls();
+      tryAutoPay();
     }
 
     run();
@@ -2199,7 +2225,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.31] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.32] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
