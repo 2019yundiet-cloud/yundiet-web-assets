@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_34__) {
+  if (window.__YD_FOOTER_V3_35__) {
     return;
   }
-  window.__YD_FOOTER_V3_34__ = true;
+  window.__YD_FOOTER_V3_35__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.34', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.35', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -488,6 +488,26 @@
         popup.appendChild(closeBtn);
       }
     });
+  }
+
+  /* ═══ 상세 비디오 로드 픽스 ═══
+     아임웹 상세 지연삽입(_prod_detail_detail_lazy_load_*)이 넣은 <video>는 초기 로드가
+     'URL safety check'로 거부되는 경우가 있다(실측). load() 재시도 한 번이면 정상 로드된다. */
+  function bindDetailVideoFix() {
+    function run() {
+      document.querySelectorAll('.fr-view video[src], #prod_detail video[src]').forEach(function(v) {
+        var tries = Number(v.dataset.ydVfix || 0);
+        if ((v.error || v.readyState === 0) && tries < 2) {
+          v.dataset.ydVfix = String(tries + 1);
+          try { v.load(); } catch (err) {}
+        }
+        if (v.autoplay && v.muted && v.paused && v.readyState >= 2) {
+          var pr = v.play(); if (pr && pr.catch) pr.catch(function() {});
+        }
+      });
+    }
+    run();
+    window.setInterval(run, 1500);
   }
 
   /* ═══ 상품 페이지 프리페치 ═══
@@ -2204,6 +2224,7 @@
 
   onReady(function() {
     bindBrokenSummaryGuard();
+    bindDetailVideoFix();
     if (!IS_IFRAME) {
       bindProductPrefetch();
       bindCustomProductModal();
@@ -2226,7 +2247,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.34] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.35] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
