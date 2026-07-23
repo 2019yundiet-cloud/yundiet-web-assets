@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_33__) {
+  if (window.__YD_FOOTER_V3_34__) {
     return;
   }
-  window.__YD_FOOTER_V3_33__ = true;
+  window.__YD_FOOTER_V3_34__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.33', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.34', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -488,51 +488,6 @@
         popup.appendChild(closeBtn);
       }
     });
-  }
-
-  /* ═══ 상세 이미지 지연 로딩 ═══
-     상세 설명의 화면 밖 이미지는 다운로드를 보류하고, 스크롤로 접근하면 그때 받는다.
-     이미지 원본·주소는 전혀 건드리지 않는다(시점만 변경). 첫 두 화면 분량은 즉시 로드 유지. */
-  function bindDetailImageLazy() {
-    if (!('IntersectionObserver' in window)) { return; }
-    var imgs = document.querySelectorAll('#prod_detail .fr-view img, .goods_detail .fr-view img, #prod_detail_detail img');
-    if (!imgs.length) { return; }
-    var vh = window.innerHeight || 800;
-    var io = new IntersectionObserver(function(entries) {
-      entries.forEach(function(en) {
-        if (!en.isIntersecting) { return; }
-        var img = en.target;
-        io.unobserve(img);
-        if (img.dataset.ydSrc) {
-          img.src = img.dataset.ydSrc;
-          img.removeAttribute('data-yd-src');
-          img.addEventListener('load', function() { img.style.minHeight = ''; }, { once: true });
-        }
-      });
-    }, { rootMargin: '200% 0px' });
-    var deferred = 0;
-    Array.prototype.forEach.call(imgs, function(img) {
-      if (img.dataset.ydLazy === '1') { return; }
-      img.dataset.ydLazy = '1';
-      var rect = img.getBoundingClientRect();
-      /* 첫 두 화면 분량은 그대로 즉시 로드 (첫 화면 이미지는 우선순위 상향) */
-      if (rect.top < vh * 2) {
-        if (rect.top < vh) { try { img.setAttribute('fetchpriority', 'high'); } catch (err) {} }
-        return;
-      }
-      /* 이미 다 받아진 이미지는 손대지 않는다 */
-      if (img.complete && img.naturalWidth > 0) { return; }
-      var src = img.currentSrc || img.getAttribute('src');
-      if (!src) { return; }
-      /* 레이아웃 점프 방지: 현재 높이를 자리로 보존 */
-      if (rect.height > 30) { img.style.minHeight = rect.height + 'px'; }
-      img.dataset.ydSrc = src;
-      img.removeAttribute('src');
-      img.setAttribute('loading', 'lazy');
-      io.observe(img);
-      deferred += 1;
-    });
-    if (deferred > 0) { ydMark('detailImageLazy', true, '화면 밖 이미지 ' + deferred + '장 지연 처리'); }
   }
 
   /* ═══ 상품 페이지 프리페치 ═══
@@ -2245,9 +2200,7 @@
 
   /* 옵션 플로우는 본문 파싱 직후 즉시 부팅 (yd-bs-root 가드로 중복 방지) */
   try { bindOptionFlow(); } catch (err) {}
-  /* 상세 이미지 지연 로딩 — 진행 중 다운로드를 최대한 빨리 보류해야 효과가 크다 */
-  try { bindDetailImageLazy(); } catch (err) {}
-  window.addEventListener('load', function() { try { bindDetailImageLazy(); } catch (err) {} });
+
 
   onReady(function() {
     bindBrokenSummaryGuard();
@@ -2273,7 +2226,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.33] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.34] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
