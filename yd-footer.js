@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_35__) {
+  if (window.__YD_FOOTER_V3_36__) {
     return;
   }
-  window.__YD_FOOTER_V3_35__ = true;
+  window.__YD_FOOTER_V3_36__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.35', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.36', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -488,6 +488,65 @@
         popup.appendChild(closeBtn);
       }
     });
+  }
+
+  /* ═══ 상세 이미지 선행 워밍 ═══
+     아임웹이 lazy로 미룬 아래쪽 상세 이미지를 페이지 로드 후 유휴 시간에 미리 받아 캐시한다
+     → 스크롤 도달 시 즉시 표시. 아직 시작 안 된 다운로드만 다루므로 실효가 있다.
+     동시에 sizes를 실제 렌더 폭으로 고정해 1920px 과대 변형 대신 적정 크기를 받게 한다. */
+  function bindDetailImageWarm() {
+    try { if (navigator.connection && navigator.connection.saveData) { return; } } catch (err) {}
+    var startedWarm = false;
+    function pickFromSrcset(img, needW) {
+      var srcset = img.getAttribute('srcset');
+      if (!srcset) { return img.getAttribute('src'); }
+      var best = null;
+      srcset.split(',').forEach(function(part) {
+        var m = part.trim().match(/^(\S+)\s+(\d+)w$/);
+        if (!m) { return; }
+        var cand = { url: m[1], w: Number(m[2]) };
+        if (cand.w >= needW) { if (!best || cand.w < best.w) { best = cand; } }
+      });
+      if (!best) {
+        srcset.split(',').forEach(function(part) {
+          var m = part.trim().match(/^(\S+)\s+(\d+)w$/);
+          if (m && (!best || Number(m[2]) > best.w)) { best = { url: m[1], w: Number(m[2]) }; }
+        });
+      }
+      return best ? best.url : img.getAttribute('src');
+    }
+    function startWarm() {
+      if (startedWarm) { return; }
+      startedWarm = true;
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      var imgs = Array.prototype.slice.call(document.querySelectorAll('#prod_detail img[loading="lazy"], .fr-view img[loading="lazy"]'))
+        .filter(function(im) { return !(im.complete && im.naturalWidth > 0); });
+      var queue = [];
+      imgs.forEach(function(im) {
+        var cssW = Math.round(im.getBoundingClientRect().width) || Math.min(680, window.innerWidth);
+        var needW = Math.ceil(cssW * dpr);
+        if (im.getAttribute('srcset')) { im.setAttribute('sizes', cssW + 'px'); }
+        var url = pickFromSrcset(im, needW);
+        if (url) { queue.push(url); }
+      });
+      var active = 0, MAX = 3;
+      var pump = function() {
+        while (active < MAX && queue.length) {
+          var url = queue.shift();
+          active += 1;
+          var warm = new Image();
+          warm.onload = warm.onerror = function() { active -= 1; pump(); };
+          warm.src = url;
+        }
+      };
+      pump();
+      if (imgs.length) { ydMark('detailImageWarm', true, '아래쪽 이미지 ' + imgs.length + '장 선행 캐시'); }
+    }
+    var kick = function() { window.setTimeout(startWarm, 800); };
+    if (document.readyState === 'complete') { kick(); }
+    else { window.addEventListener('load', kick); }
+    /* 로드 이벤트가 늦는 무거운 페이지 대비 안전망 */
+    window.setTimeout(startWarm, 12000);
   }
 
   /* ═══ 상세 비디오 로드 픽스 ═══
@@ -2225,6 +2284,7 @@
   onReady(function() {
     bindBrokenSummaryGuard();
     bindDetailVideoFix();
+    bindDetailImageWarm();
     if (!IS_IFRAME) {
       bindProductPrefetch();
       bindCustomProductModal();
@@ -2247,7 +2307,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.35] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.36] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
