@@ -299,16 +299,18 @@
     line-height: 0.9 !important;
   }
 
-  /* 담기 팝업 */
+  /* 담기 팝업 — 셀렉터는 반드시 담기 팝업으로 한정한다.
+     전역 .modal-content에 걸면 구매평 작성 등 아임웹 다른 모달의 내부 스크롤이 죽어
+     등록 버튼에 도달할 수 없게 된다(2026-07-26 고객 문의로 확인). */
   @media (max-width: 900px) {
-    .modal-content {
+    #shop_detail_add_cart_alarm .modal-content {
       height: auto !important;
       min-height: auto !important;
       display: block !important;
     }
   }
 
-  .modal-content {
+  #shop_detail_add_cart_alarm .modal-content {
     padding: 0 !important;
     border-radius: 12px !important;
     overflow: hidden !important;
@@ -333,7 +335,7 @@
 #yd-bs-root{--yd-bg:#fffdf9; --yd-paper:#fffefa; --yd-ink:#151b16; --yd-muted:#5f665f;
     --yd-green:#123f24; --yd-dark:#0d321c; --yd-lime:#d7e5a3; --yd-orange:#9d4035;
     --yd-line:#dce1da; --yd-soft:#f3f5f1; --yd-selected:#123f24; --yd-warn:#fff8e7;
-    position:fixed; inset:0; z-index:2147482000; width:100%; height:100dvh; pointer-events:none; color:var(--yd-ink);
+    position:fixed; inset:0; z-index:16000; width:100%; height:100dvh; pointer-events:none; color:var(--yd-ink);
     font-family:"Pretendard","SUIT","Noto Sans KR","Apple SD Gothic Neo",-apple-system,BlinkMacSystemFont,sans-serif;}
 .yd-bs-native-source{position:absolute!important; width:1px!important; height:1px!important; overflow:hidden!important; clip-path:inset(50%)!important; opacity:.001!important; pointer-events:none!important;}
 /* v3.13: JS 부팅 전 깜빡임 제거 — 플로우 대상 네이티브 UI를 CSS로 즉시 차단.
@@ -357,6 +359,9 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 #yd-bs-root.is-open .yd-bs-backdrop{opacity:1; visibility:visible;}
 #yd-bs-root.is-open .yd-bs-sheet{transform:translate(-50%,0);}
 #yd-bs-root.is-open .yd-bs-dock{opacity:0; pointer-events:none;}
+/* 시트·담기완료 팝업이 떠 있을 때만 최상단으로. 평상시(하단 바만 있을 때)는 아임웹 모달(z 17000)
+   아래에 두어야 구매평 작성 모달의 등록 버튼을 하단 바가 덮지 않는다. */
+#yd-bs-root.is-open, #yd-bs-root.is-top{z-index:2147482000;}
 .yd-bs-grab{width:54px; height:5px; border-radius:99px; background:#dfe3e6; margin:12px auto 2px; flex:none;}
 .yd-bs-head{min-height:76px; padding:14px 26px 16px; display:flex; align-items:center; gap:16px; border-bottom:1px solid var(--yd-line); flex:none;}
 .yd-bs-head-text{min-width:0; flex:1;}
