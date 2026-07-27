@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_38__) {
+  if (window.__YD_FOOTER_V3_39__) {
     return;
   }
-  window.__YD_FOOTER_V3_38__ = true;
+  window.__YD_FOOTER_V3_39__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.38', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.39', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -899,7 +899,8 @@
     try {
       end = parseInt(window.localStorage.getItem(key), 10) || 0;
     } catch (err) {}
-    if (!end && isAdEntry()) {
+    /* 만료된 뒤 광고로 다시 들어오면 3일을 새로 부여한다(진행 중이면 그대로 유지) */
+    if ((!end || end <= Date.now()) && isAdEntry()) {
       end = Date.now() + PROMO.HOURS * 3600000;
       try {
         window.localStorage.setItem(key, String(end));
@@ -914,14 +915,7 @@
     const h = String(Math.floor((left % 86400000) / 3600000)).padStart(2, '0');
     const m = String(Math.floor((left % 3600000) / 60000)).padStart(2, '0');
     const s = String(Math.floor((left % 60000) / 1000)).padStart(2, '0');
-    const dt = new Date(end);
-    const hh = String(dt.getHours()).padStart(2, '0');
-    const mm = String(dt.getMinutes()).padStart(2, '0');
-    return {
-      value: (d > 0 ? d + '일 ' : '') + h + ':' + m + ':' + s,
-      deadline: (dt.getMonth() + 1) + '/' + dt.getDate() + '(' + CONFIG.DAYS[dt.getDay()] + ') ' + hh + ':' + mm + ' 마감',
-      ratio: Math.max(0, Math.min(100, (left / (PROMO.HOURS * 3600000)) * 100))
-    };
+    return { value: (d > 0 ? d + '일 ' : '') + h + ':' + m + ':' + s };
   }
 
   function buildPromoCard() {
@@ -932,9 +926,7 @@
       '<div class="yd-promo-top">' +
       '<div class="yd-promo-title">특가 할인 마감까지</div>' +
       '<div class="yd-promo-clock"><span class="yd-promo-label">남은 시간</span><span class="yd-promo-value"></span></div>' +
-      '</div>' +
-      '<div class="yd-promo-track"><div class="yd-promo-fill"></div></div>' +
-      '<div class="yd-promo-labels"><span class="yd-promo-note">지금 이 가격으로 만나보세요</span><span class="yd-promo-deadline"></span></div>';
+      '</div>';
     return card;
   }
 
@@ -1150,14 +1142,7 @@
               promo.style.display = want;
             }
             if (!hidden) {
-              const pt = promoTexts(end);
-              setTextIfChanged(qs('.yd-promo-value', promo), pt.value);
-              setTextIfChanged(qs('.yd-promo-deadline', promo), pt.deadline);
-              const fill = qs('.yd-promo-fill', promo);
-              const w = pt.ratio.toFixed(1) + '%';
-              if (fill && fill.style.width !== w) {
-                fill.style.width = w;
-              }
+              setTextIfChanged(qs('.yd-promo-value', promo), promoTexts(end).value);
             }
           }
           ydMark('promoTimer', live, live ? '노출 중' : (end ? '기간 만료' : '광고 유입 아님'));
@@ -2413,7 +2398,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.38] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.39] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

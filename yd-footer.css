@@ -123,84 +123,53 @@
     }
   }
 
-  /* ── 광고 랜딩 전용 할인 타이머 카드 (배송 카드 바로 아래) ── */
+  /* ── 광고 랜딩 전용 할인 타이머 카드 (배송 카드 바로 아래, 아웃라인형) ── */
   .yd-promo-card {
-    background: #3b4024;
+    background: transparent;
+    border: 1.5px solid #ff1f1f;
     border-radius: 16px;
-    padding: 16px 20px 14px;
+    padding: 14px 18px;
     margin: 12px 15px;
-    color: #fff;
+    color: #151b16;
   }
 
   .yd-promo-card .yd-promo-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
   }
 
   .yd-promo-card .yd-promo-title {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 800;
-    line-height: 1.4;
+    line-height: 1.35;
   }
 
   .yd-promo-card .yd-promo-clock {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 7px;
   }
 
   .yd-promo-card .yd-promo-label {
     font-size: 12px;
-    opacity: 0.75;
+    font-weight: 700;
+    color: #7c827b;
   }
 
   .yd-promo-card .yd-promo-value {
-    font-size: 20px;
-    font-weight: 800;
+    font-size: 25px;
+    font-weight: 900;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
-    color: #ff6b52;
-  }
-
-  .yd-promo-card .yd-promo-track {
-    position: relative;
-    height: 6px;
-    margin: 13px 2px 9px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.22);
-    overflow: hidden;
-  }
-
-  .yd-promo-card .yd-promo-fill {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 100%;
-    border-radius: 999px;
-    background: #ff6b52;
-    transition: width 0.4s ease;
-  }
-
-  .yd-promo-card .yd-promo-labels {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    font-size: 13px;
-    font-weight: 700;
-  }
-
-  .yd-promo-card .yd-promo-deadline {
-    color: #ff6b52;
-    white-space: nowrap;
+    letter-spacing: -0.01em;
+    color: #ff1f1f;
   }
 
   @media (max-width: 768px) {
     .yd-promo-card {
-      padding: 14px 16px 12px;
+      padding: 13px 15px;
     }
 
     .yd-promo-card .yd-promo-title {
@@ -208,11 +177,7 @@
     }
 
     .yd-promo-card .yd-promo-value {
-      font-size: 17px;
-    }
-
-    .yd-promo-card .yd-promo-labels {
-      font-size: 12px;
+      font-size: 22px;
     }
   }
 
