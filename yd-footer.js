@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_37__) {
+  if (window.__YD_FOOTER_V3_38__) {
     return;
   }
-  window.__YD_FOOTER_V3_37__ = true;
+  window.__YD_FOOTER_V3_38__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -26,7 +26,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.37', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.38', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -863,6 +863,81 @@
     };
   }
 
+  /* ═══ 광고 랜딩 전용 3일 할인 타이머 ═══
+     노출 조건: 메타 광고 랜딩 상품(PROMO.PRODUCTS) + 광고 유입(UTM/fbclid)으로 최초 진입.
+     최초 진입 시각 기준 72시간이며 기기(localStorage)에 저장돼 재방문에도 이어진다.
+     만료되면 표시하지 않는다(없는 할인을 표시하지 않기 위함).
+     옵션 선택 중(바텀시트 열림)에는 숨긴다. */
+  const PROMO = {
+    PRODUCTS: ['672', '1117', '1138', '1218', '1240', '1241'],
+    HOURS: 72,
+    KEY: 'ydPromoEnd_'
+  };
+
+  function promoIdx() {
+    const m = location.search.match(/[?&]idx=(\d+)/);
+    return m ? m[1] : '';
+  }
+
+  function isAdEntry() {
+    const p = new URLSearchParams(location.search);
+    if (p.get('fbclid') || p.get('gclid')) {
+      return true;
+    }
+    const src = (p.get('utm_source') || '').toLowerCase();
+    const med = (p.get('utm_medium') || '').toLowerCase();
+    if (/^(fb|ig|meta|facebook|instagram|an|msg)$/.test(src)) {
+      return true;
+    }
+    return med === 'cpc' || med === 'paid' || med === 'paid_social';
+  }
+
+  /* 만료 시각(ms). 광고로 처음 들어왔을 때만 생성하고, 이후에는 저장된 값을 그대로 쓴다. */
+  function promoDeadline(idx) {
+    const key = PROMO.KEY + idx;
+    let end = 0;
+    try {
+      end = parseInt(window.localStorage.getItem(key), 10) || 0;
+    } catch (err) {}
+    if (!end && isAdEntry()) {
+      end = Date.now() + PROMO.HOURS * 3600000;
+      try {
+        window.localStorage.setItem(key, String(end));
+      } catch (err) {}
+    }
+    return end;
+  }
+
+  function promoTexts(end) {
+    const left = end - Date.now();
+    const d = Math.floor(left / 86400000);
+    const h = String(Math.floor((left % 86400000) / 3600000)).padStart(2, '0');
+    const m = String(Math.floor((left % 3600000) / 60000)).padStart(2, '0');
+    const s = String(Math.floor((left % 60000) / 1000)).padStart(2, '0');
+    const dt = new Date(end);
+    const hh = String(dt.getHours()).padStart(2, '0');
+    const mm = String(dt.getMinutes()).padStart(2, '0');
+    return {
+      value: (d > 0 ? d + '일 ' : '') + h + ':' + m + ':' + s,
+      deadline: (dt.getMonth() + 1) + '/' + dt.getDate() + '(' + CONFIG.DAYS[dt.getDay()] + ') ' + hh + ':' + mm + ' 마감',
+      ratio: Math.max(0, Math.min(100, (left / (PROMO.HOURS * 3600000)) * 100))
+    };
+  }
+
+  function buildPromoCard() {
+    const card = document.createElement('div');
+    card.id = 'yd-promo-card';
+    card.className = 'yd-promo-card';
+    card.innerHTML =
+      '<div class="yd-promo-top">' +
+      '<div class="yd-promo-title">특가 할인 마감까지</div>' +
+      '<div class="yd-promo-clock"><span class="yd-promo-label">남은 시간</span><span class="yd-promo-value"></span></div>' +
+      '</div>' +
+      '<div class="yd-promo-track"><div class="yd-promo-fill"></div></div>' +
+      '<div class="yd-promo-labels"><span class="yd-promo-note">지금 이 가격으로 만나보세요</span><span class="yd-promo-deadline"></span></div>';
+    return card;
+  }
+
   function setTextIfChanged(el, text) {
     if (el && el.textContent !== text) {
       el.textContent = text;
@@ -1055,6 +1130,38 @@
           updateShipCard(card, texts);
         }
         ydMark('detailShipCard', !!card, card ? '표시됨' : '앵커 탐색 중');
+
+        /* 광고 랜딩 전용 할인 타이머 — 배송 카드 바로 아래 */
+        const pIdx = promoIdx();
+        if (card && PROMO.PRODUCTS.indexOf(pIdx) >= 0) {
+          const end = promoDeadline(pIdx);
+          const live = end > Date.now();
+          let promo = qs('#yd-promo-card');
+          if (live && !promo) {
+            promo = buildPromoCard();
+            promo.style.margin = '12px 0';
+            card.insertAdjacentElement('afterend', promo);
+          }
+          if (promo) {
+            /* 옵션 선택 중에는 노출하지 않는다 */
+            const hidden = !live || document.body.classList.contains('yd-bs-lock');
+            const want = hidden ? 'none' : '';
+            if (promo.style.display !== want) {
+              promo.style.display = want;
+            }
+            if (!hidden) {
+              const pt = promoTexts(end);
+              setTextIfChanged(qs('.yd-promo-value', promo), pt.value);
+              setTextIfChanged(qs('.yd-promo-deadline', promo), pt.deadline);
+              const fill = qs('.yd-promo-fill', promo);
+              const w = pt.ratio.toFixed(1) + '%';
+              if (fill && fill.style.width !== w) {
+                fill.style.width = w;
+              }
+            }
+          }
+          ydMark('promoTimer', live, live ? '노출 중' : (end ? '기간 만료' : '광고 유입 아님'));
+        }
       }
 
       if (onHome) {
@@ -2306,7 +2413,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.37] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.38] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
