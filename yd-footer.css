@@ -1590,6 +1590,89 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     color: #fff !important;
   }
 
+  /* 광고 랜딩 1241 전용 닭가슴살 한정 수량 제안 */
+  #yd-bs-root .yd-bs-addon-group.yd-bs-welcome-offer .yd-bs-addon-choice {
+    height: auto;
+    min-height: 104px;
+    max-height: none;
+    overflow: visible;
+  }
+  #yd-bs-root .yd-bs-addon-group.yd-bs-welcome-offer .yd-bs-addon-main {
+    display: grid !important;
+    grid-template-columns: 46px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+  }
+  #yd-bs-root .yd-bs-limit-seal {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #e8442e;
+    border-radius: 50%;
+    background: #fff6f3;
+    color: #c73d2a;
+    box-shadow: inset 0 0 0 2px #fff, 0 2px 7px rgba(150, 50, 35, .12);
+    text-align: center;
+  }
+  #yd-bs-root .yd-bs-limit-seal span {
+    display: block;
+    width: 100%;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -.04em;
+    text-align: center;
+  }
+  #yd-bs-root .yd-bs-limit-seal span + span {
+    margin-top: 3px;
+    font-size: 11px;
+  }
+  #yd-bs-root .yd-bs-limit-stock {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 7px;
+    color: #c33b28;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  #yd-bs-root .yd-bs-limit-stock b {
+    font-weight: 950;
+  }
+  #yd-bs-root .yd-bs-limit-stock-dot {
+    width: 6px;
+    height: 6px;
+    flex: none;
+    border-radius: 50%;
+    background: #e8442e;
+    box-shadow: 0 0 0 3px #fde9e5;
+  }
+
+  @media (max-width: 389px) {
+    #yd-bs-root .yd-bs-addon-group.yd-bs-welcome-offer .yd-bs-addon-main {
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 8px;
+    }
+    #yd-bs-root .yd-bs-limit-seal {
+      width: 42px;
+      height: 42px;
+    }
+    #yd-bs-root .yd-bs-limit-seal span {
+      font-size: 9px;
+    }
+    #yd-bs-root .yd-bs-limit-seal span + span {
+      font-size: 10px;
+    }
+    #yd-bs-root .yd-bs-limit-stock {
+      font-size: 10px;
+    }
+  }
+
   /* 카테고리 탭(S/L/PREMIUM) 라벨 안정화: 중앙 정렬 + 높이 고정 + 긴 라벨 자동 축소 (소유자 지시 2026-07-21) */
   #yd-bs-root .yd-bs-category {
     text-align: center;
@@ -1659,5 +1742,97 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     font-weight: 800;
     color: #123f24;
     border-radius: 999px;
+  }
+
+  /* ── 멤버십 UI 기반 ──
+     기본 플래그는 꺼져 있으며, 동일 출처 서버가 검증한 상태 응답이 있을 때만 생성한다. */
+  #yd-membership-root {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    color: #1d2b20;
+  }
+  #yd-membership-root .yd-membership-card {
+    border: 1px solid #dce5dc;
+    border-radius: 20px;
+    background: #f7faf5;
+    padding: 24px;
+  }
+  #yd-membership-root .yd-membership-head,
+  #yd-membership-root .yd-membership-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  #yd-membership-root .yd-membership-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 850;
+    letter-spacing: -0.03em;
+  }
+  #yd-membership-root .yd-membership-badge {
+    flex: none;
+    border-radius: 999px;
+    background: #dfeadd;
+    color: #214b2b;
+    padding: 7px 11px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  #yd-membership-root .yd-membership-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 18px 0 0;
+  }
+  #yd-membership-root .yd-membership-fact {
+    min-width: 0;
+    border-radius: 14px;
+    background: #fff;
+    padding: 14px;
+  }
+  #yd-membership-root .yd-membership-fact dt {
+    color: #6b786d;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  #yd-membership-root .yd-membership-fact dd {
+    margin: 5px 0 0;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  #yd-membership-root .yd-membership-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  #yd-membership-root .yd-membership-link {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #b9cbb9;
+    border-radius: 12px;
+    color: #214b2b;
+    padding: 0 14px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 800;
+  }
+  @media (max-width: 767px) {
+    #yd-membership-root {
+      padding: 18px 15px;
+    }
+    #yd-membership-root .yd-membership-card {
+      padding: 18px;
+    }
+    #yd-membership-root .yd-membership-facts {
+      grid-template-columns: 1fr;
+    }
   }
 

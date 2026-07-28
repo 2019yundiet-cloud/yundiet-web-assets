@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_39__) {
+  if (window.__YD_FOOTER_V3_40__) {
     return;
   }
-  window.__YD_FOOTER_V3_39__ = true;
+  window.__YD_FOOTER_V3_40__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -14,6 +14,10 @@
     CART_API: '/shop/cart/get_cart_content.cm?cart_type=normal',
     FREE_SHIP_THRESHOLD: 90000,
     FREE_SHIP_DONE_TEXT: '장바구니 포함, 무료배송 조건 충족!',
+    MEMBERSHIP_UI_ENABLED: false,
+    MEMBERSHIP_STATE_ENDPOINT: '',
+    MEMBERSHIP_SCHEMA: 'yundiet-membership-ui/v1',
+    MEMBERSHIP_REQUEST_TIMEOUT: 5000,
     DAYS: ['일', '월', '화', '수', '목', '금', '토']
   };
 
@@ -26,7 +30,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.39', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.40', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1591,12 +1595,15 @@
           return sum + (found ? found.qty : 0);
         }, 0);
         var proteinGroup = /단백질\s*추가구성/.test(g.label);
-        return '<section class="yd-bs-addon-group"><div class="yd-bs-addon-head"><h4>' + escT(g.label) + '</h4><span>' + groupQty + '개 선택</span></div><div class="yd-bs-addon-list">' + g.items.map(function(pair) {
+        var welcomeOffer = proteinGroup && promoIdx() === '1241';
+        return '<section class="yd-bs-addon-group' + (welcomeOffer ? ' yd-bs-welcome-offer' : '') + '"><div class="yd-bs-addon-head"><h4>' + escT(g.label) + '</h4><span>' + groupQty + '개 선택</span></div><div class="yd-bs-addon-list">' + g.items.map(function(pair) {
           var name = pair[0], price = pair[1];
           var found = s.opt.find(function(x) { return x.label === name; });
           var q = found ? found.qty : 0, pending = pendingNames.has(name), unit = proteinGroup ? unitPricePer100g(name, price) : null;
           if (!found && pendingQty.has(name)) q = pendingQty.get(name);
-          return '<div class="yd-bs-addon-choice ' + ((q || pending) ? 'is-selected ' : '') + (pending ? 'is-pending' : '') + '" aria-busy="' + pending + '"><button class="yd-bs-addon-main" data-addon="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-check" aria-hidden="true"></span><span class="yd-bs-addon-copy"><strong class="' + copyFitClass(name).trim() + '">' + escT(name) + '</strong><span class="yd-bs-addon-meta"><em>' + priceLabel(price) + '</em>' + (unit ? '<span class="yd-bs-unit-badge">100g당 ' + money(unit) + '</span>' : '') + '</span></span></button>' +
+          var limitSeal = welcomeOffer ? '<span class="yd-bs-limit-seal"><span>30개</span><span>한정</span></span>' : '';
+          var limitStock = welcomeOffer ? '<span class="yd-bs-limit-stock"><span class="yd-bs-limit-stock-dot" aria-hidden="true"></span><span>30개 한정 · 이제 <b>8개</b> 남았어요</span></span>' : '';
+          return '<div class="yd-bs-addon-choice ' + ((q || pending) ? 'is-selected ' : '') + (pending ? 'is-pending' : '') + '" aria-busy="' + pending + '"><button class="yd-bs-addon-main" data-addon="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-check" aria-hidden="true"></span>' + limitSeal + '<span class="yd-bs-addon-copy"><strong class="' + copyFitClass(name).trim() + '">' + escT(name) + '</strong><span class="yd-bs-addon-meta"><em>' + priceLabel(price) + '</em>' + (unit ? '<span class="yd-bs-unit-badge">100g당 ' + money(unit) + '</span>' : '') + '</span>' + limitStock + '</span></button>' +
             (q ? '<span class="yd-bs-qty-mini"><button data-minus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 줄이기">−</button><strong aria-live="polite">' + q + '</strong><button data-plus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 늘리기">＋</button></span>' : '<button class="yd-bs-addon-plus" data-addon="' + escT(name) + '" aria-label="' + escT(name) + ' 추가">＋</button>') + '</div>';
         }).join('') + '</div></section>';
       }).join('') + '</div>';
@@ -2091,6 +2098,284 @@
     ensureObserver('paymentCompletePatch', patch);
   }
 
+  /* ═══ 멤버십 UI 기반 (기본 비활성) ═══
+     경계 계약:
+     - footer는 동일 출처 GET 응답을 표시만 하며 회원 자격·가격·상품 접근을 판정하지 않는다.
+     - 서버는 HttpOnly 세션으로 사용자를 식별하고 구독/추천 장부를 합쳐 이 스키마를 반환한다.
+     - 직접 URL·회원가·결제·해지·추천 보상은 아임웹 권한 또는 별도 서버가 반드시 재검증한다.
+     - localStorage, 쿼리, DOM 클래스, 클라이언트가 보낸 회원 ID는 권한 근거로 쓰지 않는다.
+     응답 스키마: yundiet-membership-ui/v1
+     { schema, serverVerified, viewer:{authenticated}, membership, referral, actions } */
+  function removeMembershipRoot() {
+    const root = qs('#yd-membership-root');
+    if (root) {
+      root.remove();
+    }
+  }
+
+  function membershipSafeSameOriginPath(value) {
+    if (typeof value !== 'string' || !value.trim()) {
+      return null;
+    }
+    try {
+      const url = new URL(value, window.location.origin);
+      if (url.origin !== window.location.origin || !/^https?:$/.test(url.protocol)) {
+        return null;
+      }
+      return url.pathname + url.search + url.hash;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function membershipDateLabel(value) {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return null;
+    }
+    const parts = value.split('-').map(Number);
+    const date = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+    if (
+      date.getUTCFullYear() !== parts[0] ||
+      date.getUTCMonth() !== parts[1] - 1 ||
+      date.getUTCDate() !== parts[2]
+    ) {
+      return null;
+    }
+    return parts[0] + '년 ' + parts[1] + '월 ' + parts[2] + '일';
+  }
+
+  function membershipBoundedInteger(value) {
+    return Number.isInteger(value) && value >= 0 && value <= 3660 ? value : null;
+  }
+
+  function membershipViewFromPayload(payload) {
+    if (
+      !payload ||
+      payload.schema !== CONFIG.MEMBERSHIP_SCHEMA ||
+      payload.serverVerified !== true ||
+      !payload.viewer ||
+      typeof payload.viewer.authenticated !== 'boolean'
+    ) {
+      return null;
+    }
+
+    if (!payload.viewer.authenticated) {
+      return { authenticated: false };
+    }
+
+    const membership = payload.membership;
+    const states = ['active', 'trial', 'benefit', 'cancel_scheduled', 'inactive'];
+    const billingModes = ['subscription', 'none'];
+    if (
+      !membership ||
+      states.indexOf(membership.state) === -1 ||
+      billingModes.indexOf(membership.billingMode) === -1
+    ) {
+      return null;
+    }
+
+    const nextBillingLabel = membershipDateLabel(membership.nextBillingDate);
+    if (membership.billingMode === 'subscription' && !nextBillingLabel) {
+      return null;
+    }
+
+    const benefitDays = membershipBoundedInteger(membership.benefitDaysRemaining);
+    if (benefitDays === null) {
+      return null;
+    }
+
+    const stateLabels = {
+      active: '이용 중',
+      trial: '무료 이용 중',
+      benefit: '추천 혜택 이용 중',
+      cancel_scheduled: '해지 예정',
+      inactive: '미이용'
+    };
+    const view = {
+      authenticated: true,
+      state: membership.state,
+      stateLabel: stateLabels[membership.state],
+      billingLabel: membership.billingMode === 'subscription' ? nextBillingLabel : '자동결제 없음',
+      benefitLabel: benefitDays > 0 ? benefitDays + '일 남음' : '없음',
+      referralLabel: null,
+      manageUrl: null,
+      referralUrl: null
+    };
+
+    const referral = payload.referral;
+    if (referral) {
+      const referralStates = ['ready', 'pending', 'rewarded', 'unavailable'];
+      const pendingCount = membershipBoundedInteger(referral.pendingCount);
+      const earnedDays = membershipBoundedInteger(referral.earnedDays);
+      if (
+        referralStates.indexOf(referral.state) === -1 ||
+        pendingCount === null ||
+        earnedDays === null
+      ) {
+        return null;
+      }
+      const referralLabels = {
+        ready: '추천 가능',
+        pending: pendingCount + '명 확인 중',
+        rewarded: earnedDays + '일 지급 완료',
+        unavailable: '준비 중'
+      };
+      view.referralLabel = referralLabels[referral.state];
+      view.referralUrl = membershipSafeSameOriginPath(referral.shareUrl);
+    }
+
+    if (payload.actions) {
+      view.manageUrl = membershipSafeSameOriginPath(payload.actions.manageUrl);
+    }
+    return view;
+  }
+
+  function membershipFact(label, value) {
+    const wrap = document.createElement('div');
+    wrap.className = 'yd-membership-fact';
+    const term = document.createElement('dt');
+    const detail = document.createElement('dd');
+    term.textContent = label;
+    detail.textContent = value;
+    wrap.appendChild(term);
+    wrap.appendChild(detail);
+    return wrap;
+  }
+
+  function membershipLink(label, href) {
+    const link = document.createElement('a');
+    link.className = 'yd-membership-link';
+    link.href = href;
+    link.textContent = label;
+    return link;
+  }
+
+  function renderMembershipUi(view) {
+    const footer = qs('#doz_footer_wrap');
+    if (!footer || !footer.parentNode) {
+      return false;
+    }
+
+    let root = qs('#yd-membership-root');
+    if (!root) {
+      root = document.createElement('section');
+      root.id = 'yd-membership-root';
+      root.setAttribute('aria-labelledby', 'yd-membership-title');
+      footer.parentNode.insertBefore(root, footer);
+    }
+    root.dataset.membershipState = view.state;
+    root.textContent = '';
+
+    const card = document.createElement('div');
+    card.className = 'yd-membership-card';
+    const head = document.createElement('div');
+    head.className = 'yd-membership-head';
+    const title = document.createElement('h2');
+    title.id = 'yd-membership-title';
+    title.className = 'yd-membership-title';
+    title.textContent = '윤식단 멤버십';
+    const badge = document.createElement('span');
+    badge.className = 'yd-membership-badge';
+    badge.textContent = view.stateLabel;
+    head.appendChild(title);
+    head.appendChild(badge);
+
+    const facts = document.createElement('dl');
+    facts.className = 'yd-membership-facts';
+    facts.appendChild(membershipFact('멤버십 상태', view.stateLabel));
+    facts.appendChild(membershipFact('다음 결제', view.billingLabel));
+    facts.appendChild(membershipFact('무료 이용', view.benefitLabel));
+    if (view.referralLabel) {
+      facts.appendChild(membershipFact('친구추천', view.referralLabel));
+    }
+
+    card.appendChild(head);
+    card.appendChild(facts);
+    if (view.manageUrl || view.referralUrl) {
+      const actions = document.createElement('div');
+      actions.className = 'yd-membership-actions';
+      if (view.manageUrl) {
+        actions.appendChild(membershipLink('멤버십 관리·해지', view.manageUrl));
+      }
+      if (view.referralUrl) {
+        actions.appendChild(membershipLink('친구추천 링크', view.referralUrl));
+      }
+      card.appendChild(actions);
+    }
+    root.appendChild(card);
+    return true;
+  }
+
+  function bindMembershipFoundation() {
+    if (!CONFIG.MEMBERSHIP_UI_ENABLED) {
+      removeMembershipRoot();
+      ydMark('membershipFoundation', true, '비공개 기반 — 서버 연결 전');
+      return;
+    }
+    if (IS_IFRAME) {
+      removeMembershipRoot();
+      ydMark('membershipFoundation', true, 'iframe에서는 표시하지 않음');
+      return;
+    }
+
+    const endpoint = membershipSafeSameOriginPath(CONFIG.MEMBERSHIP_STATE_ENDPOINT);
+    if (!endpoint) {
+      removeMembershipRoot();
+      ydMark('membershipFoundation', false, '동일 출처 상태 API 없음 — 표시 차단');
+      return;
+    }
+
+    const requestOptions = {
+      method: 'GET',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' }
+    };
+    let timer = 0;
+    if (typeof AbortController === 'function') {
+      const controller = new AbortController();
+      requestOptions.signal = controller.signal;
+      timer = window.setTimeout(function() {
+        controller.abort();
+      }, CONFIG.MEMBERSHIP_REQUEST_TIMEOUT);
+    }
+
+    fetch(endpoint, requestOptions)
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error('membership state ' + response.status);
+        }
+        return response.json();
+      })
+      .then(function(payload) {
+        if (timer) {
+          window.clearTimeout(timer);
+        }
+        const view = membershipViewFromPayload(payload);
+        if (!view) {
+          throw new Error('membership schema mismatch');
+        }
+        if (!view.authenticated) {
+          removeMembershipRoot();
+          ydMark('membershipFoundation', true, '비로그인 — 표시하지 않음');
+          return;
+        }
+        const rendered = renderMembershipUi(view);
+        ydMark(
+          'membershipFoundation',
+          rendered,
+          rendered ? '서버 검증 상태 표시' : '안전한 마운트 지점 없음'
+        );
+      })
+      .catch(function() {
+        if (timer) {
+          window.clearTimeout(timer);
+        }
+        removeMembershipRoot();
+        ydMark('membershipFoundation', false, '서버 상태 확인 실패 — 표시 차단');
+      });
+  }
+
   /* ═══ 마이페이지 다운로드 쿠폰 숨김 ═══ */
   function bindMyPageCouponHide() {
     if (!pageIs('/shop_mypage')) {
@@ -2390,6 +2675,7 @@
     bindShippingSchedule();
     bindCartUx();
     bindPaymentCompletePatches();
+    bindMembershipFoundation();
     bindMyPageCouponHide();
     bindCheckoutPatches();
     bindProfileModalHeight();
@@ -2398,7 +2684,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.39] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.40] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
