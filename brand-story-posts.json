@@ -1,7 +1,21 @@
 {
   "schema": "yundiet-brand-story/v1",
-  "categories": ["전체", "제품 개발", "일하는 이야기", "브랜드"],
+  "categories": [
+    "전체",
+    "제품 개발",
+    "일하는 이야기",
+    "브랜드"
+  ],
   "posts": [
+    {
+      "id": "protein-test-57g",
+      "cat": "제품 개발",
+      "title": "표기는 50g, 실제로는 57g — 단백밥 단백질을 검사기관에 맡겨봤습니다",
+      "date": "2026년 8월 2일",
+      "img": "https://2019yundiet-cloud.github.io/yundiet-web-assets/media/brand-story/protein-test-57g-2.jpg",
+      "draft": false,
+      "body": "<p class=\"ys-story-lead\">단백밥 오리지널 라지의 단백질 표기는 50g입니다. 이게 진짜인지 식품 시험·검사기관에 실측을 맡겨 봤어요. 결과를 합산해 보니 실제로는 57g — 표기보다 더 담겨 있었습니다. 오늘은 그 검사의 설계부터 성적서 원본까지 전부 공개합니다.</p><h2>1. \"단백질 50g, 진짜 들어있나요?\"</h2><p>단백밥을 시작한 뒤로 가장 많이 받은 질문이었어요. 도시락 하나에 단백질 50g은 흔한 숫자가 아니니까, 의심하는 것이 오히려 자연스럽다고 생각했습니다.</p><p>\"정말 들어있어요\"라고 말로 답할 수도 있었지만, 숫자에 대한 의심은 말이 아니라 숫자로만 풀립니다. 그래서 2026년 6월, 말 대신 검사를 받기로 했어요.</p><h2>2. 검사 설계: 닭가슴살을 빼고 보냈어요</h2><p>여기서 한 가지 결정을 했습니다. 닭가슴살은 단백질 함량이 이미 명확하게 알려진 재료예요. 궁금한 건 나머지였습니다 — 밥, 병아리콩, 브로콜리, 당근, 할라피뇨로 이루어진 '도시락 베이스'에서 단백질이 실제로 얼마나 나오는지요.</p><div class=\"ys-story-hero\"><img src=\"https://2019yundiet-cloud.github.io/yundiet-web-assets/media/brand-story/protein-test-57g-1.png\" alt=\"검사 설계 — 닭가슴살 150g은 제외하고, 밥·병아리콩·브로콜리·당근·할라피뇨로 이루어진 도시락 베이스 270g만 검사 대상으로 보냄\"></div><p>그래서 닭가슴살만 빼고, 나머지 구성을 그대로 담은 베이스를 식품 시험·검사기관에 보냈습니다. 베이스에서 나오는 단백질을 알아야, 닭가슴살과 합쳐서 50g이 맞는지 정직하게 확인할 수 있으니까요.</p><div class=\"ys-story-hero\"><img src=\"https://2019yundiet-cloud.github.io/yundiet-web-assets/media/brand-story/protein-test-57g-2.jpg\" alt=\"검사기관에 실제로 보낸 시료 — 닭가슴살을 뺀 도시락 베이스 2개\"></div><p>위 사진이 검사기관에 실제로 보낸 시료예요. 판매하는 구성에서 닭가슴살만 뺐고, 나머지는 그대로입니다.</p><h2>3. 결과: 베이스 270g에서 단백질 21.2g</h2><p>일주일 뒤 성적서가 도착했습니다. 베이스 100g당 단백질 7.87g. 오리지널 라지에 들어가는 베이스가 270g이니, 환산하면 21.2g이에요.</p><div class=\"ys-story-hero\"><img src=\"https://2019yundiet-cloud.github.io/yundiet-web-assets/media/brand-story/protein-test-57g-3.png\" alt=\"검사 결과표 — 베이스 100g당 단백질 7.87g, 270g 환산 21.2g. 열량·탄수화물·지방·나트륨 등 전체 항목 포함\"></div><p>채소와 콩, 밥으로만 이루어진 구성에서 나온 값이라 저희도 결과지를 받고서야 안심했어요. 병아리콩이 제 몫을 해 준 셈입니다.</p><h2>4. 합산: 21.2g + 36g = 57g</h2><p>이제 빼 두었던 닭가슴살을 다시 더할 차례예요. 닭가슴살 150g의 단백질은 식품성분 기준값으로 36g. 베이스 실측 21.2g과 합치면 한 그릇에 총 57g입니다.</p><div class=\"ys-story-hero\"><img src=\"https://2019yundiet-cloud.github.io/yundiet-web-assets/media/brand-story/protein-test-57g-4.png\" alt=\"합산 다이어그램 — 도시락 베이스 270g 21.2g + 닭가슴살 150g 36g = 총 단백질 57g, 패키지 표기는 50g\"></div><p>표기 50g보다 7g이 더 나왔습니다. 질문에 대한 답은 \"네, 들어있습니다\"가 아니라 \"네, 그보다 더 들어있습니다\"였어요.</p><h2>5. 그런데 왜 표기는 50g일까요</h2><p>일부러 보수적으로 잡아 둔 값이기 때문이에요. 원재료는 수급 시기에 따라 편차가 있고, 조리 과정에서도 매번 미세한 차이가 생깁니다. 어떤 날 어떤 그릇을 받아도 표기만큼은 확실히 담겨 있도록, 표기값을 실측보다 낮춰서 안내하고 있어요.</p><p>고객이 계산한 식단은 저희 표기를 기준으로 세워집니다. 그 계산이 어긋나는 일이 없어야 한다는 게 저희가 표기를 다루는 원칙이에요.</p><h2>6. 증빙은 손대지 않고 그대로 공개합니다</h2><p>\"검사 받았대\"라는 말만으로는 부족하다고 생각했어요. 그래서 검사기관과 주고받은 대화, 성적서를 받은 메일, 성적서 원본까지 그대로 올립니다.</p><div class=\"ys-story-hero\"><img src=\"https://2019yundiet-cloud.github.io/yundiet-web-assets/media/brand-story/protein-test-57g-5.jpg\" alt=\"검사기관과 주고받은 대화 원본 — 시료 발송 전 확인 메시지, 2026년 6월 18일\"></div><div class=\"ys-story-hero\"><img src=\"https://2019yundiet-cloud.github.io/yundiet-web-assets/media/brand-story/protein-test-57g-6.jpg\" alt=\"성적서 수신 메일 원본 — 2026년 6월 26일 수신, 접수번호 26-06-BR0490, 보낸 사람 개인정보는 가림\"></div><div class=\"ys-story-hero\"><img src=\"https://2019yundiet-cloud.github.io/yundiet-web-assets/media/brand-story/protein-test-57g-7.jpg\" alt=\"검사성적서 원본 — 시료명 윤식단 도시락 베이스, 접수 2026.06.19, 검사완료 2026.06.26, 단백질 100g당 7.87g\"></div><div class=\"ys-story-note\"><div class=\"ys-story-note-title\">TEST NOTE</div><ul><li>시료: 윤식단 도시락 베이스 270g (닭가슴살 제외, 판매 구성 그대로)</li><li>의뢰: 식품 시험·검사기관 · 접수 2026.06.19 · 검사완료 2026.06.26 · 접수번호 26-06-BR0490</li><li>결과: 100g당 단백질 7.87g → 270g 환산 21.2g → 닭가슴살 36g 합산 시 총 57g</li><li>문서·대화 내용은 손대지 않았고, 메일의 발신자 이름·메일주소 등 개인정보만 가렸습니다.</li></ul></div><p>숫자를 크게 말하는 건 쉽지만, 숫자를 증명하는 건 번거로운 일이에요. 저희는 앞으로도 번거로운 쪽을 선택하겠습니다. 궁금한 숫자가 또 있다면 알려 주세요 — 다음 검사 대상이 될 수 있으니까요. 오늘도 윤식단을 믿고 찾아 주셔서 감사합니다.</p>"
+    },
     {
       "id": "grain-fried-rice",
       "cat": "제품 개발",
