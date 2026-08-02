@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_43__) {
+  if (window.__YD_FOOTER_V3_44__) {
     return;
   }
-  window.__YD_FOOTER_V3_43__ = true;
+  window.__YD_FOOTER_V3_44__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -18,6 +18,7 @@
     MEMBERSHIP_STATE_ENDPOINT: '',
     MEMBERSHIP_SCHEMA: 'yundiet-membership-ui/v1',
     MEMBERSHIP_REQUEST_TIMEOUT: 5000,
+    DISCOUNT_MAP_URL: 'https://2019yundiet-cloud.github.io/yundiet-web-assets/discount-map.json',
     DAYS: ['일', '월', '화', '수', '목', '금', '토']
   };
 
@@ -30,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.43', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.44', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -139,6 +140,252 @@
     const v = getComputedStyle(document.documentElement).getPropertyValue('--site-header-height').trim();
     const n = parseFloat(v);
     return isNaN(n) ? 0 : n;
+  }
+
+  /* ═══ 판매가 전환 후 네이티브 할인 표시 재현 ═══
+     CDN 맵 + 네이티브 할인 부재 + 현재 판매가 일치의 3중 가드.
+     네이티브 클래스는 DOM에만 재사용하며 공용 클래스 CSS는 추가하지 않는다. */
+  function bindDiscountDisplay() {
+    const warnedMismatches = new Set();
+    let mapPromise = null;
+
+    function fetchMapOnce() {
+      if (mapPromise) {
+        return mapPromise;
+      }
+      mapPromise = fetch(CONFIG.DISCOUNT_MAP_URL + '?v=' + encodeURIComponent(ydStatus.version), {
+        cache: 'force-cache',
+        credentials: 'omit'
+      }).then(function(res) {
+        if (!res.ok) {
+          throw new Error('discount map HTTP ' + res.status);
+        }
+        return res.json();
+      }).then(function(raw) {
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+          throw new Error('discount map schema');
+        }
+        Object.keys(raw).forEach(function(idx) {
+          const row = raw[idx];
+          if (!/^\d+$/.test(idx) || !row ||
+              !Number.isInteger(row.org) || !Number.isInteger(row.sale) || !Number.isInteger(row.pct) ||
+              row.org < 0 || row.sale < 0 || row.pct < 0 || row.pct > 100) {
+            throw new Error('discount map row ' + idx);
+          }
+        });
+        return raw;
+      }).catch(function() {
+        return null;
+      });
+      return mapPromise;
+    }
+
+    function parseWon(text) {
+      const digits = String(text || '').replace(/[^0-9]/g, '');
+      return digits === '' ? null : Number(digits);
+    }
+
+    function money(value) {
+      return Number(value).toLocaleString('ko-KR') + '원';
+    }
+
+    function hasNativeDiscount(root) {
+      return qsa('.sale_price, .sale_percentage, .special-sale-wrap', root).some(function(el) {
+        return !el.closest('[data-yd-discount-display]');
+      });
+    }
+
+    function warnMismatchOnce(surface, idx, actual, expected) {
+      const key = surface + ':' + idx;
+      if (warnedMismatches.has(key)) {
+        return;
+      }
+      warnedMismatches.add(key);
+      console.warn('[YD price-display] 상품 ' + idx + ' ' + surface +
+        ' 표시가 불일치 — 현재 ' + actual + '원 / 맵 ' + expected + '원 (렌더 생략)');
+    }
+
+    function hideSource(el) {
+      el.setAttribute('data-yd-discount-source-hidden', '');
+      el.setAttribute('data-yd-discount-source-display', el.style.display || '');
+      el.style.display = 'none';
+    }
+
+    function restoreSources(root) {
+      qsa('[data-yd-discount-source-hidden]', root).forEach(function(el) {
+        const previous = el.getAttribute('data-yd-discount-source-display') || '';
+        if (previous) {
+          el.style.display = previous;
+        } else {
+          el.style.removeProperty('display');
+        }
+        el.removeAttribute('data-yd-discount-source-hidden');
+        el.removeAttribute('data-yd-discount-source-display');
+      });
+    }
+
+    function removeCustom(root) {
+      qsa('[data-yd-discount-display="root"]', root).forEach(function(el) { el.remove(); });
+      restoreSources(root);
+    }
+
+    function patchDetail(map) {
+      if (!isProductDetailPage()) {
+        return;
+      }
+      const idx = new URLSearchParams(location.search).get('idx');
+      const row = idx && map[idx];
+      const root = qs('.pay_detail');
+      if (!row || !root) {
+        return;
+      }
+
+      if (hasNativeDiscount(root)) {
+        if (qs('[data-yd-discount-display="root"]', root)) {
+          removeCustom(root);
+        }
+        return;
+      }
+      if (qs('[data-yd-discount-display="root"]', root)) {
+        return;
+      }
+
+      const current = qs('.real_price', root);
+      const currentHolder = current && current.closest('.holder');
+      const actual = current ? parseWon(current.textContent) : null;
+      if (actual === null || actual !== row.sale) {
+        if (actual !== null) {
+          warnMismatchOnce('detail', idx, actual, row.sale);
+        }
+        return;
+      }
+      if (!currentHolder || currentHolder.parentElement !== root) {
+        return;
+      }
+
+      const orgHolder = document.createElement('div');
+      orgHolder.className = 'holder table-row';
+      orgHolder.setAttribute('data-yd-discount-display', 'root');
+      const org = document.createElement('span');
+      org.className = 'sale_price pay_number';
+      org.textContent = money(row.org);
+      orgHolder.appendChild(org);
+
+      const saleHolder = document.createElement('div');
+      saleHolder.className = 'holder table-row';
+      saleHolder.setAttribute('data-yd-discount-display', 'root');
+      const pct = document.createElement('span');
+      pct.className = 'sale_percentage';
+      pct.textContent = row.pct + '%';
+      const sale = document.createElement('span');
+      sale.className = 'real_price';
+      sale.textContent = money(row.sale);
+      saleHolder.appendChild(pct);
+      saleHolder.appendChild(sale);
+
+      hideSource(currentHolder);
+      root.insertBefore(orgHolder, currentHolder);
+      const share = qs('.comment_num_warp', root);
+      if (share && share.parentElement === root) {
+        share.insertAdjacentElement('afterend', saleHolder);
+      } else {
+        currentHolder.insertAdjacentElement('afterend', saleHolder);
+      }
+    }
+
+    function cardIdx(card) {
+      try {
+        const props = JSON.parse(card.getAttribute('data-product-properties') || '{}');
+        if (props.idx !== undefined && props.idx !== null) {
+          return String(props.idx);
+        }
+      } catch (err) {}
+      const link = qs('a[href*="idx="]', card);
+      if (!link) {
+        return '';
+      }
+      try {
+        return new URL(link.href, location.href).searchParams.get('idx') || '';
+      } catch (err) {
+        return '';
+      }
+    }
+
+    function patchCardArea(area, idx, row) {
+      if (hasNativeDiscount(area)) {
+        if (qs('[data-yd-discount-display="root"]', area)) {
+          removeCustom(area);
+        }
+        return;
+      }
+      if (qs('[data-yd-discount-display="root"]', area)) {
+        return;
+      }
+      const current = Array.from(area.children).find(function(el) {
+        return el.classList && el.classList.contains('pay');
+      });
+      const actual = current ? parseWon(current.textContent) : null;
+      if (actual === null || actual !== row.sale) {
+        if (actual !== null) {
+          warnMismatchOnce('card', idx, actual, row.sale);
+        }
+        return;
+      }
+
+      const org = document.createElement('p');
+      org.className = 'sale_price no-margin body_font_color_50';
+      org.style.opacity = '1';
+      org.setAttribute('data-yd-discount-display', 'root');
+      org.textContent = money(row.org);
+
+      const saleWrap = document.createElement('p');
+      saleWrap.className = 'no-margin special-sale-wrap';
+      saleWrap.setAttribute('data-yd-discount-display', 'root');
+      const pct = document.createElement('span');
+      pct.className = 'sale_percentage';
+      pct.textContent = row.pct + '%';
+      const sale = document.createElement('span');
+      sale.className = 'pay';
+      sale.style.cssText = 'font-weight:bold; font-size:16px; color:#2a341e';
+      sale.textContent = money(row.sale);
+      saleWrap.appendChild(pct);
+      saleWrap.appendChild(sale);
+
+      hideSource(current);
+      area.insertBefore(org, current);
+      area.insertBefore(saleWrap, current);
+    }
+
+    function patchCards(map) {
+      qsa('.shop-item._shop_item[data-product-properties]').forEach(function(card) {
+        const idx = cardIdx(card);
+        const row = idx && map[idx];
+        if (!row) {
+          return;
+        }
+        const areas = [];
+        qsa('h2', card).forEach(function(title) {
+          const area = title.parentElement;
+          if (area && areas.indexOf(area) === -1) {
+            areas.push(area);
+          }
+        });
+        areas.forEach(function(area) { patchCardArea(area, idx, row); });
+      });
+    }
+
+    fetchMapOnce().then(function(map) {
+      if (!map) {
+        return;
+      }
+      function run() {
+        patchDetail(map);
+        patchCards(map);
+      }
+      run();
+      ensureObserver('discountDisplay', run);
+      ydMark('discountDisplay', true, 'CDN 맵 ' + Object.keys(map).length + '개 + 네이티브/판매가 가드');
+    });
   }
 
   /* ── 팝업 열림 중 뒷페이지 스크롤 잠금 ── */
@@ -2942,11 +3189,12 @@
     bindCheckoutPatches();
     bindProfileModalHeight();
     bindReviewModalHeight();
+    bindDiscountDisplay();
 
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.43] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.44] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
