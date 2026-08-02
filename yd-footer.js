@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_44__) {
+  if (window.__YD_FOOTER_V3_45__) {
     return;
   }
-  window.__YD_FOOTER_V3_44__ = true;
+  window.__YD_FOOTER_V3_45__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.44', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.45', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -128,8 +128,9 @@
   }
 
   function isHomePage() {
-    const p = location.pathname.replace(/\/+$/, '');
-    return p === '' || p === '/index' || p === '/home';
+    /* /main = 모바일 하단 탭 '홈' 버튼의 랜딩 경로(홈과 동일 구성) — v3.45에서 추가 */
+    const p = location.pathname.replace(/\/+$/, '').toLowerCase();
+    return p === '' || p === '/index' || p === '/home' || p === '/main';
   }
 
   function isGuestUser() {
@@ -2915,6 +2916,26 @@
       }
 
       firstSec.parentNode.insertBefore(root, firstSec);
+
+      /* 모바일 하단 탭(홈/쇼핑/브랜드/커뮤니티/마이페이지)은 섹션 숨김에서 제외 —
+         ys-story-mode 부여 전에 data-yd-keep-section 표식을 단다.
+         ⚠ 페이지마다 섹션 id가 다르고(홈 s2024..., 이 페이지 s2025...),
+         position:fixed는 아임웹 JS가 로드 후/스크롤 시 인라인으로 부여해 부팅 시점엔
+         relative일 수 있다(실측) → 내용 기반 판별: 탭 내비 링크(/main + /shop_all) 보유 섹션. */
+      var keptTabHeight = 0;
+      qsa('div[doz_type="section"]').forEach(function(sec) {
+        var hrefs = qsa('a[href]', sec).map(function(a) { return a.getAttribute('href'); });
+        var isTabNav = hrefs.indexOf('/main') !== -1 && hrefs.indexOf('/shop_all') !== -1;
+        if (!isTabNav && getComputedStyle(sec).position !== 'fixed') { return; }
+        if (/곡물볶음밥은 그런 부담|TASTING NOTE/.test(sec.textContent || '')) { return; }
+        sec.setAttribute('data-yd-keep-section', '');
+        keptTabHeight = Math.max(keptTabHeight, Math.ceil(sec.getBoundingClientRect().height) || 70);
+      });
+      if (keptTabHeight) {
+        /* 고정 탭이 피드 하단을 가리지 않게 여백 확보 */
+        root.style.paddingBottom = (keptTabHeight + 24) + 'px';
+      }
+
       document.documentElement.classList.add('ys-story-mode');
 
       /* 과거 별도 경로로 심긴 codex-brand-* 커스텀 블록 숨김.
@@ -3194,7 +3215,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.44] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.45] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

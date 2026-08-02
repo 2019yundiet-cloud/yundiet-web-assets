@@ -1854,8 +1854,11 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
      codex-brand-*: 과거 별도 경로로 심긴 커스텀 블록(SECTION#codex-brand-menu-mobile 등).
      doz_type="section"이 아니라 별도 규칙으로 숨긴다(데스크톱 변형 대비 접두 매칭).
      ⚠ 그 블록 자체 CSS에 #codex-brand-menu-mobile{display:block!important}가 있어(ID 특이도)
-     속성 셀렉터만으론 지지 않는다 — ID급 규칙 + JS 인라인 !important(hideLegacyBlocks)로 이중 방어. */
-  html.ys-story-mode div[doz_type="section"],
+     속성 셀렉터만으론 지지 않는다 — ID급 규칙 + JS 인라인 !important(hideLegacyBlocks)로 이중 방어.
+     ⚠ 모바일 하단 탭(홈/쇼핑/브랜드/커뮤니티/마이페이지)도 아임웹 "고정 섹션"(div[doz_type=section],
+     position:fixed, 페이지마다 id 다름)이라 전체 섹션 숨김에 같이 죽는다(v3.42~43 사고) —
+     JS(boot)가 ys-story-mode 부여 직전에 data-yd-keep-section 표식을 달아 예외 처리한다. */
+  html.ys-story-mode div[doz_type="section"]:not([data-yd-keep-section]),
   html.ys-story-mode [id^="codex-brand"],
   html.ys-story-mode body > [class^="codex-brand"],
   html.ys-story-mode body > [class*=" codex-brand"] {
