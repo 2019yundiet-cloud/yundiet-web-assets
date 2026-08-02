@@ -1850,8 +1850,21 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 
   /* ═══ 브랜드 스토리 피드 (/Brand_story 전용) ═══
      html.ys-story-mode 클래스는 /Brand_story에서 콘텐츠 JSON 로드 성공 후에만 JS가 부여한다.
-     아래 섹션 숨김 규칙은 그 클래스가 있을 때만 동작 — 다른 페이지에는 영향 없음. */
-  html.ys-story-mode div[doz_type="section"] {
+     아래 섹션 숨김 규칙은 그 클래스가 있을 때만 동작 — 다른 페이지에는 영향 없음.
+     codex-brand-*: 과거 별도 경로로 심긴 커스텀 블록(SECTION#codex-brand-menu-mobile 등).
+     doz_type="section"이 아니라 별도 규칙으로 숨긴다(데스크톱 변형 대비 접두 매칭).
+     ⚠ 그 블록 자체 CSS에 #codex-brand-menu-mobile{display:block!important}가 있어(ID 특이도)
+     속성 셀렉터만으론 지지 않는다 — ID급 규칙 + JS 인라인 !important(hideLegacyBlocks)로 이중 방어. */
+  html.ys-story-mode div[doz_type="section"],
+  html.ys-story-mode [id^="codex-brand"],
+  html.ys-story-mode body > [class^="codex-brand"],
+  html.ys-story-mode body > [class*=" codex-brand"] {
+    display: none !important;
+  }
+  html.ys-story-mode #codex-brand-menu-mobile,
+  html.ys-story-mode #codex-brand-menu-desktop,
+  html.ys-story-mode #codex-brand-menu-pc,
+  html.ys-story-mode #codex-brand-menu {
     display: none !important;
   }
   #ys-story-root {

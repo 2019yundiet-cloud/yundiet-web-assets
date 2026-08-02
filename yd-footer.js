@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_42__) {
+  if (window.__YD_FOOTER_V3_43__) {
     return;
   }
-  window.__YD_FOOTER_V3_42__ = true;
+  window.__YD_FOOTER_V3_43__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -30,7 +30,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.42', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.43', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2670,6 +2670,22 @@
       firstSec.parentNode.insertBefore(root, firstSec);
       document.documentElement.classList.add('ys-story-mode');
 
+      /* 과거 별도 경로로 심긴 codex-brand-* 커스텀 블록 숨김.
+         블록 자체 CSS의 #id{display:block!important}(ID 특이도)를 확실히 이기도록
+         인라인 style !important로 강제한다. 늦게 주입될 수 있어 재적용 2회. */
+      function hideLegacyBlocks() {
+        var legacy = document.querySelectorAll(
+          '[id^="codex-brand"], body > [class^="codex-brand"], body > [class*=" codex-brand"]');
+        for (var li = 0; li < legacy.length; li++) {
+          if (!root.contains(legacy[li])) {
+            legacy[li].style.setProperty('display', 'none', 'important');
+          }
+        }
+      }
+      hideLegacyBlocks();
+      setTimeout(hideLegacyBlocks, 1000);
+      setTimeout(hideLegacyBlocks, 3000);
+
       var listView = qs('.ys-story-list', root);
       var articleView = qs('.ys-story-article', root);
       var filtersEl = qs('.ys-story-filters', root);
@@ -2930,7 +2946,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.42] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.43] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
