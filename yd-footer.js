@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_48__) {
+  if (window.__YD_FOOTER_V3_49__) {
     return;
   }
-  window.__YD_FOOTER_V3_48__ = true;
+  window.__YD_FOOTER_V3_49__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.48', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.49', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -3020,6 +3020,7 @@
             '<button type="button" class="ys-story-back" style="margin:0">← 목록으로</button>' +
             '<button type="button" class="ys-story-copy">🔗 링크 복사</button>' +
           '</div>';
+        enhanceZoomables();
         listView.style.display = 'none';
         articleView.style.display = 'block';
         document.title = p.title + ' — 윤식단 이야기';
@@ -3032,12 +3033,257 @@
       }
 
       function route() {
+        if (lbState.open) {
+          closeLightbox(true);
+        }
         var id = currentHashId();
         if (id) {
           renderArticle(id);
         } else {
           showList();
         }
+      }
+
+      /* ── 본문 이미지 라이트박스 ──
+         탭/클릭 → 전체 화면 오버레이. 핀치줌·팬·더블탭(모바일), 휠줌·드래그·더블클릭(PC).
+         닫기 3경로: X 버튼 · 배경 탭 · 브라우저 뒤로가기.
+         히스토리: 열 때 같은 URL로 pushState({ysLb:1}) 1건 추가 → 뒤로가기 popstate가
+         라이트박스만 닫고 해시(#글id)는 유지 = 글 상세가 목록으로 튕기지 않는다.
+         X/배경 닫기는 history.back()으로 그 엔트리를 소비해 히스토리 오염 방지. */
+      var ZOOM_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20.5 20.5l-4.2-4.2M11 8.2v5.6M8.2 11h5.6"></path></svg>';
+      var lb = null;
+      var lbImg = null;
+      var lbStage = null;
+      var lbState = { open: false, armed: false, s: 1, tx: 0, ty: 0 };
+
+      function enhanceZoomables() {
+        qsa('img', articleContent).forEach(function(img) {
+          if (img.closest && img.closest('.ys-story-zoomwrap')) { return; }
+          var wrap = document.createElement('span');
+          wrap.className = 'ys-story-zoomwrap';
+          img.parentNode.insertBefore(wrap, img);
+          wrap.appendChild(img);
+          var hint = document.createElement('span');
+          hint.className = 'ys-story-zoom-hint';
+          hint.innerHTML = ZOOM_ICON;
+          wrap.appendChild(hint);
+        });
+      }
+
+      function lbApply() {
+        lbImg.style.transform = 'translate(' + lbState.tx + 'px,' + lbState.ty + 'px) scale(' + lbState.s + ')';
+      }
+
+      function lbClampPan() {
+        var stage = lbStage.getBoundingClientRect();
+        var w = lbImg.offsetWidth * lbState.s;
+        var h = lbImg.offsetHeight * lbState.s;
+        var maxX = Math.max(0, (w - stage.width) / 2);
+        var maxY = Math.max(0, (h - stage.height) / 2);
+        lbState.tx = Math.min(maxX, Math.max(-maxX, lbState.tx));
+        lbState.ty = Math.min(maxY, Math.max(-maxY, lbState.ty));
+      }
+
+      function lbReset() {
+        lbState.s = 1;
+        lbState.tx = 0;
+        lbState.ty = 0;
+        lbApply();
+      }
+
+      function stageCenterXY(clientX, clientY) {
+        var r = lbStage.getBoundingClientRect();
+        return { x: clientX - r.left - r.width / 2, y: clientY - r.top - r.height / 2 };
+      }
+
+      function lbZoomAt(x, y, targetScale) {
+        /* stage 중심 기준 좌표(x,y)를 고정점으로 스케일 변경 (translate→scale 순서 전제) */
+        var ratio = targetScale / lbState.s;
+        lbState.tx = x - (x - lbState.tx) * ratio;
+        lbState.ty = y - (y - lbState.ty) * ratio;
+        lbState.s = targetScale;
+        lbClampPan();
+        lbApply();
+      }
+
+      function ensureLightbox() {
+        if (lb) { return; }
+        lb = document.createElement('div');
+        lb.className = 'ys-story-lb';
+        lb.setAttribute('role', 'dialog');
+        lb.setAttribute('aria-modal', 'true');
+        lb.innerHTML =
+          '<div class="ys-story-lb-stage"><img alt=""></div>' +
+          '<button type="button" class="ys-story-lb-close" aria-label="닫기">✕</button>' +
+          '<div class="ys-story-lb-tip">핀치 · 더블탭으로 확대할 수 있어요</div>';
+        document.body.appendChild(lb);
+        lbStage = qs('.ys-story-lb-stage', lb);
+        lbImg = qs('img', lbStage);
+        qs('.ys-story-lb-close', lb).addEventListener('click', function() { closeLightbox(false); });
+        lbStage.addEventListener('click', function(e) {
+          if (e.target === lbStage) { closeLightbox(false); }
+        });
+        bindLbGestures();
+      }
+
+      function openLightbox(src, alt) {
+        ensureLightbox();
+        lbImg.src = src;
+        lbImg.alt = alt || '';
+        lb.classList.remove('is-used');
+        lbReset();
+        lb.classList.add('is-open');
+        lbState.open = true;
+        lockBodyScroll();
+        try {
+          history.pushState({ ysLb: 1 }, '', location.href);
+          lbState.armed = true;
+        } catch (err) {
+          lbState.armed = false;
+        }
+      }
+
+      function closeLightbox(viaHistory) {
+        if (!lbState.open) { return; }
+        lbState.open = false;
+        lb.classList.remove('is-open');
+        unlockBodyScroll();
+        if (!viaHistory && lbState.armed) {
+          lbState.armed = false;
+          try { history.back(); } catch (err) {}
+          return;
+        }
+        lbState.armed = false;
+      }
+
+      window.addEventListener('popstate', function() {
+        if (lbState.open) { closeLightbox(true); }
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (lbState.open && (e.key === 'Escape' || e.key === 'Esc')) { closeLightbox(false); }
+      });
+
+      function bindLbGestures() {
+        var MAX_S = 5;
+        var g = { mode: '', dist: 1, s0: 1, tx0: 0, ty0: 0, mx0: 0, my0: 0, moved: false, lastTap: 0, tapX: 0, tapY: 0 };
+
+        function touchMid(t) {
+          if (t.length >= 2) {
+            return stageCenterXY((t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2);
+          }
+          return stageCenterXY(t[0].clientX, t[0].clientY);
+        }
+        function touchDist(t) {
+          var dx = t[0].clientX - t[1].clientX;
+          var dy = t[0].clientY - t[1].clientY;
+          return Math.sqrt(dx * dx + dy * dy) || 1;
+        }
+        function markUsed() {
+          if (lb) { lb.classList.add('is-used'); }
+        }
+        function rebase(m) {
+          g.s0 = lbState.s; g.tx0 = lbState.tx; g.ty0 = lbState.ty;
+          g.mx0 = m.x; g.my0 = m.y;
+        }
+
+        lbStage.addEventListener('touchstart', function(e) {
+          if (!lbState.open) { return; }
+          var t = e.touches;
+          g.moved = false;
+          rebase(touchMid(t));
+          if (t.length === 2) {
+            g.mode = 'pinch';
+            g.dist = touchDist(t);
+            e.preventDefault();
+          } else {
+            g.mode = lbState.s > 1 ? 'pan' : 'tap';
+          }
+        }, { passive: false });
+
+        lbStage.addEventListener('touchmove', function(e) {
+          if (!lbState.open) { return; }
+          var t = e.touches;
+          var m = touchMid(t);
+          if (Math.abs(m.x - g.mx0) > 6 || Math.abs(m.y - g.my0) > 6) { g.moved = true; }
+          if (t.length >= 2 && g.mode !== 'pinch') {
+            g.mode = 'pinch';
+            g.dist = touchDist(t);
+            rebase(m);
+          }
+          if (g.mode === 'pinch' && t.length >= 2) {
+            e.preventDefault();
+            markUsed();
+            var s = Math.min(MAX_S, Math.max(1, g.s0 * touchDist(t) / g.dist));
+            var ratio = s / g.s0;
+            lbState.s = s;
+            lbState.tx = m.x - (g.mx0 - g.tx0) * ratio;
+            lbState.ty = m.y - (g.my0 - g.ty0) * ratio;
+            lbClampPan();
+            lbApply();
+          } else if (g.mode === 'pan' && t.length === 1) {
+            e.preventDefault();
+            lbState.tx = g.tx0 + (m.x - g.mx0);
+            lbState.ty = g.ty0 + (m.y - g.my0);
+            lbClampPan();
+            lbApply();
+          }
+        }, { passive: false });
+
+        lbStage.addEventListener('touchend', function(e) {
+          if (!lbState.open) { return; }
+          if (e.touches.length) {
+            /* 핀치 → 한 손가락만 남음: 팬으로 전환, 기준점 재설정 */
+            g.mode = lbState.s > 1 ? 'pan' : 'tap';
+            rebase(touchMid(e.touches));
+            return;
+          }
+          if (lbState.s < 1.04) { lbReset(); }
+          if (g.mode === 'pinch' || g.moved) { g.mode = ''; return; }
+          var ct = e.changedTouches && e.changedTouches[0];
+          if (!ct) { g.mode = ''; return; }
+          var p = stageCenterXY(ct.clientX, ct.clientY);
+          var now = Date.now();
+          if (now - g.lastTap < 320 && Math.abs(p.x - g.tapX) < 44 && Math.abs(p.y - g.tapY) < 44) {
+            /* 더블탭: 1배 ↔ 2.5배 토글 */
+            e.preventDefault();
+            markUsed();
+            g.lastTap = 0;
+            if (lbState.s > 1.04) { lbReset(); } else { lbZoomAt(p.x, p.y, 2.5); }
+          } else {
+            g.lastTap = now; g.tapX = p.x; g.tapY = p.y;
+          }
+          g.mode = '';
+        }, { passive: false });
+
+        /* 데스크톱: 더블클릭 줌 토글 + 휠 줌 + 드래그 팬 */
+        lbStage.addEventListener('dblclick', function(e) {
+          e.preventDefault();
+          markUsed();
+          var p = stageCenterXY(e.clientX, e.clientY);
+          if (lbState.s > 1.04) { lbReset(); } else { lbZoomAt(p.x, p.y, 2.5); }
+        });
+        lbStage.addEventListener('wheel', function(e) {
+          e.preventDefault();
+          markUsed();
+          var p = stageCenterXY(e.clientX, e.clientY);
+          var s = Math.min(MAX_S, Math.max(1, lbState.s * (e.deltaY < 0 ? 1.18 : 1 / 1.18)));
+          lbZoomAt(p.x, p.y, s);
+        }, { passive: false });
+        var drag = null;
+        lbStage.addEventListener('mousedown', function(e) {
+          if (lbState.s <= 1) { return; }
+          e.preventDefault();
+          drag = { x: e.clientX, y: e.clientY, tx: lbState.tx, ty: lbState.ty };
+        });
+        window.addEventListener('mousemove', function(e) {
+          if (!drag || !lbState.open) { return; }
+          lbState.tx = drag.tx + (e.clientX - drag.x);
+          lbState.ty = drag.ty + (e.clientY - drag.y);
+          lbClampPan();
+          lbApply();
+        });
+        window.addEventListener('mouseup', function() { drag = null; });
       }
 
       function goBackToList() {
@@ -3053,6 +3299,15 @@
       }
 
       root.addEventListener('click', function(e) {
+        var zoomwrap = e.target.closest ? e.target.closest('.ys-story-zoomwrap') : null;
+        if (zoomwrap && root.contains(zoomwrap)) {
+          e.preventDefault();
+          var zi = qs('img', zoomwrap);
+          if (zi && (zi.currentSrc || zi.src)) {
+            openLightbox(zi.currentSrc || zi.src, zi.alt);
+          }
+          return;
+        }
         var chip = e.target.closest ? e.target.closest('.ys-story-chip') : null;
         if (chip && root.contains(chip)) {
           state.cat = chip.getAttribute('data-ys-cat') || '전체';
@@ -3099,7 +3354,7 @@
       route();
 
       ydMark('brandStoryFeed', true,
-        '글 ' + posts.length + '건 렌더' + (PREVIEW ? ' (미리보기 모드: 초안 포함)' : ' (공개 글만)'));
+        '글 ' + posts.length + '건 렌더 + 이미지 라이트박스' + (PREVIEW ? ' (미리보기 모드: 초안 포함)' : ' (공개 글만)'));
     }
   }
 
@@ -3215,7 +3470,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.48] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.49] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
