@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_51__) {
+  if (window.__YD_FOOTER_V3_52__) {
     return;
   }
-  window.__YD_FOOTER_V3_51__ = true;
+  window.__YD_FOOTER_V3_52__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.51', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.52', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -312,7 +312,12 @@
       }
     }
 
-    function patchCardArea(area, idx, row) {
+    function patchCardPrice(current, idx, row) {
+      const area = current && current.parentElement;
+      if (!area || current.closest('[data-yd-discount-display]') ||
+          current.closest('.special-sale-wrap')) {
+        return;
+      }
       if (hasNativeDiscount(area)) {
         if (qs('[data-yd-discount-display="root"]', area)) {
           removeCustom(area);
@@ -322,9 +327,6 @@
       if (qs('[data-yd-discount-display="root"]', area)) {
         return;
       }
-      const current = Array.from(area.children).find(function(el) {
-        return el.classList && el.classList.contains('pay');
-      });
       const actual = current ? parseWon(current.textContent) : null;
       if (actual === null || actual !== row.sale) {
         if (actual !== null) {
@@ -364,14 +366,9 @@
         if (!row) {
           return;
         }
-        const areas = [];
-        qsa('h2', card).forEach(function(title) {
-          const area = title.parentElement;
-          if (area && areas.indexOf(area) === -1) {
-            areas.push(area);
-          }
+        qsa('.pay', card).forEach(function(current) {
+          patchCardPrice(current, idx, row);
         });
-        areas.forEach(function(area) { patchCardArea(area, idx, row); });
       });
     }
 
@@ -3470,7 +3467,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.51] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.52] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
