@@ -1848,3 +1848,115 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     }
   }
 
+  /* ═══ 브랜드 스토리 피드 (/Brand_story 전용) ═══
+     html.ys-story-mode 클래스는 /Brand_story에서 콘텐츠 JSON 로드 성공 후에만 JS가 부여한다.
+     아래 섹션 숨김 규칙은 그 클래스가 있을 때만 동작 — 다른 페이지에는 영향 없음. */
+  html.ys-story-mode div[doz_type="section"] {
+    display: none !important;
+  }
+  #ys-story-root {
+    --ys-ink: #1c1c1c;
+    --ys-ink-soft: #555;
+    --ys-ink-faint: #8a8a8a;
+    --ys-line: #ececec;
+    --ys-accent: #3d3d1f;
+    --ys-accent-soft: #f4f4ec;
+    --ys-radius: 14px;
+    color: var(--ys-ink);
+    background: #fff;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    text-align: left;
+  }
+  #ys-story-root a { color: inherit; text-decoration: none; }
+  #ys-story-root button { font-family: inherit; cursor: pointer; }
+  #ys-story-root img { max-width: 100%; display: block; }
+  .ys-story-wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+  .ys-story-head { padding: 64px 0 8px; }
+  .ys-story-head h1 { font-size: 38px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.25; margin: 0; color: var(--ys-ink); }
+  .ys-story-head p { margin: 16px 0 0; font-size: 16.5px; color: var(--ys-ink-soft); max-width: 560px; line-height: 1.7; }
+  .ys-story-filters { display: flex; gap: 8px; flex-wrap: wrap; padding: 28px 0 6px; }
+  .ys-story-chip {
+    border: 1px solid var(--ys-line); background: #fff; color: var(--ys-ink-soft);
+    font-size: 13.5px; font-weight: 600; padding: 8px 16px; border-radius: 100px;
+    transition: all 0.15s; line-height: 1.4;
+  }
+  .ys-story-chip:hover { border-color: #ccc; }
+  .ys-story-chip.is-on { background: var(--ys-accent); border-color: var(--ys-accent); color: #fff; }
+  .ys-story-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px 28px; padding: 28px 0 24px; }
+  .ys-story-card {
+    background: #fff; border: 1px solid var(--ys-line); border-radius: var(--ys-radius);
+    overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease;
+    display: flex; flex-direction: column; text-align: left;
+  }
+  .ys-story-card:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.09); }
+  .ys-story-thumb { aspect-ratio: 16/10; background: #f2f2ee; overflow: hidden; position: relative; }
+  .ys-story-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.35s ease; }
+  .ys-story-card:hover .ys-story-thumb img { transform: scale(1.035); }
+  .ys-story-badge {
+    position: absolute; top: 14px; left: 14px;
+    background: rgba(255, 255, 255, 0.92); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+    color: var(--ys-accent); font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em;
+    padding: 5px 11px; border-radius: 100px;
+  }
+  .ys-story-badge.is-draft { background: #ffe9a8; color: #6b5b12; }
+  .ys-story-card-body { padding: 20px 22px 22px; }
+  .ys-story-card-body h3 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.45; color: var(--ys-ink); }
+  .ys-story-card-meta { margin-top: 9px; font-size: 13px; color: var(--ys-ink-faint); }
+  .ys-story-more {
+    display: block; margin: 12px auto 90px;
+    border: 1px solid var(--ys-ink); background: #fff; color: var(--ys-ink);
+    font-size: 14.5px; font-weight: 700; padding: 13px 46px; border-radius: 100px;
+    transition: all 0.15s;
+  }
+  .ys-story-more:hover { background: var(--ys-ink); color: #fff; }
+  .ys-story-empty { padding: 60px 0 120px; text-align: center; color: var(--ys-ink-faint); font-size: 15px; }
+  .ys-story-article-inner { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+  .ys-story-back {
+    margin: 34px 0 0; display: inline-flex; align-items: center; gap: 7px;
+    background: none; border: none; font-size: 14px; font-weight: 600; color: var(--ys-ink-soft); padding: 0;
+  }
+  .ys-story-back:hover { color: var(--ys-ink); }
+  .ys-story-ahead { padding: 30px 0 10px; }
+  .ys-story-acat { font-size: 13px; font-weight: 700; color: var(--ys-accent); letter-spacing: 0.03em; }
+  .ys-story-ahead h1 { margin: 10px 0 0; font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.35; color: var(--ys-ink); }
+  .ys-story-ameta { margin-top: 14px; font-size: 13.5px; color: var(--ys-ink-faint); }
+  .ys-story-hero { border-radius: var(--ys-radius); overflow: hidden; margin: 26px 0 8px; }
+  .ys-story-abody { padding: 26px 0 40px; font-size: 16.5px; line-height: 1.85; color: #2c2c2c; }
+  .ys-story-abody p { margin: 0 0 22px; }
+  .ys-story-abody h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; margin: 40px 0 14px; color: var(--ys-ink); }
+  .ys-story-abody .ys-story-lead { font-size: 19px; font-weight: 600; color: var(--ys-ink); line-height: 1.7; }
+  .ys-story-note { background: var(--ys-accent-soft); border-radius: var(--ys-radius); padding: 26px 28px; margin: 34px 0; }
+  .ys-story-note-title { font-size: 12.5px; font-weight: 800; letter-spacing: 0.14em; color: var(--ys-accent); margin-bottom: 14px; }
+  .ys-story-note ul { list-style: none; margin: 0; padding: 0; }
+  .ys-story-note li { position: relative; padding-left: 18px; margin-bottom: 10px; font-size: 15.5px; line-height: 1.7; }
+  .ys-story-note li:last-child { margin-bottom: 0; }
+  .ys-story-note li::before {
+    content: ""; position: absolute; left: 2px; top: 11px; width: 6px; height: 6px;
+    border-radius: 50%; background: var(--ys-accent);
+  }
+  .ys-story-afoot {
+    border-top: 1px solid var(--ys-line); padding: 30px 0 90px;
+    display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .ys-story-copy {
+    border: 1px solid var(--ys-line); background: #fff; color: var(--ys-ink-soft);
+    font-size: 13.5px; font-weight: 600; padding: 9px 18px; border-radius: 100px; transition: all 0.15s;
+  }
+  .ys-story-copy:hover { border-color: #ccc; color: var(--ys-ink); }
+  .ys-story-draft-note {
+    background: #fffbe8; border: 1px dashed #e3d27a; border-radius: 10px;
+    padding: 16px 20px; font-size: 14px; color: #7a6b1e; margin-bottom: 26px;
+  }
+  @media (max-width: 720px) {
+    .ys-story-grid { grid-template-columns: 1fr; gap: 28px; }
+  }
+  @media (max-width: 640px) {
+    .ys-story-head { padding: 40px 0 4px; }
+    .ys-story-head h1 { font-size: 28px; }
+    .ys-story-head p { font-size: 15px; }
+    .ys-story-card-body { padding: 16px 18px 18px; }
+    .ys-story-card-body h3 { font-size: 16.5px; }
+    .ys-story-ahead h1 { font-size: 24px; }
+  }
+

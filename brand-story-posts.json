@@ -1,0 +1,71 @@
+{
+  "schema": "yundiet-brand-story/v1",
+  "categories": ["전체", "제품 개발", "일하는 이야기", "브랜드"],
+  "posts": [
+    {
+      "id": "grain-fried-rice",
+      "cat": "제품 개발",
+      "title": "밥이 먹고 싶은데, 굳이 참을 필요 없잖아요 — 곡물볶음밥 개발기",
+      "date": "2026년 7월 24일",
+      "img": "https://cdn.imweb.me/thumbnail/20260510/a17cfb1358e08.jpg",
+      "draft": false,
+      "body": "<p class=\"ys-story-lead\">탄수화물을 줄이려고 밥을 덜 먹으면, 오후면 찾아오는 허기짐.</p><p>윤식단 곡물볶음밥은 그런 부담은 줄이고, 한 끼의 만족감은 살리는 데서 시작됐습니다.</p><p>고소한 곡물의 씹는 맛, 잘 어우러지는 재료, 과하지 않은 간까지 — 매일 먹어도 질리지 않는 곡물볶음밥을 목표로 만들었습니다.</p><p>식단 중에도 따뜻한 밥 한 끼가 주는 든든함은 포기하고 싶지 않은 사람들을 위한 한 끼입니다.</p><div class=\"ys-story-note\"><div class=\"ys-story-note-title\">TASTING NOTE</div><ul><li>다양한 곡물을 더해 씹을수록 고소한 풍미가 살아나도록 설계했습니다.</li><li>재료와 밥알이 따로 놀지 않도록 볶음의 밸런스를 맞췄습니다.</li><li>자극적이지 않지만 싱겁지 않게, 끝까지 편하게 먹을 수 있는 간을 고민했습니다.</li></ul></div><h2>왜 볶음밥이었을까요</h2><p>샐러드와 닭가슴살만으로 식단을 이어가는 분들이 가장 많이 그리워하는 건 결국 '따뜻한 밥'이었습니다. 저희는 그 지점을 포기하지 않는 식단을 만들고 싶었습니다.</p><p>앞으로도 제품 하나하나가 만들어지는 과정을 이 공간에 기록하겠습니다.</p>"
+    },
+    {
+      "id": "same-taste",
+      "cat": "제품 개발",
+      "title": "단백밥이 매주 같은 맛을 유지하는 방법",
+      "date": "2026년 7월 10일",
+      "img": "https://cdn.imweb.me/upload/S20220627921120181795a/e8976273074f1.jpg",
+      "draft": true
+    },
+    {
+      "id": "faster-pages",
+      "cat": "일하는 이야기",
+      "title": "상세페이지가 3배 빨라진 이유 — 이미지 100장을 다시 만들었습니다",
+      "date": "2026년 7월 24일",
+      "img": "https://cdn.imweb.me/thumbnail/20250430/3a31097edaebd.png",
+      "draft": true
+    },
+    {
+      "id": "morning-line",
+      "cat": "일하는 이야기",
+      "title": "새벽 생산 라인에서 윤식단의 하루가 시작됩니다",
+      "date": "2026년 6월 18일",
+      "img": "https://cdn.imweb.me/upload/S20220627921120181795a/d7d75513bcc30.jpg",
+      "draft": true
+    },
+    {
+      "id": "pure-protein",
+      "cat": "제품 개발",
+      "title": "순수단백 — 원료 하나로 승부하는 이유",
+      "date": "2026년 6월 2일",
+      "img": "https://cdn.imweb.me/thumbnail/20250430/06af85e1ef010.jpg",
+      "draft": true
+    },
+    {
+      "id": "reviews-1000",
+      "cat": "제품 개발",
+      "title": "고객 리뷰 1,000개를 전부 읽고 바꾼 것들",
+      "date": "2026년 5월 20일",
+      "img": "https://cdn.imweb.me/thumbnail/20260510/460110f5c2a80.jpg",
+      "draft": true
+    },
+    {
+      "id": "delivery-box",
+      "cat": "일하는 이야기",
+      "title": "배송 박스를 다시 설계했습니다",
+      "date": "2026년 5월 8일",
+      "img": "https://cdn.imweb.me/thumbnail/20250430/020d938b99edb.jpg",
+      "draft": true
+    },
+    {
+      "id": "why-yundiet",
+      "cat": "브랜드",
+      "title": "\"윤식단은 왜?\" 질문과 답변",
+      "date": "2026년 4월 25일",
+      "img": "https://cdn.imweb.me/upload/S20220627921120181795a/87f4e0477142f.jpg",
+      "draft": true
+    }
+  ]
+}

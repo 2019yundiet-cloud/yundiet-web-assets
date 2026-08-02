@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_41__) {
+  if (window.__YD_FOOTER_V3_42__) {
     return;
   }
-  window.__YD_FOOTER_V3_41__ = true;
+  window.__YD_FOOTER_V3_42__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -30,7 +30,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.41', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.42', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2574,6 +2574,251 @@
     ensureObserver('reviewModalHeight', applyAll);
   }
 
+  /* ═══ 브랜드 스토리 피드 (/Brand_story 전용) ═══
+     기존 아임웹 빌더 콘텐츠(div[doz_type="section"])를 "윤식단 이야기" 피드로 대체한다.
+     - 콘텐츠는 CDN JSON(brand-story-posts.json)에서 로드 — 글 추가 = JSON 수정 + release.sh
+     - JSON 로드 실패 시 아무것도 하지 않음(기존 페이지 유지)
+     - draft:true 글은 ?story_preview=1 쿼리에서만 노출
+     - #글id 해시 직링크 + 뒤로가기 지원 */
+  function bindBrandStoryFeed() {
+    if (IS_IFRAME) {
+      return;
+    }
+    var path = location.pathname.replace(/\/+$/, '').toLowerCase();
+    if (path !== '/brand_story') {
+      return;
+    }
+
+    var FEED_URL = 'https://2019yundiet-cloud.github.io/yundiet-web-assets/brand-story-posts.json?v=' +
+      encodeURIComponent(ydStatus.version);
+    var PREVIEW = /[?&]story_preview=1/.test(location.search);
+    var PAGE_SIZE = 6;
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    fetch(FEED_URL)
+      .then(function(r) {
+        if (!r.ok) { throw new Error('HTTP ' + r.status); }
+        return r.json();
+      })
+      .then(boot)
+      .catch(function(err) {
+        ydMark('brandStoryFeed', false, '콘텐츠 로드 실패 — 기존 페이지 유지 (' + (err && err.message) + ')');
+      });
+
+    function boot(data) {
+      var posts = (data && data.posts || []).filter(function(p) {
+        return p && p.id && p.title && (PREVIEW || !p.draft);
+      });
+      if (!posts.length) {
+        ydMark('brandStoryFeed', false, '공개 글 0건 — 기존 페이지 유지');
+        return;
+      }
+      var firstSec = qs('div[doz_type="section"]');
+      if (!firstSec || !firstSec.parentNode) {
+        ydMark('brandStoryFeed', false, '콘텐츠 섹션 미발견 — 기존 페이지 유지');
+        return;
+      }
+      if (qs('#ys-story-root')) {
+        return;
+      }
+
+      var cats = ['전체'].concat((data.categories || []).filter(function(c) {
+        return c && c !== '전체' && posts.some(function(p) { return p.cat === c; });
+      }));
+      var postById = {};
+      posts.forEach(function(p) { postById[p.id] = p; });
+
+      var state = { cat: '전체', shown: PAGE_SIZE, fromList: false };
+      var baseTitle = document.title;
+
+      var root = document.createElement('div');
+      root.id = 'ys-story-root';
+      root.innerHTML =
+        '<div class="ys-story-list">' +
+          '<div class="ys-story-wrap">' +
+            '<div class="ys-story-head">' +
+              '<h1>윤식단 이야기</h1>' +
+              '<p>매일 먹는 한 끼를 조금 더 낫게 만드는 일.<br>제품을 개발하고, 만들고, 배송하는 우리의 이야기를 기록합니다.</p>' +
+            '</div>' +
+            '<div class="ys-story-filters"></div>' +
+            '<div class="ys-story-grid"></div>' +
+            '<div class="ys-story-empty" style="display:none">이 카테고리의 글이 아직 없습니다.</div>' +
+            '<button type="button" class="ys-story-more">더 보기</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ys-story-article" style="display:none">' +
+          '<div class="ys-story-article-inner">' +
+            '<button type="button" class="ys-story-back">← 목록으로</button>' +
+            '<div class="ys-story-article-content"></div>' +
+          '</div>' +
+        '</div>';
+
+      /* 헤더가 fixed/absolute면 본문이 밑으로 파고들지 않게 패딩 확보 */
+      var headerWrap = qs('#doz_header_wrap');
+      if (headerWrap) {
+        var hPos = getComputedStyle(headerWrap).position;
+        if (hPos === 'fixed' || hPos === 'absolute') {
+          root.style.paddingTop = headerWrap.offsetHeight + 'px';
+        }
+      }
+
+      firstSec.parentNode.insertBefore(root, firstSec);
+      document.documentElement.classList.add('ys-story-mode');
+
+      var listView = qs('.ys-story-list', root);
+      var articleView = qs('.ys-story-article', root);
+      var filtersEl = qs('.ys-story-filters', root);
+      var gridEl = qs('.ys-story-grid', root);
+      var emptyEl = qs('.ys-story-empty', root);
+      var moreBtn = qs('.ys-story-more', root);
+      var articleContent = qs('.ys-story-article-content', root);
+
+      function filtered() {
+        return state.cat === '전체' ? posts : posts.filter(function(p) { return p.cat === state.cat; });
+      }
+
+      function renderFilters() {
+        filtersEl.innerHTML = cats.map(function(c) {
+          return '<button type="button" class="ys-story-chip' + (c === state.cat ? ' is-on' : '') +
+            '" data-ys-cat="' + esc(c) + '">' + esc(c) + '</button>';
+        }).join('');
+      }
+
+      function renderGrid() {
+        var list = filtered();
+        var slice = list.slice(0, state.shown);
+        gridEl.innerHTML = slice.map(function(p) {
+          return '<a class="ys-story-card" href="#' + esc(p.id) + '" data-ys-post="' + esc(p.id) + '">' +
+            '<div class="ys-story-thumb">' +
+              '<span class="ys-story-badge' + (p.draft ? ' is-draft' : '') + '">' +
+                esc(p.draft ? '초안 · ' + p.cat : p.cat) + '</span>' +
+              '<img src="' + esc(p.img) + '" alt="" loading="lazy">' +
+            '</div>' +
+            '<div class="ys-story-card-body">' +
+              '<h3>' + esc(p.title) + '</h3>' +
+              '<div class="ys-story-card-meta">' + esc(p.date || '') + '</div>' +
+            '</div>' +
+          '</a>';
+        }).join('');
+        emptyEl.style.display = list.length ? 'none' : 'block';
+        moreBtn.style.display = list.length > state.shown ? 'block' : 'none';
+      }
+
+      function showList() {
+        articleView.style.display = 'none';
+        listView.style.display = 'block';
+        document.title = baseTitle;
+        window.scrollTo(0, 0);
+      }
+
+      function renderArticle(id) {
+        var p = postById[id];
+        if (!p) {
+          showList();
+          return;
+        }
+        var body = p.body ||
+          '<div class="ys-story-draft-note">✏️ 아직 본문이 등록되지 않은 초안입니다 — 발행 전 미리보기 화면입니다.</div>';
+        articleContent.innerHTML =
+          '<div class="ys-story-ahead">' +
+            '<div class="ys-story-acat">' + esc(p.cat) + '</div>' +
+            '<h1>' + esc(p.title) + '</h1>' +
+            '<div class="ys-story-ameta">' + esc(p.date || '') + ' · ' + esc(p.author || '윤식단 팀') + '</div>' +
+          '</div>' +
+          '<div class="ys-story-hero"><img src="' + esc(p.img) + '" alt=""></div>' +
+          '<div class="ys-story-abody">' + body + '</div>' +
+          '<div class="ys-story-afoot">' +
+            '<button type="button" class="ys-story-back" style="margin:0">← 목록으로</button>' +
+            '<button type="button" class="ys-story-copy">🔗 링크 복사</button>' +
+          '</div>';
+        listView.style.display = 'none';
+        articleView.style.display = 'block';
+        document.title = p.title + ' — 윤식단 이야기';
+        window.scrollTo(0, 0);
+      }
+
+      function currentHashId() {
+        var h = location.hash.replace(/^#/, '');
+        return h && postById[h] ? h : '';
+      }
+
+      function route() {
+        var id = currentHashId();
+        if (id) {
+          renderArticle(id);
+        } else {
+          showList();
+        }
+      }
+
+      function goBackToList() {
+        if (state.fromList) {
+          state.fromList = false;
+          history.back();
+          return;
+        }
+        try {
+          history.replaceState(null, '', location.pathname + location.search);
+        } catch (err) {}
+        showList();
+      }
+
+      root.addEventListener('click', function(e) {
+        var chip = e.target.closest ? e.target.closest('.ys-story-chip') : null;
+        if (chip && root.contains(chip)) {
+          state.cat = chip.getAttribute('data-ys-cat') || '전체';
+          state.shown = PAGE_SIZE;
+          renderFilters();
+          renderGrid();
+          return;
+        }
+        var card = e.target.closest ? e.target.closest('.ys-story-card') : null;
+        if (card && root.contains(card)) {
+          e.preventDefault();
+          state.fromList = true;
+          location.hash = card.getAttribute('data-ys-post');
+          return;
+        }
+        if (e.target.closest && e.target.closest('.ys-story-back')) {
+          goBackToList();
+          return;
+        }
+        var copyBtn = e.target.closest ? e.target.closest('.ys-story-copy') : null;
+        if (copyBtn) {
+          var url = location.href;
+          var done = function() {
+            copyBtn.textContent = '✅ 복사됨!';
+            window.setTimeout(function() { copyBtn.textContent = '🔗 링크 복사'; }, 1800);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(done, function() { window.prompt('링크를 복사하세요', url); });
+          } else {
+            window.prompt('링크를 복사하세요', url);
+          }
+        }
+      });
+
+      moreBtn.addEventListener('click', function() {
+        state.shown += PAGE_SIZE;
+        renderGrid();
+      });
+
+      window.addEventListener('hashchange', route);
+
+      renderFilters();
+      renderGrid();
+      route();
+
+      ydMark('brandStoryFeed', true,
+        '글 ' + posts.length + '건 렌더' + (PREVIEW ? ' (미리보기 모드: 초안 포함)' : ' (공개 글만)'));
+    }
+  }
+
   /* ═══ 비회원 장바구니 주문하기 버튼 (구 카카오 배너 자리) ═══ */
   function bindCartKakaoBanner() {
     const CONFIG_BANNER = {
@@ -2665,6 +2910,7 @@
       bindProductPrefetch();
       bindCustomProductModal();
       bindCartKakaoBanner();
+      bindBrandStoryFeed();
     }
 
     bindOptionKeepOpen();
@@ -2684,7 +2930,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.41] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.42] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
