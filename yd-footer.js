@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_55__) {
+  if (window.__YD_FOOTER_V3_56__) {
     return;
   }
-  window.__YD_FOOTER_V3_55__ = true;
+  window.__YD_FOOTER_V3_56__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.55', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.56', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1924,7 +1924,7 @@
       var s = flowState();
       var sheetOpen = root.classList.contains('is-open');
       root.classList.toggle('is-top', cartPopup);
-      root.innerHTML = '<div class="yd-bs-dock"><button class="yd-bs-review-btn" type="button">리뷰보기</button><button class="yd-bs-open"><span>옵션 보기</span></button></div><button class="yd-bs-backdrop" aria-label="옵션 창 닫기"></button><section class="yd-bs-sheet" role="dialog" aria-modal="true" aria-hidden="' + (sheetOpen ? 'false' : 'true') + '" aria-label="상품 옵션 선택"><div class="yd-bs-grab"></div><header class="yd-bs-head"><div class="yd-bs-head-text"><span class="yd-bs-mode">' + escT(cfg.title) + '</span><h2>상품 옵션 선택</h2></div><button class="yd-bs-close" aria-label="옵션 창 닫기">닫기</button></header><div class="yd-bs-scroll">' + (sheetOpen ? shippingGauge(s) : '') + stepContent(s) + '</div><footer class="yd-bs-foot">' + '<div class="yd-bs-total" aria-live="polite"><span>' + escT(cfg.unit) + ' ' + s.reqQty + '개 · 추가상품 ' + s.optQty + '개</span><strong>' + escT(s.total) + '</strong></div>' + (step === 3 ? '<div class="yd-bs-step3-backrow"><button class="yd-bs-back yd-bs-back-mini" ' + (addingCart ? 'disabled' : '') + '>뒤로가기</button></div><div class="yd-bs-actions"><button class="yd-bs-back yd-bs-cart-add" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode === 'close' ? '담는 중…' : '장바구니 담기') + '</button><button class="yd-bs-primary" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode === 'pay' ? '결제로 이동 중…' : '바로 결제하기') + '</button></div>' : '<div class="yd-bs-actions"><button class="yd-bs-back" ' + (step === 1 ? 'disabled' : '') + '>이전으로 돌아가기</button><button class="yd-bs-primary" ' + (canNext(s) ? '' : 'disabled') + '>' + primaryLabel() + '</button></div>') + '</footer></section>' + cartChoice();
+      root.innerHTML = '<div class="yd-bs-dock"><button class="yd-bs-review-btn" type="button">리뷰보기</button><button class="yd-bs-open"><span>옵션 보기</span></button></div><button class="yd-bs-backdrop" aria-label="옵션 창 닫기"></button><section class="yd-bs-sheet" role="dialog" aria-modal="true" aria-hidden="' + (sheetOpen ? 'false' : 'true') + '" aria-label="상품 옵션 선택"><div class="yd-bs-grab"></div><header class="yd-bs-head"><div class="yd-bs-head-text"><span class="yd-bs-mode">' + escT(cfg.title) + '</span><h2>상품 옵션 선택</h2></div><button class="yd-bs-close" aria-label="옵션 창 닫기">닫기</button></header><div class="yd-bs-scroll">' + (sheetOpen ? shippingGauge(s) : '') + stepContent(s) + '</div><footer class="yd-bs-foot">' + '<div class="yd-bs-total" aria-live="polite"><span>' + escT(cfg.unit) + ' ' + s.reqQty + '개 · 추가상품 ' + s.optQty + '개</span><strong>' + escT(s.total) + '</strong></div>' + (step === 3 ? '<div class="yd-bs-step3-backrow"><button class="yd-bs-back yd-bs-back-mini" ' + (addingCart ? 'disabled' : '') + '>뒤로가기</button></div><div class="yd-bs-actions"><button class="yd-bs-back yd-bs-cart-add" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode === 'close' ? '담는 중…' : '장바구니 담기') + '</button><button class="yd-bs-primary" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode === 'pay' ? '결제로 이동 중…' : '바로 결제하기') + '</button></div>' : '<div class="yd-bs-actions"><button class="yd-bs-back">이전으로 돌아가기</button><button class="yd-bs-primary" ' + (canNext(s) ? '' : 'disabled') + '>' + primaryLabel() + '</button></div>') + '</footer></section>' + cartChoice();
       root.classList.toggle('is-cart-result', cartPopup);
       var scroll = root.querySelector('.yd-bs-scroll');
       if (scroll) scroll.scrollTop = previousScroll;
@@ -2070,7 +2070,7 @@
       if (target.dataset.minus) { event.stopPropagation(); var itM = flowState().all.find(function(x) { return x.label === target.dataset.minus; }); if (itM) changeQty(itM, -1); return; }
       if (target.dataset.remove) { var itR = flowState().all.find(function(x) { return x.label === target.dataset.remove; }); if (itR) removeFlowItem(itR); return; }
       if (target.matches('.yd-bs-cart-add')) { performCartAdd('close'); return; }
-      if (target.matches('.yd-bs-back')) { step = Math.max(1, step - 1); cartPopup = false; render(); var sc = root.querySelector('.yd-bs-scroll'); if (sc) sc.scrollTop = 0; return; }
+      if (target.matches('.yd-bs-back')) { if (step === 1) { closeSheet(); return; } step = Math.max(1, step - 1); cartPopup = false; render(); var sc = root.querySelector('.yd-bs-scroll'); if (sc) sc.scrollTop = 0; return; }
       if (target.matches('.yd-bs-primary')) {
         var s = flowState();
         if (!canNext(s)) return;
@@ -3467,7 +3467,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.55] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.56] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
