@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_53__) {
+  if (window.__YD_FOOTER_V3_54__) {
     return;
   }
-  window.__YD_FOOTER_V3_53__ = true;
+  window.__YD_FOOTER_V3_54__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.53', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.54', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1713,7 +1713,7 @@
       var btn = function(v, strong, span) {
         return '<button class="yd-bs-category ' + (activeTab === v ? 'is-selected' : '') + '" data-category="' + v + '" aria-pressed="' + (activeTab === v) + '"><strong' + (strong.length > 3 ? ' class="is-wide"' : '') + '>' + strong + '</strong><span>' + span + '</span><b>' + totals[v] + '종 · 선택 ' + counts[v] + '개</b></button>';
       };
-      return '<div class="yd-bs-category-grid" role="group" aria-label="라인 선택">' + btn('S', 'S', '단백밥 도시락') + btn('L', 'L', '단백밥 도시락') + btn('P', 'PREMIUM', '프리미엄 도시락') + '</div>';
+      return '<div class="yd-bs-category-grid" role="group" aria-label="라인 선택">' + btn('S', 'S', '닭가슴살 도시락') + btn('L', 'L', '닭가슴살 도시락') + btn('P', 'PREMIUM', '프리미엄 도시락') + '</div>';
     }
     /* 네이티브 그룹 라벨 → 고객용 표기 (소유자 지시 2026-07-21) */
     function displayGroupLabel(label) {
@@ -3467,7 +3467,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.53] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.54] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
