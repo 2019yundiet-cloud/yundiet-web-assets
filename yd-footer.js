@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_58__) {
+  if (window.__YD_FOOTER_V3_59__) {
     return;
   }
-  window.__YD_FOOTER_V3_58__ = true;
+  window.__YD_FOOTER_V3_59__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.58', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.59', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -792,10 +792,14 @@
       if (imgs.length) { ydMark('detailImageWarm', true, '아래쪽 이미지 ' + imgs.length + '장 선행 캐시'); }
     }
     var kick = function() { window.setTimeout(startWarm, 800); };
-    if (document.readyState === 'complete') { kick(); }
-    else { window.addEventListener('load', kick); }
-    /* 로드 이벤트가 늦는 무거운 페이지 대비 안전망 */
-    window.setTimeout(startWarm, 12000);
+    /* 안전망 포함 전부 load 이후에만 발화 — 콜드 로드(load 19s 실측)에서
+       고정 12s 타이머가 임계 리소스와 대역폭 경쟁하던 문제 수정(v3.59) */
+    var arm = function() {
+      kick();
+      window.setTimeout(startWarm, 15000); /* kick 경로 실패 대비 안전망 */
+    };
+    if (document.readyState === 'complete') { arm(); }
+    else { window.addEventListener('load', arm); }
   }
 
   /* ═══ 상세 비디오 로드 픽스 ═══
@@ -846,12 +850,17 @@
         if (t) { prefetch(urlFor(t)); }
       }, { passive: true, capture: true });
     });
-    /* 유휴 시점에 첫 화면 상품 4개 선제 프리페치 */
-    window.setTimeout(function() {
-      Array.from(document.querySelectorAll('a[href*="shop_view"]')).slice(0, 4).forEach(function(a) {
-        prefetch(a.href);
-      });
-    }, 3500);
+    /* 유휴 시점에 첫 화면 상품 4개 선제 프리페치 — load 이후로 게이트(v3.59):
+       콜드 로드 중 3.5s 고정 발화가 임계 리소스와 대역폭 경쟁하던 문제 수정 */
+    var warmTop = function() {
+      window.setTimeout(function() {
+        Array.from(document.querySelectorAll('a[href*="shop_view"]')).slice(0, 4).forEach(function(a) {
+          prefetch(a.href);
+        });
+      }, 2000);
+    };
+    if (document.readyState === 'complete') { warmTop(); }
+    else { window.addEventListener('load', warmTop); }
   }
 
   /* ═══ 요약설명 원문 노출 방어 ═══
@@ -3467,7 +3476,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.58] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.59] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
