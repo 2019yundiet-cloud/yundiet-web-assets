@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_61__) {
+  if (window.__YD_FOOTER_V3_62__) {
     return;
   }
-  window.__YD_FOOTER_V3_61__ = true;
+  window.__YD_FOOTER_V3_62__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.61', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.62', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1722,9 +1722,12 @@
       var btn = function(v, strong, span) {
         return '<button class="yd-bs-category ' + (activeTab === v ? 'is-selected' : '') + '" data-category="' + v + '" aria-pressed="' + (activeTab === v) + '"><strong' + (strong.length > 3 ? ' class="is-wide"' : '') + '>' + strong + '</strong><span>' + span + '</span><b>' + totals[v] + '종 · 선택 ' + counts[v] + '개</b></button>';
       };
-      /* 1251(스레드 친구 전용): 중량 큰 글씨 표기 (소유자 지시 2026-08-11) — 다른 상품은 기존 표기 유지 */
+      /* 1251(스레드 친구 전용): 중량 큰 글씨 + 도시락명 + 가격 줄 표기 (소유자 지시 2026-08-11) — 다른 상품은 기존 표기 유지 */
       if (flowIdx === '1251') {
-        return '<div class="yd-bs-category-grid" role="group" aria-label="라인 선택">' + btn('S', '325g', '닭가슴살 도시락') + btn('L', '420g', '닭가슴살 도시락') + btn('P', 'PREMIUM', '프리미엄 도시락') + '</div>';
+        var btnW = function(v, strong, span, price) {
+          return '<button class="yd-bs-category ' + (activeTab === v ? 'is-selected' : '') + '" data-category="' + v + '" aria-pressed="' + (activeTab === v) + '"><strong' + (strong.length > 3 ? ' class="is-wide"' : '') + '>' + strong + '</strong><span>' + span + '</span>' + (price ? '<em class="yd-bs-cat-price">' + price + '</em>' : '') + '<b>' + totals[v] + '종 · 선택 ' + counts[v] + '개</b></button>';
+        };
+        return '<div class="yd-bs-category-grid" role="group" aria-label="라인 선택">' + btnW('S', '325g', '닭가슴살 도시락', '4,990원') + btnW('L', '420g', '닭가슴살 도시락', '5,190원') + btnW('P', 'PREMIUM', '프리미엄 도시락', '') + '</div>';
       }
       return '<div class="yd-bs-category-grid" role="group" aria-label="라인 선택">' + btn('S', 'S', '닭가슴살 도시락') + btn('L', 'L', '닭가슴살 도시락') + btn('P', 'PREMIUM', '프리미엄 도시락') + '</div>';
     }
@@ -3480,7 +3483,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.61] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.62] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
