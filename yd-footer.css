@@ -2017,3 +2017,11 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     .ys-story-ahead h1 { font-size: 24px; }
   }
 
+  /* 도매몰 슬라이더 복제 노드가 문서 폭을 늘려 PC 가로 스크롤을 만드는 현상 차단 */
+  html.yd-wholesale-page,
+  html.yd-wholesale-page body {
+    max-width: 100%;
+    overflow-x: hidden !important;
+    overflow-x: clip !important;
+  }
+

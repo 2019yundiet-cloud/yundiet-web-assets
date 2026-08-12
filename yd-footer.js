@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_62__) {
+  if (window.__YD_FOOTER_V3_63__) {
     return;
   }
-  window.__YD_FOOTER_V3_62__ = true;
+  window.__YD_FOOTER_V3_63__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.62', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.63', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -131,6 +131,93 @@
     /* /main = 모바일 하단 탭 '홈' 버튼의 랜딩 경로(홈과 동일 구성) — v3.45에서 추가 */
     const p = location.pathname.replace(/\/+$/, '').toLowerCase();
     return p === '' || p === '/index' || p === '/home' || p === '/main';
+  }
+
+  function isWholesalePage() {
+    return location.pathname.replace(/\/+$/, '').toLowerCase() === '/wholesale';
+  }
+
+  function applyWholesalePageFixes() {
+    if (!isWholesalePage()) {
+      return;
+    }
+
+    document.documentElement.classList.add('yd-wholesale-page');
+
+    const formUrl = 'https://naver.me/5W9uV6OC';
+    const heroSelector = '#s20251029368218a9f271d, #s202510297c0ef98f0e934';
+    qsa(heroSelector + ' a.visual_link').forEach(function(link) {
+      if (link.getAttribute('href') !== formUrl) {
+        link.setAttribute('href', formUrl);
+      }
+      if (link.getAttribute('aria-label') !== '윤식단 공동구매 신청하기') {
+        link.setAttribute('aria-label', '윤식단 공동구매 신청하기');
+      }
+    });
+
+    qsa(heroSelector + ' .item.holder.section').forEach(function(item) {
+      if (qs('a.visual_link', item)) {
+        return;
+      }
+      const link = document.createElement('a');
+      link.className = 'visual_link yd-wholesale-cta-fix';
+      link.href = formUrl;
+      link.setAttribute('aria-label', '윤식단 공동구매 신청하기');
+      link.style.cssText = 'position:absolute;inset:0;display:block;z-index:3;';
+      item.appendChild(link);
+    });
+
+    qsa('.shop-item').forEach(function(card) {
+      let idx = '';
+      try {
+        const props = JSON.parse(card.getAttribute('data-product-properties') || '{}');
+        idx = String(props.idx || '');
+      } catch (err) {}
+      if (idx !== '1220') {
+        return;
+      }
+
+      const detail = qs('.item-pay-detail', card);
+      if (!detail) {
+        return;
+      }
+      qsa('[data-yd-discount-display="root"]', detail).forEach(function(el) { el.remove(); });
+      const source = qs('p.pay', detail);
+      if (source && source.textContent.replace(/[^0-9]/g, '') === '0') {
+        source.style.display = 'none';
+        source.setAttribute('data-yd-wholesale-price-source', '');
+      }
+      if (!qs('[data-yd-wholesale-price]', detail)) {
+        const price = document.createElement('p');
+        price.className = 'no-margin yd-wholesale-balancy-price';
+        price.setAttribute('data-yd-wholesale-price', '');
+        price.innerHTML = '<span style="font-size:12px;color:#666;margin-right:6px;">4팩 체험가</span><strong style="font-size:16px;color:#2a341e;">9,800원부터</strong>';
+        detail.insertBefore(price, source || detail.firstChild);
+      }
+    });
+
+    if (isProductDetailPage() && new URLSearchParams(location.search).get('idx') === '1220') {
+      const root = qs('.pay_detail');
+      const current = root && qs('.real_price', root);
+      const currentValue = current ? current.textContent.replace(/[^0-9]/g, '') : '';
+      if (root && currentValue === '0') {
+        qsa('[data-yd-discount-display="root"]', root).forEach(function(el) { el.remove(); });
+        const holder = current.closest('.holder');
+        if (holder) {
+          holder.style.display = 'none';
+          holder.setAttribute('data-yd-wholesale-price-source', '');
+        }
+        if (!qs('[data-yd-wholesale-price]', root)) {
+          const row = document.createElement('div');
+          row.className = 'holder table-row';
+          row.setAttribute('data-yd-wholesale-price', '');
+          row.innerHTML = '<span style="font-size:13px;color:#666;margin-right:8px;">4팩 체험가</span><strong class="real_price">9,800원부터</strong>';
+          root.insertBefore(row, root.firstChild);
+        }
+      }
+    }
+
+    ydMark('wholesalePageFixes', true, 'PC 가로 스크롤·밸런시 0원·모바일 CTA 보정');
   }
 
   function isGuestUser() {
@@ -3479,11 +3566,15 @@
     bindProfileModalHeight();
     bindReviewModalHeight();
     bindDiscountDisplay();
+    if (isWholesalePage()) {
+      applyWholesalePageFixes();
+      ensureObserver('wholesalePageFixes', applyWholesalePageFixes);
+    }
 
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.62] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.63] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
