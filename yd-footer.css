@@ -1,4 +1,13 @@
 
+  /* TEMP 2026-08-13~16 배송 중단: 상세·장바구니·상품목록 상단 배송 타이머 숨김.
+     복구: 이 블록만 삭제한 뒤 다음 버전으로 릴리즈한다. */
+  #yd-ship-card-detail,
+  .yd-ship-card-home,
+  #yd-ship-banner-cart,
+  #yd-ship-banner-spacer {
+    display: none !important;
+  }
+
   /* ── 배송 카드 (홈/상세페이지) ── */
   .yd-ship-card {
     background: #3b4024;
