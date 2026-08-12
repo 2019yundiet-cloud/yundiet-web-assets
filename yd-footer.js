@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_64__) {
+  if (window.__YD_FOOTER_V3_65__) {
     return;
   }
-  window.__YD_FOOTER_V3_64__ = true;
+  window.__YD_FOOTER_V3_65__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.64', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.65', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -167,17 +167,44 @@
       item.appendChild(link);
     });
 
+    const savingCopy = {
+      '1098': { text: '일반몰 대비 9% 할인' },
+      '1111': { text: '일반몰 대비 8% 할인' },
+      '1108': { text: '일반몰 대비 21% 할인' },
+      '1106': { text: '일반몰 대비 10% 할인' },
+      '1221': { text: '일반몰 대비 3% 할인' },
+      '1252': { text: '일반몰 대비 3% 할인' },
+      '1220': { text: '일반몰과 동일가', neutral: true },
+      '1222': { text: '일반몰 대비 할인 없음', neutral: true }
+    };
+
     qsa('.shop-item').forEach(function(card) {
       let idx = '';
       try {
         const props = JSON.parse(card.getAttribute('data-product-properties') || '{}');
         idx = String(props.idx || '');
       } catch (err) {}
+
+      const compare = savingCopy[idx];
+      const detail = qs('.item-pay-detail', card);
+      if (compare && detail) {
+        let saving = qs('[data-yd-wholesale-saving]', detail);
+        if (!saving) {
+          saving = document.createElement('p');
+          saving.className = 'yd-wholesale-saving';
+          saving.setAttribute('data-yd-wholesale-saving', idx);
+          detail.appendChild(saving);
+        }
+        saving.classList.toggle('is-neutral', !!compare.neutral);
+        if (saving.textContent !== compare.text) {
+          saving.textContent = compare.text;
+        }
+      }
+
       if (idx !== '1220') {
         return;
       }
 
-      const detail = qs('.item-pay-detail', card);
       if (!detail) {
         return;
       }
@@ -1575,7 +1602,15 @@
     var FLOW_OVERRIDES = {
       '672': { min: 6,
                headline: '단백밥 메뉴를 6개 이상 골라주세요.',
-               lead: 'S, L, 프리미엄을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' }
+               lead: 'S, L, 프리미엄을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' },
+      '1098': { min: 6, scheme: 'size', categories: ['L', 'P'],
+                title: '윤식단 단백밥 L · 프리미엄',
+                headline: '단백밥 L·프리미엄 메뉴를 6개 이상 골라주세요.',
+                lead: '원하는 L·프리미엄 메뉴를 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' },
+      '1111': { min: 6, scheme: 'size', categories: ['S'],
+                title: '윤식단 단백밥 S',
+                headline: '단백밥 S 메뉴를 6개 이상 골라주세요.',
+                lead: '원하는 S 메뉴를 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' }
     };
     var cfg = null; /* 옵션 로드 후 buildFlowCfg()가 확정 */
     if (document.getElementById('yd-bs-root')) return;
@@ -1618,13 +1653,15 @@
       else if (/단백밥|단백질\s*도시락|제육|불고기|함박|훈제오리|닭가슴살|단백질/.test(rawTitle)) fam = { k: 'danbaekbap', unit: '단백밥', label: '단백밥', theme: '' };
       else fam = { k: 'generic', unit: '상품', label: '', theme: '' };
       var reqNames = Array.from(document.querySelectorAll('#prod_options a[onclick*="selectRequireOption"]')).map(optionNameOf);
-      var scheme = (reqNames.some(function(n) { return /^\[S\]/i.test(n); }) && reqNames.some(function(n) { return /^\[L\]/i.test(n); })) ? 'size' : 'groups';
       var ov = FLOW_OVERRIDES[flowIdx] || {};
+      var detectedScheme = (reqNames.some(function(n) { return /^\[S\]/i.test(n); }) && reqNames.some(function(n) { return /^\[L\]/i.test(n); })) ? 'size' : 'groups';
+      var scheme = ov.scheme || detectedScheme;
       var min = ov.min != null ? ov.min : (scheme === 'size' ? 6 : 1);
       cfg = {
         family: fam.k,
         unit: ov.unit || fam.unit,
         scheme: scheme,
+        categories: ov.categories || null,
         min: min,
         title: ov.title || (fam.label ? '윤식단 ' + fam.label : rawTitle.slice(0, 22)),
         headline: ov.headline || (scheme === 'size'
@@ -1718,6 +1755,10 @@
     /* 사이즈 스킴(단백밥): S / L / 프리미엄 분류 */
     var premiumPattern = /함박|쌈장|불고기|제육|훈제오리/;
     var categoryOf = function(name) { return premiumPattern.test(name) ? 'P' : /^\[S\]/i.test(name) ? 'S' : 'L'; };
+    /* S 전용 도매 상품처럼 옵션명에 [S] 접두사가 없는 단일 라인은 전부 지정 탭으로 묶는다. */
+    var flowCategoryOf = function(name) {
+      return cfg && cfg.categories && cfg.categories.length === 1 ? cfg.categories[0] : categoryOf(name);
+    };
     var categoryLabel = function(v) { return v === 'S' ? '단백밥 S' : v === 'P' ? '프리미엄' : '단백밥 L'; };
 
     function scheduleRender(withFollowup) {
@@ -1801,11 +1842,11 @@
     var saucePattern = /볼케이노|양념치킨|블랙\s*알리오|블랙알리오|데리야끼|바베큐/;
     var hasSeparateSauce = function(name) { return !/\(소스X\)/.test(name) && saucePattern.test(name); };
 
-    function sizeTabs(s) {
+    function sizeTabs(s, available) {
       var totals = { S: 0, L: 0, P: 0 };
-      s.cat.groups.forEach(function(g) { if (g.main) g.items.forEach(function(it) { totals[categoryOf(it[0])] += 1; }); });
+      s.cat.groups.forEach(function(g) { if (g.main) g.items.forEach(function(it) { totals[flowCategoryOf(it[0])] += 1; }); });
       var counts = { S: 0, L: 0, P: 0 };
-      s.req.forEach(function(x) { counts[categoryOf(x.label)] += x.qty; });
+      s.req.forEach(function(x) { counts[flowCategoryOf(x.label)] += x.qty; });
       var btn = function(v, strong, span) {
         return '<button class="yd-bs-category ' + (activeTab === v ? 'is-selected' : '') + '" data-category="' + v + '" aria-pressed="' + (activeTab === v) + '"><strong' + (strong.length > 3 ? ' class="is-wide"' : '') + '>' + strong + '</strong><span>' + span + '</span><b>' + totals[v] + '종 · 선택 ' + counts[v] + '개</b></button>';
       };
@@ -1816,7 +1857,15 @@
         };
         return '<div class="yd-bs-category-grid" role="group" aria-label="라인 선택">' + btnW('S', '325g', '닭가슴살 도시락', '4,990원') + btnW('L', '420g', '닭가슴살 도시락', '5,190원') + btnW('P', 'PREMIUM', '프리미엄 도시락', '') + '</div>';
       }
-      return '<div class="yd-bs-category-grid" role="group" aria-label="라인 선택">' + btn('S', 'S', '닭가슴살 도시락') + btn('L', 'L', '닭가슴살 도시락') + btn('P', 'PREMIUM', '프리미엄 도시락') + '</div>';
+      var defs = {
+        S: ['S', '닭가슴살 도시락'],
+        L: ['L', '닭가슴살 도시락'],
+        P: ['PREMIUM', '프리미엄 도시락']
+      };
+      available = available && available.length ? available : ['S', 'L', 'P'];
+      return '<div class="yd-bs-category-grid' + (available.length === 3 ? '' : ' is-fit') + '" role="group" aria-label="라인 선택">' + available.map(function(v) {
+        return btn(v, defs[v][0], defs[v][1]);
+      }).join('') + '</div>';
     }
     /* 네이티브 그룹 라벨 → 고객용 표기 (소유자 지시 2026-07-21) */
     function displayGroupLabel(label) {
@@ -1914,7 +1963,7 @@
       return '<div class="yd-bs-picked-card" aria-label="담은 상품"><h4>담은 상품</h4><div class="yd-bs-review-list">' + rows + '</div></div>';
     }
     function reviewCategoryOf(label) {
-      if (cfg.scheme === 'size') return categoryLabel(categoryOf(label));
+      if (cfg.scheme === 'size') return categoryLabel(flowCategoryOf(label));
       return cfg.unit;
     }
     /* 표시용 라벨 정리(장식문자 제거) — data 속성은 반드시 원본 유지 */
@@ -1966,10 +2015,16 @@
       if (step === 1) {
         var body = '';
         if (cfg.scheme === 'size') {
-          if (activeTab === null) activeTab = 'L';
+          var availableSizes = cfg.categories || ['S', 'L', 'P'].filter(function(v) {
+            return s.cat.groups.some(function(g) {
+              return g.main && g.items.some(function(it) { return flowCategoryOf(it[0]) === v; });
+            });
+          });
+          if (!availableSizes.length) availableSizes = ['L'];
+          if (activeTab === null || availableSizes.indexOf(activeTab) === -1) activeTab = availableSizes[0];
           var items = [];
-          s.cat.groups.forEach(function(g) { if (g.main) g.items.forEach(function(it) { if (categoryOf(it[0]) === activeTab) items.push(it); }); });
-          body = sizeTabs(s) + menuCards(items, s, activeTab === 'P' ? 'P' : activeTab);
+          s.cat.groups.forEach(function(g) { if (g.main) g.items.forEach(function(it) { if (flowCategoryOf(it[0]) === activeTab) items.push(it); }); });
+          body = sizeTabs(s, availableSizes) + menuCards(items, s, activeTab === 'P' ? 'P' : activeTab);
         } else {
           var mains = s.cat.groups.filter(function(g) { return g.main; });
           if (mains.length > prevMainsLen && prevMainsLen > 0) activeTab = mains.length - 1;
@@ -3574,7 +3629,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.64] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.65] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
