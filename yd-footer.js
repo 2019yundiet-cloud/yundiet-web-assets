@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_70__) {
+  if (window.__YD_FOOTER_V3_71__) {
     return;
   }
-  window.__YD_FOOTER_V3_70__ = true;
+  window.__YD_FOOTER_V3_71__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.70', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.71', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1726,7 +1726,7 @@
       var rawTitle = normalizeT(((document.querySelector('#prod_detail h1') || document.querySelector('h1') || {}).textContent) || document.title.split(':')[0] || '');
       var fam;
       if (/밸런시|곡물볶음밥/.test(rawTitle)) fam = { k: 'balancy', unit: '밸런시', label: '밸런시', theme: 'yd-bs-family-balancy' };
-      else if (/순수\s*단백|그릴드\s*포크/.test(rawTitle)) fam = { k: 'soonsu', unit: '순수단백', label: '순수단백', theme: 'yd-bs-family-soonsu' };
+      else if (/순수\s*단백|그릴드\s*포크|돈다리살/.test(rawTitle)) fam = { k: 'soonsu', unit: '순수단백', label: '순수단백', theme: 'yd-bs-family-soonsu' };
       else if (/단백밥|단백질\s*도시락|제육|불고기|함박|훈제오리|닭가슴살|단백질/.test(rawTitle)) fam = { k: 'danbaekbap', unit: '단백밥', label: '단백밥', theme: '' };
       else fam = { k: 'generic', unit: '상품', label: '', theme: '' };
       var reqNames = Array.from(document.querySelectorAll('#prod_options a[onclick*="selectRequireOption"]')).map(optionNameOf);
@@ -2069,6 +2069,8 @@
           return sum + (found ? found.qty : 0);
         }, 0);
         var proteinGroup = /단백질\s*추가구성/.test(g.label);
+        var discountMatch = flowIdx === '1220' ? g.label.match(/(\d+)%\s*할인/) : null;
+        var discountBadge = discountMatch ? '<span class="yd-bs-discount-badge">' + escT(discountMatch[1]) + '% 할인</span>' : '';
         var welcomeOffer = proteinGroup && promoIdx() === '1241';
         return '<section class="yd-bs-addon-group' + (welcomeOffer ? ' yd-bs-welcome-offer' : '') + '"><div class="yd-bs-addon-head"><h4>' + escT(g.label) + '</h4><span>' + groupQty + '개 선택</span></div><div class="yd-bs-addon-list">' + g.items.map(function(pair) {
           var name = pair[0], price = pair[1];
@@ -2077,7 +2079,7 @@
           if (!found && pendingQty.has(name)) q = pendingQty.get(name);
           var limitSeal = welcomeOffer ? '<span class="yd-bs-limit-seal"><span>30개</span><span>한정</span></span>' : '';
           var limitStock = welcomeOffer ? '<span class="yd-bs-limit-stock"><span class="yd-bs-limit-stock-dot" aria-hidden="true"></span><span>30개 한정 · 이제 <b>8개</b> 남았어요</span></span>' : '';
-          return '<div class="yd-bs-addon-choice ' + ((q || pending) ? 'is-selected ' : '') + (pending ? 'is-pending' : '') + '" aria-busy="' + pending + '"><button class="yd-bs-addon-main" data-addon="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-check" aria-hidden="true"></span>' + limitSeal + '<span class="yd-bs-addon-copy"><strong class="' + copyFitClass(name).trim() + '">' + escT(name) + '</strong><span class="yd-bs-addon-meta"><em>' + priceLabel(price) + '</em>' + (unit ? '<span class="yd-bs-unit-badge">100g당 ' + money(unit) + '</span>' : '') + '</span>' + limitStock + '</span></button>' +
+          return '<div class="yd-bs-addon-choice ' + ((q || pending) ? 'is-selected ' : '') + (pending ? 'is-pending' : '') + '" aria-busy="' + pending + '"><button class="yd-bs-addon-main" data-addon="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-check" aria-hidden="true"></span>' + limitSeal + '<span class="yd-bs-addon-copy"><strong class="' + copyFitClass(name).trim() + '">' + escT(name) + '</strong><span class="yd-bs-addon-meta"><em>' + priceLabel(price) + '</em>' + discountBadge + (unit ? '<span class="yd-bs-unit-badge">100g당 ' + money(unit) + '</span>' : '') + '</span>' + limitStock + '</span></button>' +
             (q ? '<span class="yd-bs-qty-mini"><button data-minus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 줄이기">−</button><strong aria-live="polite">' + q + '</strong><button data-plus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 늘리기">＋</button></span>' : '<button class="yd-bs-addon-plus" data-addon="' + escT(name) + '" aria-label="' + escT(name) + ' 추가">＋</button>') + '</div>';
         }).join('') + '</div></section>';
       }).join('') + '</div>';
@@ -3706,7 +3708,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.70] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.71] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

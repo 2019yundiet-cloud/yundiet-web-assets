@@ -1601,6 +1601,21 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     color: #fff !important;
   }
 
+  /* 곡물볶음밥 2차 추가상품 할인율: 관리자 10% 할인 그룹을 빨간색으로 명시 */
+  #yd-bs-root .yd-bs-discount-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: #fff0ed;
+    color: #e8442e;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 850;
+    line-height: 1.2;
+  }
+
   /* 도매몰 순수단백 옵션 100g당 가격: 네이티브 옵션 배지를 눈에 띄게 보정 */
   .yd-wholesale-page .option_badge[data-yd-wholesale-unit-badge] {
     display: inline-flex !important;
