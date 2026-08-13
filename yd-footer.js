@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_69__) {
+  if (window.__YD_FOOTER_V3_70__) {
     return;
   }
-  window.__YD_FOOTER_V3_69__ = true;
+  window.__YD_FOOTER_V3_70__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.69', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.70', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -194,13 +194,13 @@
     const unitPriceCopy = {
       '1108': '1팩 1,635원부터',
       '1101': '1팩 1,130원부터',
-      '1106': '1팩 3,045원부터',
+      '1106': '1팩 2,090원부터',
       '1221': '1팩 1,915원부터',
       '1252': '1팩 1,967원부터',
       '1222': '1팩 1,995원부터',
-      '1253': '1팩 2,025원부터'
+      '1253': '1팩 2,090원부터'
     };
-    const wholesaleOrder = ['1098', '1111', '1108', '1101', '1106', '1253', '1221', '1220', '1252', '1222'];
+    const wholesaleOrder = ['1098', '1111', '1108', '1101', '1106', '1221', '1220', '1253', '1252', '1222'];
     const wholesaleRank = new Map(wholesaleOrder.map(function(idx, rank) { return [idx, rank]; }));
     const cardsByParent = new Map();
 
@@ -1667,6 +1667,7 @@
      옵션·가격은 네이티브 DOM에서 동적으로 읽고, 선택은 네이티브 클릭으로 위임한다. */
   function bindOptionFlow() {
     if (!isProductDetailPage()) return;
+    document.documentElement.classList.add('yd-product-detail-page');
     var flowIdx = new URLSearchParams(location.search).get('idx') || '';
     /* 상품별 세부 오버라이드 (자동 감지 값 덮어쓰기) */
     var FLOW_OVERRIDES = {
@@ -1725,7 +1726,7 @@
       var rawTitle = normalizeT(((document.querySelector('#prod_detail h1') || document.querySelector('h1') || {}).textContent) || document.title.split(':')[0] || '');
       var fam;
       if (/밸런시|곡물볶음밥/.test(rawTitle)) fam = { k: 'balancy', unit: '밸런시', label: '밸런시', theme: 'yd-bs-family-balancy' };
-      else if (/순수\s*단백/.test(rawTitle)) fam = { k: 'soonsu', unit: '순수단백', label: '순수단백', theme: 'yd-bs-family-soonsu' };
+      else if (/순수\s*단백|그릴드\s*포크/.test(rawTitle)) fam = { k: 'soonsu', unit: '순수단백', label: '순수단백', theme: 'yd-bs-family-soonsu' };
       else if (/단백밥|단백질\s*도시락|제육|불고기|함박|훈제오리|닭가슴살|단백질/.test(rawTitle)) fam = { k: 'danbaekbap', unit: '단백밥', label: '단백밥', theme: '' };
       else fam = { k: 'generic', unit: '상품', label: '', theme: '' };
       var reqNames = Array.from(document.querySelectorAll('#prod_options a[onclick*="selectRequireOption"]')).map(optionNameOf);
@@ -3705,7 +3706,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.69] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.70] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

@@ -2049,6 +2049,13 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     overflow-x: hidden !important;
     overflow-x: clip !important;
   }
+  /* 아임웹 상품 상세의 음수 row margin·갤러리 복제 노드가 만드는 13px 가로 이동 차단 */
+  html.yd-product-detail-page,
+  html.yd-product-detail-page body {
+    max-width: 100%;
+    overflow-x: hidden !important;
+    overflow-x: clip !important;
+  }
   .yd-wholesale-saving {
     display: inline-flex;
     align-items: center;
