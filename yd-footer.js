@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_65__) {
+  if (window.__YD_FOOTER_V3_66__) {
     return;
   }
-  window.__YD_FOOTER_V3_65__ = true;
+  window.__YD_FOOTER_V3_66__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.65', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.66', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -168,15 +168,19 @@
     });
 
     const savingCopy = {
-      '1098': { text: '일반몰 대비 9% 할인' },
-      '1111': { text: '일반몰 대비 8% 할인' },
-      '1108': { text: '일반몰 대비 21% 할인' },
-      '1106': { text: '일반몰 대비 10% 할인' },
-      '1221': { text: '일반몰 대비 3% 할인' },
-      '1252': { text: '일반몰 대비 3% 할인' },
-      '1220': { text: '일반몰과 동일가', neutral: true },
-      '1222': { text: '일반몰 대비 할인 없음', neutral: true }
+      '1098': { text: '센터 회원 특별가 · 9% 혜택' },
+      '1111': { text: '센터 회원 특별가 · 8% 혜택' },
+      '1108': { text: '센터 회원 특별가 · 21% 혜택' },
+      '1101': { text: '센터 회원 전용 대용량가' },
+      '1106': { text: '센터 회원 특별가 · 10% 혜택' },
+      '1221': { text: '센터 회원 특별가 · 3% 혜택' },
+      '1252': { text: '센터 회원 특별가 · 3% 혜택' },
+      '1220': { text: '센터 회원 전용 구성', neutral: true },
+      '1222': { text: '센터 회원 전용 구성', neutral: true }
     };
+    const wholesaleOrder = ['1098', '1111', '1108', '1101', '1106', '1221', '1220', '1252', '1222'];
+    const wholesaleRank = new Map(wholesaleOrder.map(function(idx, rank) { return [idx, rank]; }));
+    const cardsByParent = new Map();
 
     qsa('.shop-item').forEach(function(card) {
       let idx = '';
@@ -184,6 +188,12 @@
         const props = JSON.parse(card.getAttribute('data-product-properties') || '{}');
         idx = String(props.idx || '');
       } catch (err) {}
+
+      if (wholesaleRank.has(idx) && card.parentElement) {
+        const group = cardsByParent.get(card.parentElement) || [];
+        group.push({ card: card, idx: idx });
+        cardsByParent.set(card.parentElement, group);
+      }
 
       const compare = savingCopy[idx];
       const detail = qs('.item-pay-detail', card);
@@ -220,6 +230,17 @@
         price.setAttribute('data-yd-wholesale-price', '');
         price.innerHTML = '<span style="font-size:12px;color:#666;margin-right:6px;">4팩 체험가</span><strong style="font-size:16px;color:#2a341e;">9,800원부터</strong>';
         detail.insertBefore(price, source || detail.firstChild);
+      }
+    });
+
+    cardsByParent.forEach(function(group, parent) {
+      const desired = group.slice().sort(function(a, b) {
+        return wholesaleRank.get(a.idx) - wholesaleRank.get(b.idx);
+      });
+      const currentKey = group.map(function(item) { return item.idx; }).join(',');
+      const desiredKey = desired.map(function(item) { return item.idx; }).join(',');
+      if (currentKey !== desiredKey) {
+        desired.forEach(function(item) { parent.appendChild(item.card); });
       }
     });
 
@@ -851,6 +872,7 @@
         popup.appendChild(closeBtn);
       }
     });
+
   }
 
   /* ═══ 상세 이미지 선행 워밍 ═══
@@ -3629,7 +3651,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.65] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.66] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
