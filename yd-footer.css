@@ -1601,6 +1601,22 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     color: #fff !important;
   }
 
+  /* 도매몰 순수단백 옵션 100g당 가격: 네이티브 옵션 배지를 눈에 띄게 보정 */
+  .yd-wholesale-page .option_badge[data-yd-wholesale-unit-badge] {
+    display: inline-flex !important;
+    align-items: center;
+    min-height: 24px;
+    padding: 4px 8px !important;
+    margin-right: 6px;
+    border-radius: 999px;
+    background: #e8442e !important;
+    color: #fff !important;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+    vertical-align: middle;
+  }
+
   /* 광고 랜딩 1241 전용 닭가슴살 한정 수량 제안 */
   #yd-bs-root .yd-bs-addon-group.yd-bs-welcome-offer .yd-bs-addon-choice {
     height: auto;

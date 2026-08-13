@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_66__) {
+  if (window.__YD_FOOTER_V3_67__) {
     return;
   }
-  window.__YD_FOOTER_V3_66__ = true;
+  window.__YD_FOOTER_V3_67__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.66', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.67', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -143,6 +143,19 @@
     }
 
     document.documentElement.classList.add('yd-wholesale-page');
+
+    qsa('.option_badge').forEach(function(badge) {
+      const match = badge.textContent.trim().match(/^100g(?:당)?\s*([0-9,]+)원$/);
+      if (!match) {
+        return;
+      }
+      const amount = String(Number(match[1].replace(/,/g, ''))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const label = '100g당 ' + amount + '원';
+      if (badge.textContent !== label) {
+        badge.textContent = label;
+      }
+      badge.setAttribute('data-yd-wholesale-unit-badge', '');
+    });
 
     const formUrl = 'https://naver.me/5W9uV6OC';
     const heroSelector = '#s20251029368218a9f271d, #s202510297c0ef98f0e934';
@@ -1665,6 +1678,12 @@
       var text = normalizeT(el ? el.textContent : '');
       return text ? numberFrom(text) : null;
     };
+    var unitLabelFromAnchor = function(a){
+      var el = a && a.querySelector('.option_badge');
+      var match = normalizeT(el ? el.textContent : '').match(/^100g(?:당)?\s*([0-9,]+)원$/);
+      if (!match) return '';
+      return '100g당 ' + String(Number(match[1].replace(/,/g, ''))).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '원';
+    };
 
     /* 계열(단백밥/밸런시/순수단백)·스킴·최소수량 자동 감지 — 새 상품에도 즉시 적용 */
     function buildFlowCfg() {
@@ -1717,7 +1736,7 @@
           var n = optionNameOf(a);
           if (!n || isNoticeOption(n) || seen.has(n)) return;
           seen.add(n);
-          items.push([n, priceFromAnchor(a)]);
+          items.push([n, priceFromAnchor(a), unitLabelFromAnchor(a)]);
         });
         if (!items.length) return;
         var isAddon = ADDON_LABEL.test(label);
@@ -1959,13 +1978,13 @@
     function menuCards(items, s, tag) {
       var toggled = selectedToggleNames();
       return '<div class="yd-bs-menu-grid">' + items.map(function(pair) {
-        var name = pair[0], price = pair[1];
+        var name = pair[0], price = pair[1], unit = cfg.family === 'soonsu' ? pair[2] : '';
         var found = s.req.find(function(x) { return x.label === name; });
         var q = found ? found.qty : 0, pending = pendingNames.has(name) || (!q && toggled.has(name));
         if (!found && pendingQty.has(name)) q = pendingQty.get(name);
         return '<div class="yd-bs-menu-card ' + ((q || pending) ? 'is-selected ' : '') + (pending ? 'is-pending' : '') + '" aria-busy="' + pending + '">' +
           (tag ? '<span class="yd-bs-line-tag" aria-hidden="true">' + tag + '</span>' : '') +
-          '<button class="yd-bs-menu-main" data-pick="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-menu-name' + copyFitClass(name) + '">' + escT(name) + '</span><span class="yd-bs-menu-meta"><span class="yd-bs-menu-price">' + priceLabel(price) + '</span>' + (hasSeparateSauce(name) ? '<span class="yd-bs-menu-note">· 소스는 별도 제공됩니다</span>' : '') + '</span></button>' +
+          '<button class="yd-bs-menu-main" data-pick="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-menu-name' + copyFitClass(name) + '">' + escT(name) + '</span><span class="yd-bs-menu-meta"><span class="yd-bs-menu-price">' + priceLabel(price) + '</span>' + (unit ? '<span class="yd-bs-unit-badge">' + escT(unit) + '</span>' : '') + (hasSeparateSauce(name) ? '<span class="yd-bs-menu-note">· 소스는 별도 제공됩니다</span>' : '') + '</span></button>' +
           (q ? '<span class="yd-bs-qty-mini"><button data-minus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 줄이기">−</button><strong aria-live="polite">' + q + '</strong><button data-plus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 늘리기">＋</button></span>' : '<button class="yd-bs-menu-plus" data-pick="' + escT(name) + '" aria-label="' + escT(name) + ' 추가">＋</button>') + '</div>';
       }).join('') + '</div>';
     }
@@ -3651,7 +3670,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.66] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.67] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
