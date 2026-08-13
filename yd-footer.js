@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_67__) {
+  if (window.__YD_FOOTER_V3_68__) {
     return;
   }
-  window.__YD_FOOTER_V3_67__ = true;
+  window.__YD_FOOTER_V3_68__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.67', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.68', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1690,7 +1690,7 @@
       var rawTitle = normalizeT(((document.querySelector('#prod_detail h1') || document.querySelector('h1') || {}).textContent) || document.title.split(':')[0] || '');
       var fam;
       if (/밸런시|곡물볶음밥/.test(rawTitle)) fam = { k: 'balancy', unit: '밸런시', label: '밸런시', theme: 'yd-bs-family-balancy' };
-      else if (/순수단백/.test(rawTitle)) fam = { k: 'soonsu', unit: '순수단백', label: '순수단백', theme: 'yd-bs-family-soonsu' };
+      else if (/순수\s*단백/.test(rawTitle)) fam = { k: 'soonsu', unit: '순수단백', label: '순수단백', theme: 'yd-bs-family-soonsu' };
       else if (/단백밥|단백질\s*도시락|제육|불고기|함박|훈제오리|닭가슴살|단백질/.test(rawTitle)) fam = { k: 'danbaekbap', unit: '단백밥', label: '단백밥', theme: '' };
       else fam = { k: 'generic', unit: '상품', label: '', theme: '' };
       var reqNames = Array.from(document.querySelectorAll('#prod_options a[onclick*="selectRequireOption"]')).map(optionNameOf);
@@ -3670,7 +3670,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.67] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.68] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
