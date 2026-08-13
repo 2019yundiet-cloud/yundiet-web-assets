@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_68__) {
+  if (window.__YD_FOOTER_V3_69__) {
     return;
   }
-  window.__YD_FOOTER_V3_68__ = true;
+  window.__YD_FOOTER_V3_69__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.68', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.69', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -145,12 +145,12 @@
     document.documentElement.classList.add('yd-wholesale-page');
 
     qsa('.option_badge').forEach(function(badge) {
-      const match = badge.textContent.trim().match(/^100g(?:당)?\s*([0-9,]+)원$/);
+      const match = badge.textContent.trim().match(/^(100g|1팩)(?:당)?\s*([0-9,]+)원$/);
       if (!match) {
         return;
       }
-      const amount = String(Number(match[1].replace(/,/g, ''))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      const label = '100g당 ' + amount + '원';
+      const amount = String(Number(match[2].replace(/,/g, ''))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const label = match[1] + '당 ' + amount + '원';
       if (badge.textContent !== label) {
         badge.textContent = label;
       }
@@ -191,7 +191,16 @@
       '1220': { text: '센터 회원 전용 구성', neutral: true },
       '1222': { text: '센터 회원 전용 구성', neutral: true }
     };
-    const wholesaleOrder = ['1098', '1111', '1108', '1101', '1106', '1221', '1220', '1252', '1222'];
+    const unitPriceCopy = {
+      '1108': '1팩 1,635원부터',
+      '1101': '1팩 1,130원부터',
+      '1106': '1팩 3,045원부터',
+      '1221': '1팩 1,915원부터',
+      '1252': '1팩 1,967원부터',
+      '1222': '1팩 1,995원부터',
+      '1253': '1팩 2,025원부터'
+    };
+    const wholesaleOrder = ['1098', '1111', '1108', '1101', '1106', '1253', '1221', '1220', '1252', '1222'];
     const wholesaleRank = new Map(wholesaleOrder.map(function(idx, rank) { return [idx, rank]; }));
     const cardsByParent = new Map();
 
@@ -221,6 +230,32 @@
         saving.classList.toggle('is-neutral', !!compare.neutral);
         if (saving.textContent !== compare.text) {
           saving.textContent = compare.text;
+        }
+      }
+
+      const unitPrice = unitPriceCopy[idx];
+      if (unitPrice && detail) {
+        qsa(':scope > .sale_price, :scope > .special-sale-wrap, :scope > .pay', detail).forEach(function(el) {
+          if (el.style.display !== 'none') {
+            el.style.display = 'none';
+          }
+          el.setAttribute('data-yd-wholesale-total-price-source', '');
+        });
+        qsa('[data-yd-discount-display="root"]', detail).forEach(function(el) {
+          if (el.style.display !== 'none') {
+            el.style.display = 'none';
+          }
+          el.setAttribute('data-yd-wholesale-total-price-source', '');
+        });
+        let row = qs('[data-yd-wholesale-unit-price]', detail);
+        if (!row) {
+          row = document.createElement('p');
+          row.className = 'yd-wholesale-unit-price';
+          row.setAttribute('data-yd-wholesale-unit-price', idx);
+          detail.insertBefore(row, detail.firstChild);
+        }
+        if (row.textContent !== unitPrice) {
+          row.textContent = unitPrice;
         }
       }
 
@@ -1680,9 +1715,9 @@
     };
     var unitLabelFromAnchor = function(a){
       var el = a && a.querySelector('.option_badge');
-      var match = normalizeT(el ? el.textContent : '').match(/^100g(?:당)?\s*([0-9,]+)원$/);
+      var match = normalizeT(el ? el.textContent : '').match(/^(100g|1팩)(?:당)?\s*([0-9,]+)원$/);
       if (!match) return '';
-      return '100g당 ' + String(Number(match[1].replace(/,/g, ''))).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '원';
+      return match[1] + '당 ' + String(Number(match[2].replace(/,/g, ''))).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '원';
     };
 
     /* 계열(단백밥/밸런시/순수단백)·스킴·최소수량 자동 감지 — 새 상품에도 즉시 적용 */
@@ -3670,7 +3705,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.68] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.69] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
