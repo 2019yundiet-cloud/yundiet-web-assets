@@ -316,6 +316,48 @@
     ydMark('wholesalePageFixes', true, 'PC 가로 스크롤·밸런시 0원·모바일 CTA 보정');
   }
 
+  function applyRetailUnitPrices() {
+    if (isWholesalePage()) {
+      return;
+    }
+
+    const unitPriceCopy = {
+      '1242': '100g당 1,393원부터',
+      '1125': '100g당 1,593원부터',
+      '1235': '100g당 2,300원부터',
+      '1246': '100g당 1,992원부터',
+      '1214': '100g당 2,300원부터',
+      '1233': '100g당 2,300원부터'
+    };
+
+    qsa('.shop-item[data-product-properties]').forEach(function(card) {
+      let idx = '';
+      try {
+        const props = JSON.parse(card.getAttribute('data-product-properties') || '{}');
+        idx = String(props.idx || '');
+      } catch (err) {}
+
+      const unitPrice = unitPriceCopy[idx];
+      const detail = qs('.item-pay-detail', card);
+      if (!unitPrice || !detail) {
+        return;
+      }
+
+      let row = qs('[data-yd-retail-unit-price]', detail);
+      if (!row) {
+        row = document.createElement('p');
+        row.className = 'yd-retail-unit-price';
+        row.setAttribute('data-yd-retail-unit-price', idx);
+        detail.insertBefore(row, detail.firstChild);
+      }
+      if (row.textContent !== unitPrice) {
+        row.textContent = unitPrice;
+      }
+    });
+
+    ydMark('retailUnitPrices', true, '일반몰 순수단백 6종 100g당 최저가 표시');
+  }
+
   function isGuestUser() {
     return !!qs('.member-info.guest');
   }
@@ -3703,6 +3745,9 @@
     if (isWholesalePage()) {
       applyWholesalePageFixes();
       ensureObserver('wholesalePageFixes', applyWholesalePageFixes);
+    } else {
+      applyRetailUnitPrices();
+      ensureObserver('retailUnitPrices', applyRetailUnitPrices);
     }
 
     window.setTimeout(function() {
