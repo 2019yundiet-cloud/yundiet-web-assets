@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_74__) {
+  if (window.__YD_FOOTER_V3_75__) {
     return;
   }
-  window.__YD_FOOTER_V3_74__ = true;
+  window.__YD_FOOTER_V3_75__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.74', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.75', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1482,29 +1482,16 @@
     }
 
     function syncHomeCardEdges(card) {
-      const items = qsa('.shop-item').filter(function(el) {
-        return el.offsetParent !== null;
-      }).slice(0, 8);
-      if (!items.length) {
-        return;
-      }
-      let L = Infinity;
-      let R = -Infinity;
-      items.forEach(function(it) {
-        const r = it.getBoundingClientRect();
-        if (r.width > 0) {
-          if (r.left < L) L = r.left;
-          if (r.right > R) R = r.right;
-        }
-      });
-      if (!isFinite(L) || !isFinite(R) || R - L < 100) {
-        return;
-      }
-      const w = Math.round(R - L);
-      if (card.dataset.ydW !== String(w)) {
-        card.dataset.ydW = String(w);
-        card.style.width = w + 'px';
-        card.style.maxWidth = 'calc(100% - 8px)';
+      /*
+       * 홈에는 PC/모바일 상품 목록이 따로 있다. 보이는 첫 .shop-item의 폭을
+       * 기준으로 삼으면 목록 가시성이 바뀔 때 배송 카드 폭도 함께 변한다.
+       * 배송 카드는 제목 행의 컨테이너를 기준으로 고정해 두 화면에서 같은
+       * 4px 좌우 여백을 유지한다.
+       */
+      if (card.dataset.ydW !== 'container') {
+        card.dataset.ydW = 'container';
+        card.style.width = 'calc(100% - 8px)';
+        card.style.maxWidth = 'none';
         card.style.marginLeft = 'auto';
         card.style.marginRight = 'auto';
         card.style.boxSizing = 'border-box';
@@ -3708,7 +3695,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.74] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.75] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
