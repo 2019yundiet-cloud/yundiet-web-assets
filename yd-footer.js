@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_75__) {
+  if (window.__YD_FOOTER_V3_76__) {
     return;
   }
-  window.__YD_FOOTER_V3_75__ = true;
+  window.__YD_FOOTER_V3_76__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.75', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.76', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -113,6 +113,16 @@
 
   function isProductDetailPage() {
     return /\/shop_view/.test(location.pathname) || location.search.indexOf('idx=') !== -1;
+  }
+
+  const PURE_PROTEIN_NO_SHIP_GAUGE_IDS = new Set(['1125', '1214', '1233', '1235', '1242', '1246']);
+
+  function currentProductIdx() {
+    return new URLSearchParams(location.search).get('idx') || '';
+  }
+
+  function isPureProteinNoShipGaugeProduct() {
+    return isProductDetailPage() && PURE_PROTEIN_NO_SHIP_GAUGE_IDS.has(currentProductIdx());
   }
 
   function isPaymentCompletePage() {
@@ -641,6 +651,12 @@
   /* ═══ 무료배송 안내를 장바구니 기준으로 보정 ═══ */
   function bindCartAwareFreeShip() {
     if (!isProductDetailPage()) {
+      return;
+    }
+
+    if (isPureProteinNoShipGaugeProduct()) {
+      document.documentElement.classList.add('yd-pure-protein-no-ship-gauge');
+      ydMark('cartAwareFreeShip', true, '순수단백 쿠폰 대상 상품은 배송비 게이지 비노출');
       return;
     }
 
@@ -2128,6 +2144,7 @@
       return progress + html;
     }
     function shippingGauge(s) {
+      if (isPureProteinNoShipGaugeProduct()) return '';
       var estimated = (cartSubtotalReady ? cartSubtotal : 0) + s.totalValue;
       var remaining = Math.max(0, CONFIG.FREE_SHIP_THRESHOLD - estimated);
       var percent = Math.max(0, Math.min(100, Math.round(estimated / CONFIG.FREE_SHIP_THRESHOLD * 100)));
@@ -3695,7 +3712,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.75] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.76] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

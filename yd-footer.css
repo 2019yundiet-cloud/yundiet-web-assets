@@ -244,6 +244,11 @@
     width: 100%;
   }
 
+  /* 순수단백 3세트 무료배송 쿠폰 대상은 상품 옵션 배송비 게이지를 노출하지 않는다. */
+  html.yd-pure-protein-no-ship-gauge fo-shopping-free-ship-notify {
+    display: none !important;
+  }
+
   @media (max-width: 768px) {
     .yd-ship-banner {
       padding: 10px 12px;
