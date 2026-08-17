@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_80__) {
+  if (window.__YD_FOOTER_V3_81__) {
     return;
   }
-  window.__YD_FOOTER_V3_80__ = true;
+  window.__YD_FOOTER_V3_81__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.80', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.81', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2347,8 +2347,6 @@
     }
 
     function sizeTabs(s, available) {
-      var totals = { S: 0, L: 0, P: 0 };
-      s.cat.groups.forEach(function(g) { if (g.main) g.items.forEach(function(it) { totals[flowCategoryOf(it[0])] += 1; }); });
       var counts = { S: 0, L: 0, P: 0 };
       s.req.forEach(function(x) { counts[flowCategoryOf(x.label)] += x.qty; });
       var guide = { S: '325g', L: '420g', P: '' };
@@ -4141,7 +4139,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.80] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.81] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
