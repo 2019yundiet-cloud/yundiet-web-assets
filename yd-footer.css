@@ -2139,7 +2139,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     display: block;
     margin-top: 7px;
     color: #5d645e;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 500;
     line-height: 1.45;
     word-break: keep-all;
@@ -2190,6 +2190,6 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
       min-height: 126px;
     }
     #yd-bs-root .yd-bs-menu-description {
-      font-size: 12px;
+      font-size: 15px;
     }
   }
