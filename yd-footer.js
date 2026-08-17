@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_82__) {
+  if (window.__YD_FOOTER_V3_83__) {
     return;
   }
-  window.__YD_FOOTER_V3_82__ = true;
+  window.__YD_FOOTER_V3_83__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.82', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.83', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2343,7 +2343,7 @@
     }
 
     function premiumNotice() {
-      return '<aside class="yd-bs-premium-notice">프리미엄 도시락은 윤식단이 오랜 시간 연구한 저당 양념/소스를 사용했습니다. 맛있는 음식을 더 건강하게 즐겨주세요.</aside>';
+      return '<aside class="yd-bs-premium-notice">프리미엄 도시락은 윤식단이 오랜 시간 연구한 저당 양념/소스를 사용해 맛과 성분까지 모두 잡아낸 단백질 도시락입니다. 맛있는 음식 더 건강하게 즐겨주세요.</aside>';
     }
 
     function sizeTabs(s, available) {
@@ -4139,7 +4139,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.82] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.83] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
