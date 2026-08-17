@@ -19,7 +19,25 @@
     MEMBERSHIP_SCHEMA: 'yundiet-membership-ui/v1',
     MEMBERSHIP_REQUEST_TIMEOUT: 5000,
     DISCOUNT_MAP_URL: 'https://2019yundiet-cloud.github.io/yundiet-web-assets/discount-map.json',
-    DAYS: ['일', '월', '화', '수', '목', '금', '토']
+    DAYS: ['일', '월', '화', '수', '목', '금', '토'],
+    TOP_BANNER_AB: {
+      experimentId: 'top_banner_coupon_20260817',
+      storageKey: 'yd_exp_top_banner_coupon_20260817',
+      previewParam: 'yd_top_banner_variant',
+      selector: '#w202207150ee0a4036592b a._fade_link',
+      variants: {
+        A: {
+          copy: '3초 회원가입 18,000원 쿠폰 받기',
+          href: '/site_join_type_choice',
+          destinationType: 'signup'
+        },
+        B: {
+          copy: '카카오채널 추가하고 18,000원 쿠폰받기',
+          href: 'http://pf.kakao.com/_Lxexcxkj/friend',
+          destinationType: 'kakao_channel'
+        }
+      }
+    }
   };
 
   const IS_IFRAME = (function() {
@@ -70,6 +88,140 @@
     if (typeof e.stopImmediatePropagation === 'function') {
       e.stopImmediatePropagation();
     }
+  }
+
+  /* ═══ 상단 띠지 회원가입 vs 카카오채널 A/B 실험 (2026-08-17) ═══
+     - 비회원만 실험에 포함: 기존 회원에게 회원가입 안을 노출하지 않는다.
+     - 브라우저별 A/B 50:50 최초 배정 후 localStorage로 고정한다.
+     - 검증 쿼리 강제값은 계측하지 않아 운영 집계를 오염시키지 않는다. */
+  function bindTopBannerExperiment() {
+    const exp = CONFIG.TOP_BANNER_AB;
+    let impressionFired = false;
+    let assignment = null;
+
+    function previewVariant() {
+      try {
+        const value = new URLSearchParams(location.search).get(exp.previewParam);
+        return value && exp.variants[String(value).toUpperCase()] ? String(value).toUpperCase() : '';
+      } catch (err) {
+        return '';
+      }
+    }
+
+    function storedVariant() {
+      try {
+        const value = window.localStorage.getItem(exp.storageKey);
+        return value && exp.variants[value] ? value : '';
+      } catch (err) {
+        return '';
+      }
+    }
+
+    function randomVariant() {
+      try {
+        if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+          const value = new Uint32Array(1);
+          window.crypto.getRandomValues(value);
+          return value[0] % 2 === 0 ? 'A' : 'B';
+        }
+      } catch (err) {}
+      return Math.random() < 0.5 ? 'A' : 'B';
+    }
+
+    function resolveAssignment() {
+      if (assignment) {
+        return assignment;
+      }
+      const preview = previewVariant();
+      if (preview) {
+        assignment = { variant: preview, preview: true };
+        return assignment;
+      }
+      let variant = storedVariant();
+      if (!variant) {
+        variant = randomVariant();
+        try { window.localStorage.setItem(exp.storageKey, variant); } catch (err) {}
+      }
+      assignment = { variant: variant, preview: false };
+      return assignment;
+    }
+
+    function analyticsEvent(name, variant, config) {
+      const params = {
+        experiment_id: exp.experimentId,
+        variant_id: variant,
+        exp_variant_string: 'yundiet-' + exp.experimentId + '-' + variant,
+        experiment_surface: 'top_banner',
+        destination_type: config.destinationType,
+        transport_type: 'beacon'
+      };
+      try {
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', name, params);
+        } else {
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push(Object.assign({ event: name }, params));
+        }
+        return true;
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function render() {
+      const preview = previewVariant();
+      if (!preview && !isGuestUser()) {
+        ydMark('topBannerExperiment', true, '회원 제외 · 기존 카카오채널 띠지 유지');
+        return;
+      }
+
+      const link = qs(exp.selector);
+      if (!link) {
+        ydMark('topBannerExperiment', false, '대상 띠지 위젯 미발견');
+        return;
+      }
+
+      const resolved = resolveAssignment();
+      const variant = resolved.variant;
+      const config = exp.variants[variant];
+      if (link.textContent !== config.copy) {
+        link.textContent = config.copy;
+      }
+      if (link.getAttribute('href') !== config.href) {
+        link.setAttribute('href', config.href);
+      }
+      link.setAttribute('data-yd-top-banner-experiment', exp.experimentId);
+      link.setAttribute('data-yd-top-banner-variant', variant);
+      link.setAttribute('aria-label', config.copy);
+
+      if (link.getAttribute('data-yd-top-banner-ab-bound') !== 'true') {
+        link.setAttribute('data-yd-top-banner-ab-bound', 'true');
+        link.addEventListener('click', function() {
+          if (!resolved.preview) {
+            analyticsEvent('yd_tb_' + variant.toLowerCase() + '_click', variant, config);
+          }
+        });
+      }
+
+      if (!impressionFired && !resolved.preview) {
+        impressionFired = analyticsEvent('yd_tb_' + variant.toLowerCase() + '_view', variant, config);
+      }
+
+      window.YD_TOP_BANNER_AB = {
+        experimentId: exp.experimentId,
+        variant: variant,
+        preview: resolved.preview,
+        audience: preview ? 'preview' : 'guest',
+        copy: config.copy,
+        href: config.href,
+        impressionFired: impressionFired
+      };
+      ydMark('topBannerExperiment', true,
+        variant + '안 · ' + (resolved.preview ? '검증 미계측' : '비회원 계측'));
+    }
+
+    render();
+    ensureObserver('topBannerExperiment', render);
   }
 
   /* ── 공유 MutationObserver 1개 + 100ms 디바운스 ── */
@@ -3906,6 +4058,7 @@
 
 
   onReady(function() {
+    bindTopBannerExperiment();
     bindBrokenSummaryGuard();
     bindDetailVideoFix();
     bindDetailImageWarm();
