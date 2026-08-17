@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_84__) {
+  if (window.__YD_FOOTER_V3_85__) {
     return;
   }
-  window.__YD_FOOTER_V3_84__ = true;
+  window.__YD_FOOTER_V3_85__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.84', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.85', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2330,7 +2330,8 @@
     function danbaekbapMenuDescription(name, category) {
       if (!cfg || cfg.family !== 'danbaekbap' || cfg.scheme !== 'size') return '';
       var clean = normalizeT(String(name).replace(/\[[^\]]*\]/g, ' ').replace(/[🌶️]/g, ' '));
-      if (category === 'S') return '단백질 38g 닭가슴살 도시락';
+      if (category === 'S' && hasSeparateSauce(name)) return '오리지널S+저당소스가 별도 제공됩니다.';
+      if (category === 'S') return '단백질 38g의 식단 정석 닭가슴살 도시락';
       if (/쌈장\s*제육/.test(clean)) return '특제 저당쌈장소스를 활용하여 목전지를 볶아 올려낸 단백질 32g 도시락';
       if (/직화\s*제육|제육\s*볶음/.test(clean)) return '특제 저당 제육 소스를 활용하여 목전지를 볶아 올려낸 단백질 32g 도시락';
       if (/불고기/.test(clean)) return '특제 저당 불고기 소스를 활용하여 목전지를 볶아 올려낸 단백질 32g 도시락';
@@ -4139,7 +4140,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.84] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.85] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
