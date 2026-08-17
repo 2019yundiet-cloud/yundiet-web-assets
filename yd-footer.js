@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_76__) {
+  if (window.__YD_FOOTER_V3_77__) {
     return;
   }
-  window.__YD_FOOTER_V3_76__ = true;
+  window.__YD_FOOTER_V3_77__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.76', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.77', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -116,6 +116,14 @@
   }
 
   const PURE_PROTEIN_NO_SHIP_GAUGE_IDS = new Set(['1125', '1214', '1233', '1235', '1242', '1246']);
+  const PURE_PROTEIN_COUPON_LABELS = {
+    '1125': '[순수단백 3세트] 한돈스테이크 무료배송',
+    '1214': '[순수단백 3세트] 단백 직화 불고기 무료배송',
+    '1233': '[순수단백 3세트] 단백 제육 고추장맛 무료배송',
+    '1235': '[순수단백 3세트] 단백 제육 쌈장맛 무료배송',
+    '1242': '[순수단백 3세트] 스팀 닭가슴살 무료배송',
+    '1246': '[순수단백 3세트] 돈다리살 고추장맛 무료배송'
+  };
 
   function currentProductIdx() {
     return new URLSearchParams(location.search).get('idx') || '';
@@ -833,6 +841,114 @@
     window.setInterval(patchFreeShip, 1000);
     ensureObserver('cartAwareFreeShip', patchFreeShip);
     ydMark('cartAwareFreeShip', true, '대기 중(게이지 노출 시 보정)');
+  }
+
+  /* ═══ 순수단백 무료배송 쿠폰 받기 버튼 ═══
+   * 아임웹 네이티브 버튼은 고객 다운로드형 중 '금액 할인'만 자동 노출한다.
+   * 배송비 무료 쿠폰은 네이티브 컨테이너가 비어 있으므로, 같은 카드 디자인 안에서
+   * 아임웹의 기존 SITE_COUPON 다운로드 모달만 연다. 쿠폰 발급/조건은 변경하지 않는다. */
+  function bindPureProteinCouponButton() {
+    if (!isProductDetailPage()) {
+      return;
+    }
+
+    const idx = currentProductIdx();
+    const couponLabel = PURE_PROTEIN_COUPON_LABELS[idx];
+    if (!couponLabel) {
+      return;
+    }
+
+    function findProductCode() {
+      const dataNode = qs('[data-prod-code]');
+      if (dataNode && dataNode.getAttribute('data-prod-code')) {
+        return dataNode.getAttribute('data-prod-code');
+      }
+
+      const scripts = Array.from(document.scripts || []);
+      for (let i = 0; i < scripts.length; i += 1) {
+        const text = scripts[i].textContent || '';
+        const match = text.match(/SITE_COUPON\.openCouponDownloadModal\(['\"]([^'\"]+)['\"]\)/);
+        if (match) {
+          return match[1];
+        }
+      }
+      return '';
+    }
+
+    function render() {
+      const host = qs('.prod-detail-coupon-container-style-a');
+      if (!host) {
+        return;
+      }
+
+      if (host.querySelector('.yd-pure-protein-coupon-card')) {
+        return;
+      }
+
+      /* 향후 아임웹이 자체 쿠폰 카드를 다시 만들면 네이티브 UI를 우선한다. */
+      if (host.children.length > 0 || (host.textContent || '').trim()) {
+        ydMark('pureProteinCouponButton', true, '아임웹 네이티브 쿠폰 카드 우선');
+        return;
+      }
+
+      const card = document.createElement('div');
+      card.className = 'prod-detail-coupon-container yd-pure-protein-coupon-card';
+
+      const copy = document.createElement('div');
+      copy.className = 'prod-detail-coupon-container-price-text';
+
+      const benefit = document.createElement('div');
+      benefit.className = 'price-title';
+      benefit.style.fontSize = '1.2em';
+      const benefitText = document.createElement('span');
+      benefitText.style.whiteSpace = 'nowrap';
+      benefitText.textContent = '배송비 무료';
+      benefit.appendChild(benefitText);
+
+      const title = document.createElement('div');
+      title.className = 'price-sub-title';
+      title.style.fontSize = '11.2px';
+      title.textContent = couponLabel;
+
+      copy.appendChild(benefit);
+      copy.appendChild(title);
+
+      const action = document.createElement('div');
+      action.className = 'prod-detail-coupon-container-btn _coupon_down_wrap_';
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'btn-coupon-square yd-pure-protein-coupon-btn';
+      button.setAttribute('aria-label', couponLabel + ' 쿠폰 받기');
+      button.innerHTML = '<span class="tw-text-[12px] tw-font-[400]" style="white-space:nowrap;">쿠폰받기</span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M13 13H1M11 6.33333L7 10.3333M7 10.3333L3 6.33333M7 10.3333V1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+      button.addEventListener('click', function() {
+        if (isGuestUser()) {
+          const loginLink = qs('a[href^="/login?back_url="], a[href*="/login?back_url="]');
+          if (loginLink && loginLink.href) {
+            ydMark('pureProteinCouponButton', true, '비회원 로그인 후 쿠폰 받기로 연결');
+            location.href = loginLink.href;
+            return;
+          }
+        }
+
+        const productCode = findProductCode();
+        if (window.SITE_COUPON && typeof window.SITE_COUPON.openCouponDownloadModal === 'function' && productCode) {
+          window.SITE_COUPON.openCouponDownloadModal(productCode);
+          ydMark('pureProteinCouponButton', true, '쿠폰 다운로드 모달 열림');
+          return;
+        }
+        ydMark('pureProteinCouponButton', false, '아임웹 쿠폰 모달 연결값 없음');
+      });
+
+      action.appendChild(button);
+      card.appendChild(copy);
+      card.appendChild(action);
+      host.appendChild(card);
+      ydMark('pureProteinCouponButton', true, couponLabel + ' 버튼 노출');
+    }
+
+    render();
+    ensureObserver('pureProteinCouponButton', render);
   }
 
   /* ═══ 장바구니 담기 완료 팝업 ═══ */
@@ -3692,6 +3808,7 @@
 
     bindOptionKeepOpen();
     bindCartAwareFreeShip();
+    bindPureProteinCouponButton();
     bindOptionFlow();
     patchLayerPopupButtons();
     ensureObserver('patchLayerPopupButtons', patchLayerPopupButtons);
@@ -3712,7 +3829,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.76] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.77] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

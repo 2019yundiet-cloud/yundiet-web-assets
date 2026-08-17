@@ -249,6 +249,10 @@
     display: none !important;
   }
 
+  .yd-pure-protein-coupon-btn {
+    cursor: pointer;
+  }
+
   @media (max-width: 768px) {
     .yd-ship-banner {
       padding: 10px 12px;
