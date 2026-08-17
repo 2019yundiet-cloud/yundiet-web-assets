@@ -2108,3 +2108,88 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     font-weight: 700;
     line-height: 1.35;
   }
+
+  /* 2026-08-17 상품 UI: 고정 헤더 로고 확대 + 하단 도크의 Safari 안전영역 불투명 처리 */
+  #doz_header_wrap .inline_widget.logo img.normal_logo,
+  #doz_header_wrap .inline_widget.logo img.scroll_logo {
+    width: 72px !important;
+    max-width: none !important;
+    height: auto !important;
+  }
+  #yd-bs-root:not(.is-open):not(.is-cart-result)::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    height: calc(88px + env(safe-area-inset-bottom));
+    background: #fff;
+    pointer-events: none;
+  }
+
+  /* 단백밥 메뉴 설명과 추가금: 설명 다음 줄에 동일한 보조 글자 크기로 표시 */
+  #yd-bs-root .yd-bs-menu-card {
+    height: auto;
+    min-height: 132px;
+    max-height: none;
+    overflow: visible;
+  }
+  #yd-bs-root .yd-bs-menu-description {
+    display: block;
+    margin-top: 7px;
+    color: #5d645e;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.45;
+    word-break: keep-all;
+  }
+  #yd-bs-root .yd-bs-menu-price,
+  #yd-bs-root .yd-bs-menu-card.is-selected .yd-bs-menu-price {
+    font-size: 13px;
+  }
+  #yd-bs-root .yd-bs-category .yd-bs-size-guide,
+  #yd-bs-root .yd-bs-category.is-selected .yd-bs-size-guide {
+    font-size: 17px;
+    font-weight: 600;
+  }
+  #yd-bs-root .yd-bs-premium-notice {
+    margin: -8px 0 16px;
+    padding: 13px 15px;
+    border: 1px solid #dfe4da;
+    border-radius: 13px;
+    background: #f7f9f3;
+    color: #4b534c;
+    font-size: 13px;
+    font-weight: 550;
+    line-height: 1.55;
+    word-break: keep-all;
+  }
+  #yd-bs-root .yd-bs-free-ship-coupon,
+  #prod_options .yd-option-coupon-note {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    margin-left: 7px;
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: #e94141;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  @media (max-width: 767px) {
+    #yd-bs-root .yd-bs-category .yd-bs-size-guide,
+    #yd-bs-root .yd-bs-category.is-selected .yd-bs-size-guide {
+      font-size: 11px;
+    }
+    #yd-bs-root .yd-bs-menu-card {
+      min-height: 126px;
+    }
+    #yd-bs-root .yd-bs-menu-description {
+      font-size: 12px;
+    }
+  }

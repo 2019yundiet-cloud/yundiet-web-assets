@@ -2045,6 +2045,31 @@
     window.setInterval(tick, 1000);
   }
 
+  /* 무료배송 옵션은 쿠폰 적용 조건을 가격 바로 옆에서 확인할 수 있게 표시한다.
+     커스텀 옵션 플로우가 아직 뜨지 않은 초기/복구 상태에서도 네이티브 옵션에 동일하게 적용한다. */
+  function bindFreeShipOptionCouponNote() {
+    if (!isProductDetailPage()) return;
+    function patch() {
+      qsa('#prod_options a[onclick*="selectRequireOption"], #prod_options a[onclick*="selectOptionalOption"]').forEach(function(anchor) {
+        var name = ((anchor.querySelector('.margin-bottom-lg') || anchor).textContent || '').replace(/\s+/g, ' ').trim();
+        var note = anchor.querySelector('.yd-option-coupon-note');
+        if (!/무료배송/.test(name)) {
+          if (note) note.remove();
+          return;
+        }
+        if (note) return;
+        var price = anchor.querySelector('.no-margin strong');
+        if (!price || !price.parentElement) return;
+        note = document.createElement('span');
+        note.className = 'yd-option-coupon-note';
+        note.textContent = '[쿠폰 받기 후 적용]';
+        price.insertAdjacentElement('afterend', note);
+      });
+    }
+    patch();
+    ensureObserver('freeShipOptionCouponNote', patch);
+  }
+
   /* ═══ 신규. 옵션 선택 플로우 (바텀시트 UI — 레갈로 시안 이식) ═══
      대상 상품에서 네이티브 옵션 UI를 숨기고 3단계 바텀시트로 대체한다.
      옵션·가격은 네이티브 DOM에서 동적으로 읽고, 선택은 네이티브 클릭으로 위임한다. */
@@ -2302,21 +2327,38 @@
     var saucePattern = /볼케이노|양념치킨|블랙\s*알리오|블랙알리오|데리야끼|바베큐/;
     var hasSeparateSauce = function(name) { return !/\(소스X\)/.test(name) && saucePattern.test(name); };
 
+    function danbaekbapMenuDescription(name, category) {
+      if (!cfg || cfg.family !== 'danbaekbap' || cfg.scheme !== 'size') return '';
+      var clean = normalizeT(String(name).replace(/\[[^\]]*\]/g, ' ').replace(/[🌶️]/g, ' '));
+      if (category === 'S') return '단백질 38g 닭가슴살 도시락';
+      if (/쌈장\s*제육/.test(clean)) return '특제 저당쌈장소스를 활용하여 목전지를 볶아 올려낸 단백질 32g 도시락';
+      if (/직화\s*제육|제육\s*볶음/.test(clean)) return '특제 저당 제육 소스를 활용하여 목전지를 볶아 올려낸 단백질 32g 도시락';
+      if (/불고기/.test(clean)) return '특제 저당 불고기 소스를 활용하여 목전지를 볶아 올려낸 단백질 32g 도시락';
+      if (/훈제\s*오리/.test(clean)) return '훈연된 오리고기를 한 번 삶은 후 올려낸 단백질 29g 도시락';
+      if (/함박/.test(clean) && hasSeparateSauce(name)) return '그릴드함박+저당소스가 별도 제공됩니다.';
+      if (/함박/.test(clean)) return '지방이 적은 돼지 뒷다리살을 사용해 만든 함박스테이크를 올려낸 단백질 32g 도시락';
+      if (/오리지널/.test(clean)) return '단백질 50g 닭가슴살 도시락';
+      if (category === 'L' && hasSeparateSauce(name)) return '오리지널L+저당소스가 별도 제공됩니다.';
+      return category === 'L' ? '단백질 50g 닭가슴살 도시락' : '';
+    }
+
+    function premiumNotice() {
+      return '<aside class="yd-bs-premium-notice">프리미엄 도시락은 윤식단이 오랜 시간 연구한 저당 양념/소스를 사용했습니다. 맛있는 음식을 더 건강하게 즐겨주세요.</aside>';
+    }
+
     function sizeTabs(s, available) {
       var totals = { S: 0, L: 0, P: 0 };
       s.cat.groups.forEach(function(g) { if (g.main) g.items.forEach(function(it) { totals[flowCategoryOf(it[0])] += 1; }); });
       var counts = { S: 0, L: 0, P: 0 };
       s.req.forEach(function(x) { counts[flowCategoryOf(x.label)] += x.qty; });
+      var guide = { S: '325g', L: '420g', P: '' };
+      var tabPrice = flowIdx === '1251' ? { S: '4,990원', L: '5,190원', P: '' } : {};
       var btn = function(v, strong, span) {
-        return '<button class="yd-bs-category ' + (activeTab === v ? 'is-selected' : '') + '" data-category="' + v + '" aria-pressed="' + (activeTab === v) + '"><strong' + (strong.length > 3 ? ' class="is-wide"' : '') + '>' + strong + '</strong><span>' + span + '</span><b>' + totals[v] + '종 · 선택 ' + counts[v] + '개</b></button>';
+        var sizeGuide = guide[v] ? '<b class="yd-bs-size-guide">' + guide[v] + '</b>' : '';
+        var price = tabPrice[v] ? '<em class="yd-bs-cat-price">' + tabPrice[v] + '</em>' : '';
+        var aria = span + (guide[v] ? ', ' + guide[v] : '') + ', ' + counts[v] + '개 선택';
+        return '<button class="yd-bs-category ' + (activeTab === v ? 'is-selected' : '') + '" data-category="' + v + '" aria-label="' + aria + '" aria-pressed="' + (activeTab === v) + '"><strong' + (strong.length > 3 ? ' class="is-wide"' : '') + '>' + strong + '</strong><span>' + span + '</span>' + price + sizeGuide + '</button>';
       };
-      /* 1251(스레드 친구 전용): 중량 큰 글씨 + 도시락명 + 가격 줄 표기 (소유자 지시 2026-08-11) — 다른 상품은 기존 표기 유지 */
-      if (flowIdx === '1251') {
-        var btnW = function(v, strong, span, price) {
-          return '<button class="yd-bs-category ' + (activeTab === v ? 'is-selected' : '') + '" data-category="' + v + '" aria-pressed="' + (activeTab === v) + '"><strong' + (strong.length > 3 ? ' class="is-wide"' : '') + '>' + strong + '</strong><span>' + span + '</span>' + (price ? '<em class="yd-bs-cat-price">' + price + '</em>' : '') + '<b>' + totals[v] + '종 · 선택 ' + counts[v] + '개</b></button>';
-        };
-        return '<div class="yd-bs-category-grid" role="group" aria-label="라인 선택">' + btnW('S', '325g', '닭가슴살 도시락', '4,990원') + btnW('L', '420g', '닭가슴살 도시락', '5,190원') + btnW('P', 'PREMIUM', '프리미엄 도시락', '') + '</div>';
-      }
       var defs = {
         S: ['S', '닭가슴살 도시락'],
         L: ['L', '닭가슴살 도시락'],
@@ -2398,12 +2440,15 @@
       var toggled = selectedToggleNames();
       return '<div class="yd-bs-menu-grid">' + items.map(function(pair) {
         var name = pair[0], price = pair[1], unit = cfg.family === 'soonsu' ? pair[2] : '';
+        var category = cfg.scheme === 'size' ? flowCategoryOf(name) : '';
+        var description = danbaekbapMenuDescription(name, category);
+        var couponNote = /무료배송/.test(name) ? '<span class="yd-bs-free-ship-coupon">[쿠폰 받기 후 적용]</span>' : '';
         var found = s.req.find(function(x) { return x.label === name; });
         var q = found ? found.qty : 0, pending = pendingNames.has(name) || (!q && toggled.has(name));
         if (!found && pendingQty.has(name)) q = pendingQty.get(name);
         return '<div class="yd-bs-menu-card ' + ((q || pending) ? 'is-selected ' : '') + (pending ? 'is-pending' : '') + '" aria-busy="' + pending + '">' +
           (tag ? '<span class="yd-bs-line-tag" aria-hidden="true">' + tag + '</span>' : '') +
-          '<button class="yd-bs-menu-main" data-pick="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-menu-name' + copyFitClass(name) + '">' + escT(name) + '</span><span class="yd-bs-menu-meta"><span class="yd-bs-menu-price">' + priceLabel(price) + '</span>' + (unit ? '<span class="yd-bs-unit-badge">' + escT(unit) + '</span>' : '') + (hasSeparateSauce(name) ? '<span class="yd-bs-menu-note">· 소스는 별도 제공됩니다</span>' : '') + '</span></button>' +
+          '<button class="yd-bs-menu-main" data-pick="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-menu-name' + copyFitClass(name) + '">' + escT(name) + '</span>' + (description ? '<span class="yd-bs-menu-description">' + escT(description) + '</span>' : '') + '<span class="yd-bs-menu-meta"><span class="yd-bs-menu-price">' + priceLabel(price) + '</span>' + couponNote + (unit ? '<span class="yd-bs-unit-badge">' + escT(unit) + '</span>' : '') + (!description && hasSeparateSauce(name) ? '<span class="yd-bs-menu-note">· 소스는 별도 제공됩니다</span>' : '') + '</span></button>' +
           (q ? '<span class="yd-bs-qty-mini"><button data-minus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 줄이기">−</button><strong aria-live="polite">' + q + '</strong><button data-plus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 늘리기">＋</button></span>' : '<button class="yd-bs-menu-plus" data-pick="' + escT(name) + '" aria-label="' + escT(name) + ' 추가">＋</button>') + '</div>';
       }).join('') + '</div>';
     }
@@ -2486,7 +2531,7 @@
           if (activeTab === null || availableSizes.indexOf(activeTab) === -1) activeTab = availableSizes[0];
           var items = [];
           s.cat.groups.forEach(function(g) { if (g.main) g.items.forEach(function(it) { if (flowCategoryOf(it[0]) === activeTab) items.push(it); }); });
-          body = sizeTabs(s, availableSizes) + menuCards(items, s, activeTab === 'P' ? 'P' : activeTab);
+          body = sizeTabs(s, availableSizes) + (activeTab === 'P' ? premiumNotice() : '') + menuCards(items, s, activeTab === 'P' ? 'P' : activeTab);
         } else {
           var mains = s.cat.groups.filter(function(g) { return g.main; });
           if (mains.length > prevMainsLen && prevMainsLen > 0) activeTab = mains.length - 1;
@@ -4075,6 +4120,7 @@
     bindCartAwareFreeShip();
     bindDanbaekbapCouponHide();
     bindPureProteinCouponButton();
+    bindFreeShipOptionCouponNote();
     bindOptionFlow();
     patchLayerPopupButtons();
     ensureObserver('patchLayerPopupButtons', patchLayerPopupButtons);
