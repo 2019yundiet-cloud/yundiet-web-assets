@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_86__) {
+  if (window.__YD_FOOTER_V3_87__) {
     return;
   }
-  window.__YD_FOOTER_V3_86__ = true;
+  window.__YD_FOOTER_V3_87__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.86', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.87', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2359,12 +2359,12 @@
       var clean = normalizeT(String(name).replace(/\[[^\]]*\]/g, ' ').replace(/[🌶️]/g, ' '));
       if (category === 'S' && hasSeparateSauce(name)) return '오리지널S+저당소스가 별도 제공됩니다.';
       if (category === 'S') return '단백질 38g의 식단 정석 닭가슴살 도시락';
-      if (/쌈장\s*제육/.test(clean)) return '특제 저당쌈장소스를 활용하여 목전지를 볶아 올려낸 단백질 32g 도시락';
-      if (/직화\s*제육|제육\s*볶음/.test(clean)) return '특제 저당 제육 소스를 활용하여 목전지를 볶아 올려낸 단백질 32g 도시락';
-      if (/불고기/.test(clean)) return '특제 저당 불고기 소스를 활용하여 목전지를 볶아 올려낸 단백질 32g 도시락';
-      if (/훈제\s*오리/.test(clean)) return '훈연된 오리고기를 한 번 삶은 후 올려낸 단백질 29g 도시락';
+      if (/쌈장\s*제육/.test(clean)) return '구수한 저당 쌈장에 부드러운 목전지를 볶아 깊은 감칠맛을 살린 단백질 32g 도시락';
+      if (/직화\s*제육|제육\s*볶음/.test(clean)) return '매콤한 저당 제육 양념을 부드러운 목전지에 입히고 은은한 직화 풍미를 더한 단백질 32g 도시락';
+      if (/불고기/.test(clean)) return '달콤짭짤한 저당 불고기 양념을 부드러운 목전지에 입혀 촉촉한 단짠 풍미를 살린 단백질 32g 도시락';
+      if (/훈제\s*오리/.test(clean)) return '은은한 훈연 향의 오리고기를 한 번 삶아 담백하고 부드럽게 완성한 단백질 29g 도시락';
       if (/함박/.test(clean) && hasSeparateSauce(name)) return '그릴드함박+저당소스가 별도 제공됩니다.';
-      if (/함박/.test(clean)) return '지방이 적은 돼지 뒷다리살을 사용해 만든 함박스테이크를 올려낸 단백질 32g 도시락';
+      if (/함박/.test(clean)) return '지방이 적은 돼지 뒷다리살로 빚어 담백한 고기 맛과 부드러운 식감을 살린 단백질 32g 도시락';
       if (/오리지널/.test(clean)) return '단백질50g 당1g의 식단 정석 닭가슴살 도시락';
       if (category === 'L' && hasSeparateSauce(name)) return '오리지널L+저당소스가 별도 제공됩니다.';
       return category === 'L' ? '단백질50g 당1g의 식단 정석 닭가슴살 도시락' : '';
@@ -4168,7 +4168,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.86] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.87] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
