@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_77__) {
+  if (window.__YD_FOOTER_V3_78__) {
     return;
   }
-  window.__YD_FOOTER_V3_77__ = true;
+  window.__YD_FOOTER_V3_78__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.77', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.78', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -123,6 +123,14 @@
     '1235': '[순수단백 3세트] 단백 제육 쌈장맛 무료배송',
     '1242': '[순수단백 3세트] 스팀 닭가슴살 무료배송',
     '1246': '[순수단백 3세트] 돈다리살 고추장맛 무료배송'
+  };
+  const PURE_PROTEIN_COUPON_CODES = {
+    '1125': 'c20260817fc5bb105c440d',
+    '1214': 'c202608175c5ddf30ea17e',
+    '1233': 'c202608179025c3ef98627',
+    '1235': 'c202608170df82d164cb07',
+    '1242': 'c2026081701cf3e1a233be',
+    '1246': 'c202608176c4d225051240'
   };
 
   function currentProductIdx() {
@@ -854,8 +862,65 @@
 
     const idx = currentProductIdx();
     const couponLabel = PURE_PROTEIN_COUPON_LABELS[idx];
+    const couponCode = PURE_PROTEIN_COUPON_CODES[idx];
     if (!couponLabel) {
       return;
+    }
+
+    function filterCouponModal() {
+      const modal = qs('#cocoaModal.modal_download_coupon');
+      if (!modal || !couponCode) {
+        return;
+      }
+
+      const rows = qsa('.coupon-item-row', modal);
+      if (!rows.length) {
+        return;
+      }
+
+      const candidates = rows.filter(function(row) {
+        const card = qs('.coupon-wrap', row);
+        const download = card && qs('[data-code]', card);
+        const cardCode = download ? download.getAttribute('data-code') : '';
+        const cardText = (card && card.textContent || '').replace(/\s+/g, ' ').trim();
+        return cardCode === couponCode || cardText.indexOf(couponLabel) !== -1;
+      });
+
+      /* 코드/이름 대조 결과가 정확히 1개가 아니면 빈 모달을 만들지 않고 원본을 유지한다. */
+      if (candidates.length !== 1) {
+        ydMark('pureProteinCouponModalFilter', false, '상품 쿠폰 1개 식별 실패(' + candidates.length + '개)');
+        return;
+      }
+
+      const targetRow = candidates[0];
+      rows.forEach(function(row) {
+        const isTarget = row === targetRow;
+        row.style.setProperty('display', isTarget ? '' : 'none', isTarget ? '' : 'important');
+        if (isTarget) {
+          row.removeAttribute('aria-hidden');
+        } else {
+          row.setAttribute('aria-hidden', 'true');
+        }
+      });
+
+      const totalWrap = qs('.total_coupon_wrap', modal);
+      if (totalWrap) {
+        totalWrap.style.setProperty('display', 'none', 'important');
+        totalWrap.setAttribute('aria-hidden', 'true');
+
+        const footer = totalWrap.parentElement;
+        if (footer) {
+          footer.style.height = '52px';
+          footer.style.minHeight = '52px';
+          footer.style.paddingTop = '16px';
+          footer.style.paddingBottom = '16px';
+          footer.style.justifyContent = 'center';
+        }
+      }
+
+      modal.setAttribute('data-yd-product-coupon-filter', idx);
+      modal.setAttribute('data-yd-product-coupon-code', couponCode);
+      ydMark('pureProteinCouponModalFilter', true, couponLabel + ' 1개만 노출');
     }
 
     function findProductCode() {
@@ -934,6 +999,9 @@
         const productCode = findProductCode();
         if (window.SITE_COUPON && typeof window.SITE_COUPON.openCouponDownloadModal === 'function' && productCode) {
           window.SITE_COUPON.openCouponDownloadModal(productCode);
+          window.setTimeout(filterCouponModal, 0);
+          window.setTimeout(filterCouponModal, 150);
+          window.setTimeout(filterCouponModal, 500);
           ydMark('pureProteinCouponButton', true, '쿠폰 다운로드 모달 열림');
           return;
         }
@@ -947,8 +1015,13 @@
       ydMark('pureProteinCouponButton', true, couponLabel + ' 버튼 노출');
     }
 
-    render();
-    ensureObserver('pureProteinCouponButton', render);
+    function sync() {
+      render();
+      filterCouponModal();
+    }
+
+    sync();
+    ensureObserver('pureProteinCouponButton', sync);
   }
 
   /* ═══ 장바구니 담기 완료 팝업 ═══ */
@@ -3829,7 +3902,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.77] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.78] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
