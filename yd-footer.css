@@ -253,6 +253,11 @@
     cursor: pointer;
   }
 
+  /* 단백밥 단품 골라담기·세트상품에서는 쿠폰 카드 전체를 노출하지 않는다. */
+  html.yd-danbaekbap-hide-coupon .prod-detail-coupon-container-style-a {
+    display: none !important;
+  }
+
   @media (max-width: 768px) {
     .yd-ship-banner {
       padding: 10px 12px;

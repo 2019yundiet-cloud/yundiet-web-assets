@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_78__) {
+  if (window.__YD_FOOTER_V3_79__) {
     return;
   }
-  window.__YD_FOOTER_V3_78__ = true;
+  window.__YD_FOOTER_V3_79__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -31,7 +31,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.78', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.79', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -116,6 +116,7 @@
   }
 
   const PURE_PROTEIN_NO_SHIP_GAUGE_IDS = new Set(['1125', '1214', '1233', '1235', '1242', '1246']);
+  const DANBAEKBAP_HIDE_COUPON_IDS = new Set(['672', '675']);
   const PURE_PROTEIN_COUPON_LABELS = {
     '1125': '[순수단백 3세트] 한돈스테이크 무료배송',
     '1214': '[순수단백 3세트] 단백 직화 불고기 무료배송',
@@ -139,6 +140,10 @@
 
   function isPureProteinNoShipGaugeProduct() {
     return isProductDetailPage() && PURE_PROTEIN_NO_SHIP_GAUGE_IDS.has(currentProductIdx());
+  }
+
+  function isDanbaekbapCouponHiddenProduct() {
+    return isProductDetailPage() && DANBAEKBAP_HIDE_COUPON_IDS.has(currentProductIdx());
   }
 
   function isPaymentCompletePage() {
@@ -849,6 +854,38 @@
     window.setInterval(patchFreeShip, 1000);
     ensureObserver('cartAwareFreeShip', patchFreeShip);
     ydMark('cartAwareFreeShip', true, '대기 중(게이지 노출 시 보정)');
+  }
+
+  /* ═══ 단백밥 상품상세 쿠폰 UI 비노출 ═══
+   * 쿠폰 자체의 발급 조건·사용 가능 여부는 변경하지 않고, 요청한 두 단백밥 상품의
+   * 가격 아래 쿠폰 카드와 쿠폰받기 버튼만 고객 화면에서 숨긴다. */
+  function bindDanbaekbapCouponHide() {
+    if (!isProductDetailPage()) {
+      return;
+    }
+
+    if (!isDanbaekbapCouponHiddenProduct()) {
+      document.documentElement.classList.remove('yd-danbaekbap-hide-coupon');
+      return;
+    }
+
+    document.documentElement.classList.add('yd-danbaekbap-hide-coupon');
+
+    function sync() {
+      const hosts = qsa('.prod-detail-coupon-container-style-a');
+      hosts.forEach(function(host) {
+        host.setAttribute('aria-hidden', 'true');
+      });
+
+      if (hosts.length > 0) {
+        ydMark('danbaekbapCouponHide', true, currentProductIdx() + ' 쿠폰 카드 비노출');
+      } else {
+        ydMark('danbaekbapCouponHide', false, currentProductIdx() + ' 쿠폰 카드 렌더 대기');
+      }
+    }
+
+    sync();
+    ensureObserver('danbaekbapCouponHide', sync);
   }
 
   /* ═══ 순수단백 무료배송 쿠폰 받기 버튼 ═══
@@ -3881,6 +3918,7 @@
 
     bindOptionKeepOpen();
     bindCartAwareFreeShip();
+    bindDanbaekbapCouponHide();
     bindPureProteinCouponButton();
     bindOptionFlow();
     patchLayerPopupButtons();
@@ -3902,7 +3940,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.78] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.79] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
