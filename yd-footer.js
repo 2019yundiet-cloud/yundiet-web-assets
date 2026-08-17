@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_79__) {
+  if (window.__YD_FOOTER_V3_80__) {
     return;
   }
-  window.__YD_FOOTER_V3_79__ = true;
+  window.__YD_FOOTER_V3_80__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -24,7 +24,7 @@
       experimentId: 'top_banner_coupon_20260817',
       storageKey: 'yd_exp_top_banner_coupon_20260817',
       previewParam: 'yd_top_banner_variant',
-      selector: '#w202207150ee0a4036592b a._fade_link',
+      selector: '#w202207150ee0a4036592b a._fade_link, #w20240730fec120873ad50 a._fade_link',
       variants: {
         A: {
           copy: '3초 회원가입 18,000원 쿠폰 받기',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.79', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.80', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -175,8 +175,8 @@
         return;
       }
 
-      const link = qs(exp.selector);
-      if (!link) {
+      const links = qsa(exp.selector);
+      if (!links.length) {
         ydMark('topBannerExperiment', false, '대상 띠지 위젯 미발견');
         return;
       }
@@ -184,24 +184,26 @@
       const resolved = resolveAssignment();
       const variant = resolved.variant;
       const config = exp.variants[variant];
-      if (link.textContent !== config.copy) {
-        link.textContent = config.copy;
-      }
-      if (link.getAttribute('href') !== config.href) {
-        link.setAttribute('href', config.href);
-      }
-      link.setAttribute('data-yd-top-banner-experiment', exp.experimentId);
-      link.setAttribute('data-yd-top-banner-variant', variant);
-      link.setAttribute('aria-label', config.copy);
+      links.forEach(function(link) {
+        if (link.textContent !== config.copy) {
+          link.textContent = config.copy;
+        }
+        if (link.getAttribute('href') !== config.href) {
+          link.setAttribute('href', config.href);
+        }
+        link.setAttribute('data-yd-top-banner-experiment', exp.experimentId);
+        link.setAttribute('data-yd-top-banner-variant', variant);
+        link.setAttribute('aria-label', config.copy);
 
-      if (link.getAttribute('data-yd-top-banner-ab-bound') !== 'true') {
-        link.setAttribute('data-yd-top-banner-ab-bound', 'true');
-        link.addEventListener('click', function() {
-          if (!resolved.preview) {
-            analyticsEvent('yd_tb_' + variant.toLowerCase() + '_click', variant, config);
-          }
-        });
-      }
+        if (link.getAttribute('data-yd-top-banner-ab-bound') !== 'true') {
+          link.setAttribute('data-yd-top-banner-ab-bound', 'true');
+          link.addEventListener('click', function() {
+            if (!resolved.preview) {
+              analyticsEvent('yd_tb_' + variant.toLowerCase() + '_click', variant, config);
+            }
+          });
+        }
+      });
 
       if (!impressionFired && !resolved.preview) {
         impressionFired = analyticsEvent('yd_tb_' + variant.toLowerCase() + '_view', variant, config);
@@ -4093,7 +4095,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.79] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.80] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
