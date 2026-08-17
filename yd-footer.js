@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_85__) {
+  if (window.__YD_FOOTER_V3_86__) {
     return;
   }
-  window.__YD_FOOTER_V3_85__ = true;
+  window.__YD_FOOTER_V3_86__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.85', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.86', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -263,6 +263,33 @@
       childList: true,
       subtree: true
     });
+  }
+
+  /* 모바일 헤더의 60x30 썸네일을 동일 로고의 Retina 대응 원본으로 교체 */
+  function bindHeaderLogoResolution() {
+    const highResolutionLogo = 'https://cdn.imweb.me/thumbnail/20250523/87954525425e9.png';
+    const selector = '#doz_header_wrap .inline_widget.logo img.normal_logo, #doz_header_wrap .inline_widget.logo img.scroll_logo';
+
+    function upgrade() {
+      const logos = qsa(selector);
+      logos.forEach(function(img) {
+        if (img.getAttribute('src') !== highResolutionLogo) {
+          img.setAttribute('src', highResolutionLogo);
+        }
+        if (img.hasAttribute('data-src')) {
+          img.setAttribute('data-src', highResolutionLogo);
+        }
+        if (img.hasAttribute('srcset')) {
+          img.removeAttribute('srcset');
+        }
+        img.setAttribute('data-yd-logo-resolution', '363x180');
+      });
+      ydMark('headerLogoResolution', logos.length > 0,
+        logos.length ? '고해상도 363x180 원본 적용 · 표시 크기 유지' : '헤더 로고 미발견');
+    }
+
+    upgrade();
+    ensureObserver('headerLogoResolution', upgrade);
   }
 
   function isProductDetailPage() {
@@ -4104,6 +4131,7 @@
 
 
   onReady(function() {
+    bindHeaderLogoResolution();
     bindTopBannerExperiment();
     bindBrokenSummaryGuard();
     bindDetailVideoFix();
@@ -4140,7 +4168,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.85] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.86] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
