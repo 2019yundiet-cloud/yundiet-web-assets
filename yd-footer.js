@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_88__) {
+  if (window.__YD_FOOTER_V3_89__) {
     return;
   }
-  window.__YD_FOOTER_V3_88__ = true;
+  window.__YD_FOOTER_V3_89__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.88', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.89', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -3448,8 +3448,6 @@
     }
 
     const CHECKOUT_STORAGE_KEY = 'yd_reorder_checkout_v1';
-    const ELIGIBLE_STATUS = /배송\s*완료|구매\s*확정/;
-    const BLOCKED_STATUS = /취소|환불|반품|교환|결제\s*실패|주문\s*실패/;
     let busy = false;
 
     function normalized(value) {
@@ -3541,10 +3539,9 @@
     }
 
     function isEligibleOrder(table) {
-      const statusText = normalized(qsa('.section_info, .order_title', table).map(function(el) {
-        return el.textContent;
-      }).join(' ') || table.textContent);
-      return ELIGIBLE_STATUS.test(statusText) && !BLOCKED_STATUS.test(statusText);
+      return qsa('tbody tr.content', table).some(function(row) {
+        return !!productIdxFromLink(qs('a[href*="shop_view"]', row)) && quantityFromRow(row) > 0;
+      });
     }
 
     function fetchProduct(prodIdx) {
@@ -4789,7 +4786,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.88] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.89] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
