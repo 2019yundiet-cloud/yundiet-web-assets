@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_89__) {
+  if (window.__YD_FOOTER_V3_90__) {
     return;
   }
-  window.__YD_FOOTER_V3_89__ = true;
+  window.__YD_FOOTER_V3_90__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.89', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.90', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -3771,9 +3771,7 @@
       busy = value;
       qsa('button', actions).forEach(function(button) { button.disabled = value; });
       const primary = qs('.yd-reorder-primary', actions);
-      const cart = qs('.yd-reorder-cart', actions);
-      if (primary) primary.textContent = value && mode === 'checkout' ? '확인 중…' : '재주문하기';
-      if (cart) cart.textContent = value && mode === 'cart' ? '담는 중…' : '장바구니에 담기';
+      if (primary) primary.textContent = value ? '담는 중…' : '재주문하기';
     }
 
     function setNotice(actions, kind, text, withCartLink) {
@@ -3877,13 +3875,7 @@
       primary.type = 'button';
       primary.className = 'yd-reorder-primary';
       primary.textContent = '재주문하기';
-      primary.addEventListener('click', function() { runReorder(actions, 'checkout'); });
-
-      const cart = document.createElement('button');
-      cart.type = 'button';
-      cart.className = 'yd-reorder-cart';
-      cart.textContent = '장바구니에 담기';
-      cart.addEventListener('click', function() { runReorder(actions, 'cart'); });
+      primary.addEventListener('click', function() { runReorder(actions, 'cart'); });
 
       const notice = document.createElement('p');
       notice.className = 'yd-reorder-notice';
@@ -3891,7 +3883,6 @@
       notice.setAttribute('aria-live', 'polite');
 
       actions.appendChild(primary);
-      actions.appendChild(cart);
       actions.appendChild(notice);
       return actions;
     }
@@ -4786,7 +4777,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.89] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.90] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

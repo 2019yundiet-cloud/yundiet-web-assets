@@ -2203,7 +2203,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     padding: 12px 0 4px;
   }
   .yd-reorder-actions button {
-    min-width: 132px;
+    min-width: 180px;
     min-height: 44px;
     padding: 0 18px;
     border-radius: 8px;
@@ -2217,14 +2217,9 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     cursor: wait;
   }
   .yd-reorder-primary {
-    border: 1px solid #123f24;
-    background: #123f24;
+    border: 1px solid #3b4024;
+    background: #3b4024;
     color: #fff;
-  }
-  .yd-reorder-cart {
-    border: 1px solid #123f24;
-    background: #fff;
-    color: #123f24;
   }
   .yd-reorder-notice {
     flex: 1 0 100%;
@@ -2234,8 +2229,27 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     line-height: 1.5;
     text-align: right;
   }
-  .yd-reorder-notice.is-error { color: #9d4035; }
-  .yd-reorder-notice.is-success { color: #123f24; }
+  .yd-reorder-notice.is-error {
+    margin-top: 4px;
+    padding: 14px 16px;
+    border: 2px solid #9d4035;
+    border-radius: 10px;
+    background: #fff3f0;
+    color: #7f3028;
+    font-size: 15px;
+    font-weight: 750;
+    line-height: 1.55;
+    text-align: left;
+    box-shadow: 0 4px 14px rgba(127, 48, 40, .12);
+  }
+  .yd-reorder-notice.is-error::before {
+    content: "재주문할 수 없습니다";
+    display: block;
+    margin-bottom: 3px;
+    font-size: 16px;
+    font-weight: 900;
+  }
+  .yd-reorder-notice.is-success { color: #3b4024; }
   .yd-reorder-notice a {
     color: inherit;
     font-weight: 800;
@@ -2262,7 +2276,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
   }
   @media (max-width: 767px) {
     .yd-reorder-actions { justify-content: stretch; }
-    .yd-reorder-actions button { flex: 1 1 calc(50% - 4px); min-width: 0; }
+    .yd-reorder-actions button { flex: 1 1 100%; min-width: 0; }
     .yd-reorder-notice { text-align: left; }
   }
 
