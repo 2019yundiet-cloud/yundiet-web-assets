@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_90__) {
+  if (window.__YD_FOOTER_V3_91__) {
     return;
   }
-  window.__YD_FOOTER_V3_90__ = true;
+  window.__YD_FOOTER_V3_91__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.90', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.91', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -3835,7 +3835,7 @@
         });
       }).then(function(context) {
         if (mode === 'cart') {
-          setNotice(actions, 'success', '이전 주문 상품을 장바구니에 담았습니다.', true);
+          window.location.href = '/shop_cart';
           return;
         }
 
@@ -4777,7 +4777,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.90] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.91] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
