@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_87__) {
+  if (window.__YD_FOOTER_V3_88__) {
     return;
   }
-  window.__YD_FOOTER_V3_87__ = true;
+  window.__YD_FOOTER_V3_88__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.87', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.88', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2931,6 +2931,133 @@
       });
     }
 
+    /* 마이페이지 재주문 직행: 새로 담긴 항목만 선택된 것을 API로 재확인한 뒤 주문서로 이동 */
+    var reorderCheckoutStarted = false;
+    var reorderCheckoutDone = false;
+    var REORDER_CHECKOUT_KEY = 'yd_reorder_checkout_v1';
+
+    function showReorderCartError(message) {
+      var notice = qs('#yd-reorder-cart-error');
+      if (!notice) {
+        notice = document.createElement('div');
+        notice.id = 'yd-reorder-cart-error';
+        notice.setAttribute('role', 'alert');
+        document.body.appendChild(notice);
+      }
+      notice.textContent = message;
+    }
+
+    function clearReorderCheckoutQuery() {
+      try {
+        var url = new URL(window.location.href);
+        url.searchParams.delete('yd_reorder_checkout');
+        window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      } catch (err) {}
+    }
+
+    function clearReorderCheckoutMarker() {
+      try { window.sessionStorage.removeItem(REORDER_CHECKOUT_KEY); } catch (err) {}
+    }
+
+    function cartPayload() {
+      return fetch(CONFIG.CART_API, {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' }
+      }).then(function(response) {
+        if (!response.ok) throw new Error('cart_http_' + response.status);
+        return response.json();
+      });
+    }
+
+    function cartPayloadItems(payload) {
+      var cart = payload && payload.data && payload.data.cart;
+      return cart && Array.isArray(cart.items) ? cart.items : [];
+    }
+
+    function cartItemSelected(item) {
+      var value = item && item.selected;
+      return value === true || value === 1 || value === '1' || value === 'Y' || value === 'true';
+    }
+
+    function cartItemCheckboxes() {
+      return qsa('input[type="checkbox"][data-clay-blind]').filter(function(input) {
+        return !/^전체\s*선택/.test((input.getAttribute('aria-label') || '').trim());
+      });
+    }
+
+    function verifyCartCheckboxMap(items, boxes) {
+      if (!items.length || items.length !== boxes.length) return false;
+      return items.every(function(item, index) {
+        var name = String(item && item.product && item.product.name || '').replace(/\s+/g, ' ').trim();
+        var label = String(boxes[index].getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
+        return !!name && label.indexOf(name) !== -1;
+      });
+    }
+
+    function waitForExactReorderSelection(targetCodes, round) {
+      round = round || 0;
+      return cartPayload().then(function(payload) {
+        var items = cartPayloadItems(payload);
+        var exact = items.length > 0 && items.every(function(item) {
+          return cartItemSelected(item) === targetCodes.has(String(item.item_code));
+        });
+        if (exact) return payload;
+        if (round >= 20) throw new Error('선택 상태를 확인하지 못했습니다.');
+        return new Promise(function(resolve) { window.setTimeout(resolve, 250); })
+          .then(function() { return waitForExactReorderSelection(targetCodes, round + 1); });
+      });
+    }
+
+    function tryReorderCheckout() {
+      if (reorderCheckoutStarted || reorderCheckoutDone || !/[?&]yd_reorder_checkout=1/.test(window.location.search)) return;
+      reorderCheckoutStarted = true;
+
+      var marker = null;
+      try { marker = JSON.parse(window.sessionStorage.getItem(REORDER_CHECKOUT_KEY) || 'null'); }
+      catch (err) {}
+      if (!marker || !Array.isArray(marker.itemCodes) || !marker.itemCodes.length ||
+          !marker.createdAt || Date.now() - Number(marker.createdAt) > 10 * 60 * 1000) {
+        reorderCheckoutDone = true;
+        clearReorderCheckoutMarker();
+        clearReorderCheckoutQuery();
+        showReorderCartError('재주문 항목을 확인하지 못했습니다. 결제로 이동하지 않았으니 장바구니를 확인해 주세요.');
+        return;
+      }
+
+      var targetCodes = new Set(marker.itemCodes.map(String));
+      cartPayload().then(function(payload) {
+        var items = cartPayloadItems(payload);
+        var boxes = cartItemCheckboxes();
+        var allTargetsExist = Array.from(targetCodes).every(function(code) {
+          return items.some(function(item) { return String(item.item_code) === code; });
+        });
+        if (!allTargetsExist || !verifyCartCheckboxMap(items, boxes)) {
+          throw new Error('새로 담긴 상품과 장바구니 화면을 정확히 연결하지 못했습니다.');
+        }
+
+        items.forEach(function(item, index) {
+          var shouldSelect = targetCodes.has(String(item.item_code));
+          if (boxes[index].checked !== shouldSelect) boxes[index].click();
+        });
+        return waitForExactReorderSelection(targetCodes, 0);
+      }).then(function() {
+        var orderButton = qsa('button').find(function(button) {
+          return /^주문하기/.test((button.textContent || '').trim());
+        });
+        if (!orderButton) throw new Error('주문하기 버튼을 찾지 못했습니다.');
+        reorderCheckoutDone = true;
+        clearReorderCheckoutMarker();
+        clearReorderCheckoutQuery();
+        orderButton.click();
+      }).catch(function() {
+        reorderCheckoutDone = true;
+        clearReorderCheckoutMarker();
+        clearReorderCheckoutQuery();
+        showReorderCartError('새로 담긴 상품만 안전하게 선택하지 못해 결제로 이동하지 않았습니다. 장바구니에서 직접 확인해 주세요.');
+      });
+    }
+
     /* 바로 결제하기 직행: ?yd_autopay=1로 도착하면 주문하기를 1회 자동 클릭 (게스트는 로그인→결제 복귀) */
     var autoPayDone = false;
     function tryAutoPay() {
@@ -2949,6 +3076,7 @@
       hideItemDetailRows();
       applyOrderButton();
       polishCartControls();
+      tryReorderCheckout();
       tryAutoPay();
     }
 
@@ -3311,6 +3439,498 @@
         removeMembershipRoot();
         ydMark('membershipFoundation', false, '서버 상태 확인 실패 — 표시 차단');
       });
+  }
+
+  /* ═══ 마이페이지 이전 주문 그대로 담기 / 재주문 ═══ */
+  function bindMyPageReorder() {
+    if (!pageIs('/shop_mypage') || IS_IFRAME) {
+      return;
+    }
+
+    const CHECKOUT_STORAGE_KEY = 'yd_reorder_checkout_v1';
+    const ELIGIBLE_STATUS = /배송\s*완료|구매\s*확정/;
+    const BLOCKED_STATUS = /취소|환불|반품|교환|결제\s*실패|주문\s*실패/;
+    let busy = false;
+
+    function normalized(value) {
+      return String(value || '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function normalizedOptionLabel(value) {
+      return normalized(String(value || '')
+        .replace(/[\u25A0-\u27BF\uFE0F\u2B50]/g, ' ')
+        .replace(/[:：]+$/g, ' '));
+    }
+
+    function asArray(value) {
+      if (Array.isArray(value)) return value.map(String);
+      if (value === undefined || value === null || value === '') return [];
+      return String(value).split(',').map(function(v) { return v.trim(); }).filter(Boolean);
+    }
+
+    function boolSelected(value) {
+      return value === true || value === 1 || value === '1' || value === 'Y' || value === 'true';
+    }
+
+    function productIdxFromLink(link) {
+      if (!link) return '';
+      try {
+        return new URL(link.href, window.location.origin).searchParams.get('idx') || '';
+      } catch (err) {
+        const match = String(link.getAttribute('href') || '').match(/[?&]idx=(\d+)/);
+        return match ? match[1] : '';
+      }
+    }
+
+    function optionPairsFromRow(row) {
+      const wrap = qsa('div', row).find(function(el) {
+        return String(el.className || '').indexOf('tw-gap-[4px]') !== -1;
+      });
+      if (!wrap) return [];
+
+      return Array.from(wrap.children).map(function(block) {
+        const labelEl = qs('.tw-inline', block);
+        if (!labelEl) return null;
+        const clone = block.cloneNode(true);
+        const clonedLabel = qs('.tw-inline', clone);
+        if (clonedLabel) clonedLabel.remove();
+        const label = normalizedOptionLabel(labelEl.textContent);
+        const value = normalized(clone.textContent);
+        return label && value ? { label: label, value: value } : null;
+      }).filter(Boolean);
+    }
+
+    function quantityFromRow(row) {
+      const quantityText = qsa('span', row).map(function(el) {
+        return normalized(el.textContent);
+      }).find(function(text) {
+        return /^\d+\s*개$/.test(text);
+      });
+      const match = quantityText && quantityText.match(/^(\d+)/);
+      return match ? Number(match[1]) : 0;
+    }
+
+    function extractOrder(table) {
+      const contentRows = qsa('tbody tr.content', table);
+      const groups = {};
+      const errors = [];
+
+      contentRows.forEach(function(row) {
+        const productLink = qs('a[href*="shop_view"]', row);
+        const prodIdx = productIdxFromLink(productLink);
+        const quantity = quantityFromRow(row);
+        if (!prodIdx || !quantity) {
+          errors.push('이전 주문의 상품 또는 수량 정보를 읽을 수 없습니다.');
+          return;
+        }
+        if (!groups[prodIdx]) {
+          groups[prodIdx] = {
+            prodIdx: prodIdx,
+            name: normalized(productLink.textContent),
+            rows: []
+          };
+        }
+        groups[prodIdx].rows.push({
+          quantity: quantity,
+          pairs: optionPairsFromRow(row)
+        });
+      });
+
+      if (!contentRows.length) errors.push('이전 주문 상품을 찾을 수 없습니다.');
+      return { groups: Object.keys(groups).map(function(key) { return groups[key]; }), errors: errors };
+    }
+
+    function isEligibleOrder(table) {
+      const statusText = normalized(qsa('.section_info, .order_title', table).map(function(el) {
+        return el.textContent;
+      }).join(' ') || table.textContent);
+      return ELIGIBLE_STATUS.test(statusText) && !BLOCKED_STATUS.test(statusText);
+    }
+
+    function fetchProduct(prodIdx) {
+      return fetch('/ajax/oms/OMS_get_product.cm?prod_idx=' + encodeURIComponent(prodIdx), {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' }
+      }).then(function(response) {
+        if (!response.ok) throw new Error('product_http_' + response.status);
+        return response.json();
+      }).then(function(payload) {
+        if (!payload || !payload.data) throw new Error('product_schema');
+        return payload.data;
+      });
+    }
+
+    function optionDefinitions(product) {
+      return Array.isArray(product.options) ? product.options : [];
+    }
+
+    function findCurrentOption(product, pair) {
+      const definition = optionDefinitions(product).find(function(option) {
+        return normalizedOptionLabel(option.name) === normalizedOptionLabel(pair.label);
+      });
+      if (!definition || String(definition.type || '').toLowerCase() === 'input') return null;
+
+      const values = Object.entries(definition.value_list || {});
+      const value = values.find(function(entry) {
+        return normalized(entry[1]) === normalized(pair.value);
+      });
+      if (!value) return null;
+
+      return {
+        value_type: 'SELECT',
+        option_code: String(definition.code),
+        value_code: String(value[0]),
+        value_name: String(value[1]),
+        require: definition.is_require === true || definition.is_require === 'Y' || definition.is_require === 1
+      };
+    }
+
+    function findOptionDetail(product, selections, require) {
+      const codes = selections.map(function(item) { return item.option_code; });
+      const values = selections.map(function(item) { return item.value_code; });
+      return (Array.isArray(product.options_detail) ? product.options_detail : []).find(function(detail) {
+        const detailCodes = asArray(detail.option_code_list);
+        const detailValues = asArray(detail.value_code_list);
+        const detailRequire = detail.is_require === true || detail.is_require === 'Y' || detail.is_require === 1;
+        return detailRequire === require &&
+          detailCodes.length === codes.length &&
+          detailCodes.every(function(code, index) {
+            return code === codes[index] && detailValues[index] === values[index];
+          });
+      }) || null;
+    }
+
+    function productIsOrderable(product) {
+      const soldoutStatus = String(product && product.prod_soldout_status || '').toLowerCase();
+      return product && product.deleted !== true &&
+        String(product.prod_status || '').toLowerCase() === 'sale' &&
+        soldoutStatus !== 'soldout' && soldoutStatus !== 'true' && soldoutStatus !== 'y';
+    }
+
+    function buildProductPlan(group, product) {
+      if (!productIsOrderable(product)) {
+        throw new Error('현재 판매하지 않는 상품이 포함되어 있습니다.');
+      }
+
+      const requiredDefinitions = optionDefinitions(product).filter(function(option) {
+        return option.is_require === true || option.is_require === 'Y' || option.is_require === 1;
+      });
+      const rows = [];
+      let orderCount = 0;
+
+      group.rows.forEach(function(oldRow) {
+        if (!oldRow.pairs.length) {
+          if (requiredDefinitions.length) {
+            throw new Error('현재 옵션과 이전 주문 옵션이 달라진 상품이 있습니다.');
+          }
+          orderCount += oldRow.quantity;
+          return;
+        }
+
+        const selections = oldRow.pairs.map(function(pair) {
+          return findCurrentOption(product, pair);
+        });
+        if (selections.some(function(selection) { return !selection; })) {
+          throw new Error('현재 옵션과 이전 주문 옵션이 달라진 상품이 있습니다.');
+        }
+
+        const require = selections.some(function(selection) { return selection.require; });
+        const detail = findOptionDetail(product, selections, require);
+        const hasStockValue = detail && detail.stock !== undefined && detail.stock !== null && detail.stock !== '';
+        const stock = hasStockValue ? Number(detail.stock) : NaN;
+        const stockManaged = product.stock_use === true || product.stock_use === 'Y' || product.stock_use === 1;
+        if (!detail || String(detail.status || '').toUpperCase() !== 'SALE' ||
+            (stockManaged && hasStockValue && Number.isFinite(stock) && stock <= 0)) {
+          throw new Error('현재 품절되었거나 선택할 수 없는 옵션이 포함되어 있습니다.');
+        }
+
+        rows.push({
+          options: selections.map(function(selection) {
+            return {
+              value_type: selection.value_type,
+              option_code: selection.option_code,
+              value_code: selection.value_code,
+              value_name: selection.value_name
+            };
+          }),
+          require: require,
+          count: oldRow.quantity,
+          price: Number(detail.price) || 0
+        });
+      });
+
+      return {
+        prodIdx: String(group.prodIdx),
+        options: rows,
+        orderCount: orderCount || 1,
+        shippingTemplateCode: String(product.shipping_template_code || '')
+      };
+    }
+
+    function preflight(table) {
+      const extracted = extractOrder(table);
+      if (extracted.errors.length || !extracted.groups.length) {
+        return Promise.resolve({ ok: false, reason: extracted.errors[0] || '이전 주문을 읽을 수 없습니다.' });
+      }
+
+      return Promise.all(extracted.groups.map(function(group) {
+        return fetchProduct(group.prodIdx).then(function(product) {
+          return buildProductPlan(group, product);
+        });
+      })).then(function(plans) {
+        return { ok: true, plans: plans, rowCount: extracted.groups.reduce(function(sum, group) { return sum + group.rows.length; }, 0) };
+      }).catch(function(error) {
+        const safeReason = /현재|이전 주문/.test(error.message || '')
+          ? error.message
+          : '상품 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+        return { ok: false, reason: safeReason };
+      });
+    }
+
+    function cartItemsFromPayload(payload) {
+      const cart = payload && payload.data && payload.data.cart;
+      return cart && Array.isArray(cart.items) ? cart.items : [];
+    }
+
+    function fetchCart() {
+      return fetch(CONFIG.CART_API, {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' }
+      }).then(function(response) {
+        if (!response.ok) throw new Error('cart_http_' + response.status);
+        return response.json();
+      });
+    }
+
+    function canonicalRows(rows) {
+      return rows.map(function(row) {
+        const codes = asArray(row.option_code_list);
+        const values = asArray(row.value_code_list);
+        if (Array.isArray(row.options)) {
+          codes.splice(0, codes.length);
+          values.splice(0, values.length);
+          row.options.forEach(function(option) {
+            codes.push(String(option.option_code));
+            values.push(String(option.value_code));
+          });
+        }
+        return codes.map(function(code, index) { return code + '=' + values[index]; }).sort().join('&');
+      }).sort().join('|');
+    }
+
+    function planIdentity(plan) {
+      return plan.prodIdx + '::' + canonicalRows(plan.options);
+    }
+
+    function itemIdentity(item) {
+      const product = item && item.product || {};
+      return String(product.prod_idx || item.prod_idx || '') + '::' + canonicalRows(item.options || []);
+    }
+
+    function cartSignature(payload) {
+      return cartItemsFromPayload(payload).map(function(item) {
+        return [item.item_code, item.count, (item.options || []).map(function(option) { return option.count; }).join(','), itemIdentity(item)].join(':');
+      }).sort().join('|');
+    }
+
+    function addPlanToCart(plan) {
+      return new Promise(function(resolve, reject) {
+        const cart = window.SITE_SHOP_CART;
+        if (!cart || typeof cart.addCart !== 'function') {
+          reject(new Error('장바구니 기능을 불러오지 못했습니다.'));
+          return;
+        }
+        let finished = false;
+        const timer = window.setTimeout(function() {
+          if (!finished) reject(new Error('장바구니 확인 시간이 초과되었습니다.'));
+        }, 15000);
+        cart.addCart(Number(plan.prodIdx), plan.options, plan.orderCount, function(ok, message) {
+          if (finished) return;
+          finished = true;
+          window.clearTimeout(timer);
+          if (ok) resolve();
+          else reject(new Error(message || '상품을 장바구니에 담지 못했습니다.'));
+        }, {
+          cart_type: 'normal',
+          shipping_template_code: plan.shippingTemplateCode
+        });
+      });
+    }
+
+    function waitForCartChange(beforeSignature, round) {
+      round = round || 0;
+      return fetchCart().then(function(payload) {
+        if (cartSignature(payload) !== beforeSignature) return payload;
+        if (round >= 20) throw new Error('장바구니 반영을 확인하지 못했습니다.');
+        return new Promise(function(resolve) {
+          window.setTimeout(resolve, 250);
+        }).then(function() { return waitForCartChange(beforeSignature, round + 1); });
+      });
+    }
+
+    function setBusy(actions, value, mode) {
+      busy = value;
+      qsa('button', actions).forEach(function(button) { button.disabled = value; });
+      const primary = qs('.yd-reorder-primary', actions);
+      const cart = qs('.yd-reorder-cart', actions);
+      if (primary) primary.textContent = value && mode === 'checkout' ? '확인 중…' : '재주문하기';
+      if (cart) cart.textContent = value && mode === 'cart' ? '담는 중…' : '장바구니에 담기';
+    }
+
+    function setNotice(actions, kind, text, withCartLink) {
+      const notice = qs('.yd-reorder-notice', actions);
+      if (!notice) return;
+      notice.className = 'yd-reorder-notice' + (kind ? ' is-' + kind : '');
+      notice.textContent = text;
+      if (withCartLink) {
+        notice.appendChild(document.createTextNode(' '));
+        const link = document.createElement('a');
+        link.href = '/shop_cart';
+        link.textContent = '장바구니 보기';
+        notice.appendChild(link);
+      }
+    }
+
+    function writeCheckoutMarker(itemCodes) {
+      try {
+        window.sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify({
+          itemCodes: itemCodes,
+          createdAt: Date.now()
+        }));
+        return true;
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function runReorder(actions, mode) {
+      if (busy) return;
+      const table = actions.__ydOrderTable;
+      setBusy(actions, true, mode);
+      setNotice(actions, '', '현재 판매 상태와 옵션을 확인하고 있습니다.', false);
+
+      let beforePayload = null;
+      let addedPlanCount = 0;
+      preflight(table).then(function(result) {
+        if (!result.ok) throw new Error(result.reason);
+        return fetchCart().then(function(payload) {
+          beforePayload = payload;
+          if (mode === 'checkout') {
+            const currentIdentities = cartItemsFromPayload(payload).map(itemIdentity);
+            const duplicate = result.plans.some(function(plan) {
+              return currentIdentities.indexOf(planIdentity(plan)) !== -1;
+            });
+            if (duplicate) {
+              throw new Error('동일한 상품이 이미 장바구니에 있어 정확한 결제 구성을 만들 수 없습니다. 기존 장바구니를 먼저 확인해 주세요.');
+            }
+          }
+          return result.plans.reduce(function(chain, plan) {
+            return chain.then(function() {
+              return addPlanToCart(plan).then(function() { addedPlanCount += 1; });
+            });
+          }, Promise.resolve()).then(function() {
+            return { result: result, before: payload };
+          });
+        });
+      }).then(function(context) {
+        return waitForCartChange(cartSignature(context.before)).then(function(afterPayload) {
+          return { result: context.result, before: context.before, after: afterPayload };
+        });
+      }).then(function(context) {
+        if (mode === 'cart') {
+          setNotice(actions, 'success', '이전 주문 상품을 장바구니에 담았습니다.', true);
+          return;
+        }
+
+        const oldCodes = new Set(cartItemsFromPayload(context.before).map(function(item) { return String(item.item_code); }));
+        const newItems = cartItemsFromPayload(context.after).filter(function(item) {
+          return !oldCodes.has(String(item.item_code));
+        });
+        const newIdentities = newItems.map(itemIdentity);
+        const expected = context.result.plans.map(planIdentity);
+        const exact = expected.length === newItems.length && expected.every(function(identity) {
+          return newIdentities.indexOf(identity) !== -1;
+        });
+        if (!exact) {
+          throw new Error('새로 담긴 상품만 정확히 구분하지 못했습니다. 결제로 이동하지 않았으니 장바구니에서 확인해 주세요.');
+        }
+        const itemCodes = newItems.map(function(item) { return String(item.item_code); });
+        if (!writeCheckoutMarker(itemCodes)) {
+          throw new Error('안전한 결제 이동 정보를 저장하지 못했습니다. 장바구니에서 확인해 주세요.');
+        }
+        window.location.href = '/shop_cart?yd_reorder_checkout=1';
+      }).catch(function(error) {
+        const message = addedPlanCount > 0
+          ? '일부 상품만 장바구니에 담겼습니다. 결제로 이동하지 않았으니 장바구니에서 구성을 확인해 주세요.'
+          : (error.message || '재주문 준비 중 오류가 발생했습니다.');
+        setNotice(actions, 'error', message, !!beforePayload);
+      }).finally(function() {
+        setBusy(actions, false, mode);
+      });
+    }
+
+    function createActions(table) {
+      const actions = document.createElement('div');
+      actions.className = 'yd-reorder-actions';
+      actions.__ydOrderTable = table;
+
+      const primary = document.createElement('button');
+      primary.type = 'button';
+      primary.className = 'yd-reorder-primary';
+      primary.textContent = '재주문하기';
+      primary.addEventListener('click', function() { runReorder(actions, 'checkout'); });
+
+      const cart = document.createElement('button');
+      cart.type = 'button';
+      cart.className = 'yd-reorder-cart';
+      cart.textContent = '장바구니에 담기';
+      cart.addEventListener('click', function() { runReorder(actions, 'cart'); });
+
+      const notice = document.createElement('p');
+      notice.className = 'yd-reorder-notice';
+      notice.setAttribute('role', 'status');
+      notice.setAttribute('aria-live', 'polite');
+
+      actions.appendChild(primary);
+      actions.appendChild(cart);
+      actions.appendChild(notice);
+      return actions;
+    }
+
+    function refresh() {
+      const tables = qsa('#shop_mypage_orderlist table.shop-table');
+      tables.forEach(function(table) {
+        if (table.dataset.ydReorderChecked === '1') return;
+        if (!isEligibleOrder(table)) return;
+        table.dataset.ydReorderChecked = '1';
+        const actions = createActions(table);
+        if (table.parentNode) table.parentNode.insertBefore(actions, table.nextSibling);
+      });
+      const actionCount = qsa('.yd-reorder-actions').length;
+      ydMark('myPageReorder', true, '대상 주문 ' + actionCount + '개');
+    }
+
+    window.YD_REORDER_CHECK = function() {
+      return {
+        eligibleOrders: qsa('#shop_mypage_orderlist table.shop-table').filter(isEligibleOrder).length,
+        actionGroups: qsa('.yd-reorder-actions').length,
+        busy: busy
+      };
+    };
+    window.YD_REORDER_PREFLIGHT = function(table) {
+      const target = table || qsa('#shop_mypage_orderlist table.shop-table').filter(isEligibleOrder)[0];
+      if (!target) return Promise.resolve({ ok: false, reason: '검사할 완료 주문이 없습니다.' });
+      return preflight(target).then(function(result) {
+        return result.ok
+          ? { ok: true, productCount: result.plans.length, rowCount: result.rowCount }
+          : { ok: false, reason: result.reason };
+      });
+    };
+
+    refresh();
+    ensureObserver('myPageReorder', refresh);
   }
 
   /* ═══ 마이페이지 다운로드 쿠폰 숨김 ═══ */
@@ -4155,6 +4775,7 @@
     bindCartUx();
     bindPaymentCompletePatches();
     bindMembershipFoundation();
+    bindMyPageReorder();
     bindMyPageCouponHide();
     bindCheckoutPatches();
     bindProfileModalHeight();
@@ -4168,7 +4789,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.87] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.88] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

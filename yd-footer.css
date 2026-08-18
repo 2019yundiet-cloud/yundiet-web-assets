@@ -2193,3 +2193,76 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
       font-size: 15px;
     }
   }
+  /* 마이페이지 주문 단위 재구매 */
+  .yd-reorder-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 12px 0 4px;
+  }
+  .yd-reorder-actions button {
+    min-width: 132px;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+  }
+  .yd-reorder-actions button:disabled {
+    opacity: .55;
+    cursor: wait;
+  }
+  .yd-reorder-primary {
+    border: 1px solid #123f24;
+    background: #123f24;
+    color: #fff;
+  }
+  .yd-reorder-cart {
+    border: 1px solid #123f24;
+    background: #fff;
+    color: #123f24;
+  }
+  .yd-reorder-notice {
+    flex: 1 0 100%;
+    margin: 0;
+    color: #555;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: right;
+  }
+  .yd-reorder-notice.is-error { color: #9d4035; }
+  .yd-reorder-notice.is-success { color: #123f24; }
+  .yd-reorder-notice a {
+    color: inherit;
+    font-weight: 800;
+    text-decoration: underline;
+  }
+  #yd-reorder-cart-error {
+    position: fixed;
+    z-index: 10002;
+    left: 16px;
+    right: 16px;
+    bottom: 92px;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 13px 16px;
+    border: 1px solid #e2b8b1;
+    border-radius: 10px;
+    background: #fff8f6;
+    color: #7f3028;
+    font-size: 14px;
+    font-weight: 750;
+    line-height: 1.45;
+    text-align: center;
+    box-shadow: 0 6px 22px rgba(0,0,0,.12);
+  }
+  @media (max-width: 767px) {
+    .yd-reorder-actions { justify-content: stretch; }
+    .yd-reorder-actions button { flex: 1 1 calc(50% - 4px); min-width: 0; }
+    .yd-reorder-notice { text-align: left; }
+  }
+
