@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_91__) {
+  if (window.__YD_FOOTER_V3_92__) {
     return;
   }
-  window.__YD_FOOTER_V3_91__ = true;
+  window.__YD_FOOTER_V3_92__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.91', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.92', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1067,6 +1067,53 @@
 
     sync();
     ensureObserver('danbaekbapCouponHide', sync);
+  }
+
+  /* ═══ 단백밥 SET 무료배송 기준 태그 ═══
+   * 675 상품의 제목에만 배송비 기준을 빨간 태그로 안내한다.
+   * 기존 아임웹 배송정책/결제 로직은 변경하지 않는다. */
+  function bindDanbaekbapSetFreeShippingTag() {
+    const selector = '[data-yd-set-free-shipping-tag]';
+
+    function sync() {
+      const isTarget = isProductDetailPage() && currentProductIdx() === '675';
+
+      if (!isTarget) {
+        qsa(selector).forEach(function(tag) { tag.remove(); });
+        ydMark('danbaekbapSetFreeShippingTag', true, '비대상 상품');
+        return;
+      }
+
+      const title = qsa('h1.view_tit').find(function(el) {
+        return /단백밥\s*SET|단백질\s*도시락\s*세트상품/i.test(el.textContent || '');
+      });
+      if (!title) {
+        ydMark('danbaekbapSetFreeShippingTag', false, '675 상품명 렌더 대기');
+        return;
+      }
+
+      qsa(selector).forEach(function(tag) {
+        if (tag.parentElement !== title) { tag.remove(); }
+      });
+
+      let tag = qs(selector, title);
+      if (!tag) {
+        tag = document.createElement('span');
+        tag.className = 'yd-set-free-shipping-tag';
+        tag.setAttribute('data-yd-set-free-shipping-tag', '675');
+        tag.setAttribute('aria-label', '9만원 이상 상품 무료배송');
+        const nativeIcon = qs('.ns-icon', title);
+        title.insertBefore(tag, nativeIcon || null);
+      }
+
+      if (tag.textContent !== '9만원 이상 상품 무료배송') {
+        tag.textContent = '9만원 이상 상품 무료배송';
+      }
+      ydMark('danbaekbapSetFreeShippingTag', true, '675 제목 태그 표시');
+    }
+
+    sync();
+    ensureObserver('danbaekbapSetFreeShippingTag', sync);
   }
 
   /* ═══ 순수단백 무료배송 쿠폰 받기 버튼 ═══
@@ -4754,6 +4801,7 @@
     bindOptionKeepOpen();
     bindCartAwareFreeShip();
     bindDanbaekbapCouponHide();
+    bindDanbaekbapSetFreeShippingTag();
     bindPureProteinCouponButton();
     bindFreeShipOptionCouponNote();
     bindOptionFlow();
@@ -4777,7 +4825,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.91] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.92] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
