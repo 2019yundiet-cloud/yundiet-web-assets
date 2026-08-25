@@ -2680,7 +2680,21 @@
       return '<aside class="yd-bs-shipping ' + (remaining === 0 && cartSubtotalReady ? 'is-complete' : '') + '" aria-label="무료배송 진행 상황"><div class="yd-bs-shipping-head"><span>9만원 이상 무료배송</span><strong aria-live="polite">' + status + '</strong></div><div class="yd-bs-shipping-track" role="progressbar" aria-valuemin="0" aria-valuemax="' + CONFIG.FREE_SHIP_THRESHOLD + '" aria-valuenow="' + Math.min(CONFIG.FREE_SHIP_THRESHOLD, estimated) + '"><div class="yd-bs-shipping-fill" style="width:' + percent + '%"></div><span class="yd-bs-shipping-percent" style="left:' + marker + '%">' + percent + '%</span></div><div class="yd-bs-shipping-meta"><span>장바구니 상품 기준</span><span>' + detail + '</span></div></aside>';
     }
     var canNext = function(s) { return (step === 1 || step === 3) ? s.reqQty >= cfg.min : true; };
-    var primaryLabel = function() { return step === 3 ? '바로 결제하기' : '다음으로'; };
+    /* 비회원 판별: 시트가 iframe에서 떠도 부모 문서의 헤더 마커(.member-info.guest)로 확인.
+       판별 실패 시 false(=기존 회원용 라벨/동작 유지)로 안전하게 떨어진다 */
+    var payIsGuest = function() {
+      try { if (document.querySelector('.member-info.guest')) return true; } catch (err) {}
+      try {
+        if (window.parent && window.parent !== window && window.parent.document.querySelector('.member-info.guest')) return true;
+      } catch (err) {}
+      return false;
+    };
+    /* 비회원에게는 로그인 벽을 예고한다(2026-08-26 소유자 지시): 기대 불일치 이탈 방지 */
+    var payButtonLabel = function(busy) {
+      if (payIsGuest()) return busy ? '카카오 로그인으로 이동 중…' : '카카오 3초 로그인 후 바로 결제';
+      return busy ? '결제로 이동 중…' : '바로 결제하기';
+    };
+    var primaryLabel = function() { return step === 3 ? payButtonLabel(false) : '다음으로'; };
     var cartChoice = function() {
       return cartPopup ? '<div class="yd-bs-cart-result" role="dialog" aria-modal="true" aria-label="장바구니 담기 완료"><div class="yd-bs-cart-result-card"><span class="yd-bs-cart-result-badge">장바구니 담기 완료</span><h3>선택한 상품을 장바구니에 담았습니다.</h3><p>장바구니에서 주문을 확인하거나 다른 상품을 계속 둘러보세요.</p><div class="yd-bs-cart-result-actions"><a class="yd-bs-cart-pay" href="/shop_cart">결제하기</a><a class="yd-bs-cart-continue" href="/best">계속 쇼핑하기</a></div></div></div>' : '';
     };
@@ -2691,7 +2705,7 @@
       var s = flowState();
       var sheetOpen = root.classList.contains('is-open');
       root.classList.toggle('is-top', cartPopup);
-      root.innerHTML = '<div class="yd-bs-dock"><button class="yd-bs-review-btn" type="button">리뷰보기</button><button class="yd-bs-open"><span>옵션 보기</span></button></div><button class="yd-bs-backdrop" aria-label="옵션 창 닫기"></button><section class="yd-bs-sheet" role="dialog" aria-modal="true" aria-hidden="' + (sheetOpen ? 'false' : 'true') + '" aria-label="상품 옵션 선택"><div class="yd-bs-grab"></div><header class="yd-bs-head"><div class="yd-bs-head-text"><span class="yd-bs-mode">' + escT(cfg.title) + '</span><h2>상품 옵션 선택</h2></div><button class="yd-bs-close" aria-label="옵션 창 닫기">닫기</button></header><div class="yd-bs-scroll">' + (sheetOpen ? shippingGauge(s) : '') + stepContent(s) + '</div><footer class="yd-bs-foot">' + '<div class="yd-bs-total" aria-live="polite"><span>' + escT(cfg.unit) + ' ' + s.reqQty + '개 · 추가상품 ' + s.optQty + '개</span><strong>' + escT(s.total) + '</strong></div>' + (step === 3 ? '<div class="yd-bs-step3-backrow"><button class="yd-bs-back yd-bs-back-mini" ' + (addingCart ? 'disabled' : '') + '>뒤로가기</button></div><div class="yd-bs-actions"><button class="yd-bs-primary" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode === 'pay' ? '결제로 이동 중…' : '바로 결제하기') + '</button><button class="yd-bs-back yd-bs-cart-add" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode === 'close' ? '담는 중…' : '장바구니 담기') + '</button></div>' : '<div class="yd-bs-actions"><button class="yd-bs-back">이전으로 돌아가기</button><button class="yd-bs-primary" ' + (canNext(s) ? '' : 'disabled') + '>' + primaryLabel() + '</button></div>') + '</footer></section>' + cartChoice();
+      root.innerHTML = '<div class="yd-bs-dock"><button class="yd-bs-review-btn" type="button">리뷰보기</button><button class="yd-bs-open"><span>옵션 보기</span></button></div><button class="yd-bs-backdrop" aria-label="옵션 창 닫기"></button><section class="yd-bs-sheet" role="dialog" aria-modal="true" aria-hidden="' + (sheetOpen ? 'false' : 'true') + '" aria-label="상품 옵션 선택"><div class="yd-bs-grab"></div><header class="yd-bs-head"><div class="yd-bs-head-text"><span class="yd-bs-mode">' + escT(cfg.title) + '</span><h2>상품 옵션 선택</h2></div><button class="yd-bs-close" aria-label="옵션 창 닫기">닫기</button></header><div class="yd-bs-scroll">' + (sheetOpen ? shippingGauge(s) : '') + stepContent(s) + '</div><footer class="yd-bs-foot">' + '<div class="yd-bs-total" aria-live="polite"><span>' + escT(cfg.unit) + ' ' + s.reqQty + '개 · 추가상품 ' + s.optQty + '개</span><strong>' + escT(s.total) + '</strong></div>' + (step === 3 ? '<div class="yd-bs-step3-backrow"><button class="yd-bs-back yd-bs-back-mini" ' + (addingCart ? 'disabled' : '') + '>뒤로가기</button></div><div class="yd-bs-actions"><button class="yd-bs-primary' + (payIsGuest() ? ' yd-bs-primary-kakao' : '') + '" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + payButtonLabel(addingCart && afterAddMode === 'pay') + '</button><button class="yd-bs-back yd-bs-cart-add" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode === 'close' ? '담는 중…' : '장바구니 담기') + '</button></div>' : '<div class="yd-bs-actions"><button class="yd-bs-back">이전으로 돌아가기</button><button class="yd-bs-primary" ' + (canNext(s) ? '' : 'disabled') + '>' + primaryLabel() + '</button></div>') + '</footer></section>' + cartChoice();
       root.classList.toggle('is-cart-result', cartPopup);
       var scroll = root.querySelector('.yd-bs-scroll');
       if (scroll) scroll.scrollTop = previousScroll;
@@ -2740,6 +2754,11 @@
       dismissNativeCartModal();
       [250, 600, 1200, 2000].forEach(function(ms) { setTimeout(dismissNativeCartModal, ms); });
       if (afterAddMode === 'pay') {
+        /* 비회원: 로그인 페이지 도착 시 카카오 간편로그인으로 직행하도록 10분 유효 마커를 남긴다
+           (sessionStorage는 같은 탭·같은 오리진에서 iframe/top이 공유한다 — 2026-08-26) */
+        if (payIsGuest()) {
+          try { window.sessionStorage.setItem('yd_kakao_direct', String(Date.now())); } catch (err) {}
+        }
         /* yd_autopay=1: 장바구니 도착 즉시 네이티브 주문하기를 자동 클릭해 결제 단계로 직행 */
         try { (window.top || window).location.href = '/shop_cart?yd_autopay=1'; }
         catch (err) { window.location.href = '/shop_cart?yd_autopay=1'; }
@@ -4791,6 +4810,43 @@
     ensureObserver('cartKakaoBanner', renderBanner);
   }
 
+  /* ═══ 비회원 바로결제 → 카카오 간편로그인 직행 (2026-08-26 소유자 지시) ═══
+     옵션시트에서 비회원이 [카카오 3초 로그인 후 바로 결제]를 누르면 sessionStorage에
+     yd_kakao_direct 마커(10분 유효)가 남는다. imweb이 로그인/가입선택 페이지로 보내면
+     여기서 마커를 소비해 네이티브 카카오 로그인 버튼(#custom-login-btn)을 1회 자동 클릭한다.
+     - 버튼 href의 OAuth 파라미터(state·redirect_uri)는 서버 생성 원본을 그대로 사용(직접 조립 금지)
+     - 마커 없으면 아무것도 하지 않음: 일반 로그인 UX 불변. 버튼을 못 찾으면 조용히 포기(기존 벽 유지) */
+  function bindGuestKakaoDirectLogin() {
+    var path = window.location.pathname || '';
+    if (!/^\/login\/?$/.test(path) && !/^\/site_join_type_choice\/?$/.test(path)) return;
+    var raw = null;
+    try { raw = window.sessionStorage.getItem('yd_kakao_direct'); } catch (err) {}
+    if (!raw) { ydMark('guestKakaoDirect', true, '마커 없음(일반 로그인 화면 유지)'); return; }
+    var age = Date.now() - Number(raw);
+    if (!(age >= 0 && age < 10 * 60 * 1000)) {
+      try { window.sessionStorage.removeItem('yd_kakao_direct'); } catch (err) {}
+      ydMark('guestKakaoDirect', true, '마커 만료 폐기');
+      return;
+    }
+    var clicked = false;
+    var started = Date.now();
+    var tryClick = function() {
+      if (clicked) return;
+      var btn = qs('#custom-login-btn') || qs('a.btn-kakao');
+      if (btn && btn.offsetParent !== null && /kauth\.kakao\.com/.test(btn.href || '')) {
+        clicked = true;
+        try { window.sessionStorage.removeItem('yd_kakao_direct'); } catch (err) {}
+        ydMark('guestKakaoDirect', true, '카카오 간편로그인 자동 진입');
+        btn.click();
+        return;
+      }
+      if (Date.now() - started < 6000) { window.setTimeout(tryClick, 250); return; }
+      try { window.sessionStorage.removeItem('yd_kakao_direct'); } catch (err) {}
+      ydMark('guestKakaoDirect', false, '카카오 버튼 미발견 — 일반 로그인 화면 유지');
+    };
+    tryClick();
+  }
+
   /* 옵션 플로우는 본문 파싱 직후 즉시 부팅 (yd-bs-root 가드로 중복 방지) */
   try { bindOptionFlow(); } catch (err) {}
 
@@ -4818,6 +4874,7 @@
     patchLayerPopupButtons();
     ensureObserver('patchLayerPopupButtons', patchLayerPopupButtons);
     bindShippingSchedule();
+    bindGuestKakaoDirectLogin();
     bindCartUx();
     bindPaymentCompletePatches();
     bindMembershipFoundation();
