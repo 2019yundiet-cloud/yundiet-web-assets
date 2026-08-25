@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_96__) {
+  if (window.__YD_FOOTER_V3_97__) {
     return;
   }
-  window.__YD_FOOTER_V3_96__ = true;
+  window.__YD_FOOTER_V3_97__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.96', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.97', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2689,9 +2689,9 @@
       } catch (err) {}
       return false;
     };
-    /* 비회원에게는 로그인 벽을 예고한다(2026-08-26 소유자 지시): 기대 불일치 이탈 방지 */
+    /* 비회원 라벨(2026-08-26 소유자 지시 2차): 가입 시 쿠폰팩 자동발행과 연결된 카피 + 카카오 옐로 버튼 */
     var payButtonLabel = function(busy) {
-      if (payIsGuest()) return busy ? '카카오 로그인으로 이동 중…' : '카카오 3초 로그인 후 바로 결제';
+      if (payIsGuest()) return busy ? '카카오 로그인으로 이동 중…' : '3초 회원가입쿠폰';
       return busy ? '결제로 이동 중…' : '바로 결제하기';
     };
     var primaryLabel = function() { return step === 3 ? payButtonLabel(false) : '다음으로'; };
@@ -4891,7 +4891,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.96] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.97] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

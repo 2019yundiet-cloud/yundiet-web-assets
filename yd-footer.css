@@ -2349,6 +2349,6 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     .yd-reorder-notice { text-align: left; }
   }
 
-/* 비회원 바로결제: 카카오 로그인 안내 라벨(길어서 줄바꿈 허용·축소) — 모바일 nowrap 오버라이드보다 뒤에 배치 */
-.yd-bs-primary.yd-bs-primary-kakao{font-size:13px !important; white-space:normal !important; line-height:1.22; padding:6px 8px;}
-@media (max-width:359px){ .yd-bs-primary.yd-bs-primary-kakao{font-size:12px !important;} }
+/* 비회원 바로결제: 카카오 옐로 버튼 + 가입쿠폰 카피(2026-08-26 소유자 지시) — 모바일 오버라이드보다 뒤에 배치 */
+.yd-bs-primary.yd-bs-primary-kakao{background:#FEE500 !important; color:#191919 !important; font-size:15px !important; white-space:normal !important; line-height:1.22; padding:6px 8px; font-weight:900;}
+@media (max-width:359px){ .yd-bs-primary.yd-bs-primary-kakao{font-size:13px !important;} }
