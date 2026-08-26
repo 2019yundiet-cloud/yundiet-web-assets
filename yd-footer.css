@@ -2384,3 +2384,9 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 .yd-pop-toast { word-break: keep-all; position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 16px); z-index: 100100; background: rgba(25, 25, 25, 0.94); color: #fff; padding: 13px 18px; border-radius: 14px; font-size: 14px; line-height: 1.45; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; max-width: calc(100% - 32px); text-align: center; }
 .yd-pop-toast.yd-pop-on { opacity: 1; transform: translate(-50%, 0); }
 .yd-pop-toast strong { color: #FEE500; font-weight: 800; }
+
+/* 비회원 장바구니 듀얼 주문바 (2026-08-27 복구 — 게스트 주문 진입 소실 결함) */
+#yd-guest-orderbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000; background: #fff; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08); display: flex; gap: 8px; }
+#yd-guest-orderbar button { border: 0; border-radius: 12px; font-weight: 800; font-size: 15px; padding: 14px 8px; cursor: pointer; }
+#yd-guest-orderbar .yd-gob-join { flex: 1.55; background: #FEE500; color: #191919; }
+#yd-guest-orderbar .yd-gob-guest { flex: 1; background: #fff; color: #555; border: 1px solid #D9D4C7; }

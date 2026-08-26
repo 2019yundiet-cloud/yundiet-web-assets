@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_107__) {
+  if (window.__YD_FOOTER_V3_108__) {
     return;
   }
-  window.__YD_FOOTER_V3_107__ = true;
+  window.__YD_FOOTER_V3_108__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.107', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.108', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2986,8 +2986,34 @@
           if (wrap.style.display !== 'none') {
             wrap.style.display = 'none';
           }
+          /* 2026-08-27 복구: 게스트 주문 진입이 사라졌던 결함 — 숨기는 대신
+             [3초 회원가입 후 구매하기 / 비회원 구매] 듀얼 바를 띄운다 (대표 지시) */
+          if (!qs('#yd-guest-orderbar')) {
+            const bar = document.createElement('div');
+            bar.id = 'yd-guest-orderbar';
+            bar.innerHTML =
+              '<button type="button" class="yd-gob-join">3초 회원가입 후 구매하기</button>' +
+              '<button type="button" class="yd-gob-guest">비회원 구매</button>';
+            document.body.appendChild(bar);
+            qs('.yd-gob-join', bar).addEventListener('click', function() {
+              try {
+                window.sessionStorage.setItem('yd_kakao_direct', String(Date.now()));
+                window.sessionStorage.setItem('yd_pay_resume', String(Date.now()));
+              } catch (err) {}
+              try { (window.top || window).location.href = '/login'; }
+              catch (err) { window.location.href = '/login'; }
+            });
+            qs('.yd-gob-guest', bar).addEventListener('click', function() {
+              /* 네이티브 주문하기 트리거 — '로그인 전 바로 주문 허용' ON이라 비회원 주문서로 진행 */
+              btn.click();
+            });
+            const aside = wrap.closest('aside');
+            if (aside) aside.style.paddingBottom = '110px';
+          }
           return;
         }
+        const gob = qs('#yd-guest-orderbar');
+        if (gob) gob.remove();
 
         if (wrap.style.display === 'none') {
           wrap.style.display = '';
@@ -3010,7 +3036,7 @@
           }
         }
       });
-      ydMark('cartOrderButton', found, guest ? '비로그인: 숨김' : '로그인: 하단 고정');
+      ydMark('cartOrderButton', found, guest ? '비로그인: 듀얼 주문바' : '로그인: 하단 고정');
     }
 
     function polishCartControls() {
@@ -5502,7 +5528,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.107] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.108] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
