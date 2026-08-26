@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_103__) {
+  if (window.__YD_FOOTER_V3_104__) {
     return;
   }
-  window.__YD_FOOTER_V3_103__ = true;
+  window.__YD_FOOTER_V3_104__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.103', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.104', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -5076,14 +5076,16 @@
         onCta: function() {
           try { window.localStorage.setItem('yd_boost_claimed', String(Date.now())); } catch (err) {}
           if (isGuestUser()) {
-            /* 비회원: 카카오 3초 가입 경유 → 복귀 시 bindBoostCouponResume이 쿠폰 링크로 발급 */
+            /* 비회원: 쿠폰 링크 직행 — imweb이 /login?back_url=쿠폰링크로 보내고(실측),
+               yd_kakao_direct가 카카오 버튼 자동 클릭 → 가입 후 back_url 복귀로 자동 발급.
+               yd_boost_pending은 back_url이 유실되는 경로의 백업 체인. */
             try {
               window.sessionStorage.setItem('yd_kakao_direct', String(Date.now()));
               window.sessionStorage.setItem('yd_boost_pending', String(Date.now()));
               window.sessionStorage.removeItem('yd_pay_resume');
             } catch (err) {}
-            try { (window.top || window).location.href = '/login'; }
-            catch (err) { window.location.href = '/login'; }
+            try { (window.top || window).location.href = CONFIG.BOOST_COUPON_URL; }
+            catch (err) { window.location.href = CONFIG.BOOST_COUPON_URL; }
             return;
           }
           try { (window.top || window).location.href = CONFIG.BOOST_COUPON_URL; }
@@ -5465,7 +5467,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.103] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.104] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
