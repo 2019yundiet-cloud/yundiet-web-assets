@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_106__) {
+  if (window.__YD_FOOTER_V3_107__) {
     return;
   }
-  window.__YD_FOOTER_V3_106__ = true;
+  window.__YD_FOOTER_V3_107__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.106', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.107', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4963,9 +4963,9 @@
     if (qs('.yd-pop-wrap')) return null;
     if (!opts.force) {
       if (def.capExempt) {
-        /* 부스터: 세션당 1개 캡 예외 — 발급 이력(영구)·24h 재노출 캡만 적용 */
+        /* 세션당 1개 캡 예외(부스터·결제정체) — 수령 이력(claimedKey)·팝업별 24h 캡만 적용 */
         try {
-          if (window.localStorage.getItem('yd_boost_claimed')) return null;
+          if (def.claimedKey && window.localStorage.getItem(def.claimedKey)) return null;
           const last = Number(window.localStorage.getItem(POPUP_RULES.lastPrefix + def.id) || 0);
           if (last && Date.now() - last < POPUP_RULES.cooldownMs) return null;
           window.localStorage.setItem(POPUP_RULES.lastPrefix + def.id, String(Date.now()));
@@ -5068,6 +5068,7 @@
       return {
         id: 'first_buy_boost',
         capExempt: true,
+        claimedKey: 'yd_boost_claimed',
         bodyHtml:
           '<div class="yd-pop-body">' +
           '<p class="yd-pop-kicker">첫 구매 응원 쿠폰</p>' +
@@ -5121,6 +5122,7 @@
       const ship = formatDate(getNextShipDate(new Date()));
       return {
         id: 'checkout_stall',
+        capExempt: true,
         titleHtml: '결제하다 막히는 부분이 있으세요?',
         descHtml: '지금 결제를 완료하면<br><strong>' + popEscapeHtml(ship) + ' 출발</strong>로 가장 빨리 받아보세요<br>궁금한 건 카카오톡으로 바로 물어보셔도 돼요',
         ctaLabel: '이어서 결제하기',
@@ -5297,8 +5299,18 @@
         try { bought = window.sessionStorage.getItem('yd_purchased'); } catch (err) {}
         if (bought) { window.clearInterval(boostTimer); return; }
         if (Date.now() - t0 >= 6 * 60 * 1000) {
-          window.clearInterval(boostTimer);
-          popShowCard(POPUP_DEFS.first_buy_boost());
+          if (qs('.yd-pop-wrap')) return; /* 다른 카드 표시 중 — 닫힌 뒤 다음 틱에 재시도 */
+          const card = popShowCard(POPUP_DEFS.first_buy_boost());
+          if (card) window.clearInterval(boostTimer);
+          else {
+            /* 캡·수령이력으로 거절된 경우만 종료(재시도 무의미) */
+            let denied = false;
+            try {
+              denied = !!window.localStorage.getItem('yd_boost_claimed') ||
+                (Date.now() - Number(window.localStorage.getItem(POPUP_RULES.lastPrefix + 'first_buy_boost') || 0)) < POPUP_RULES.cooldownMs;
+            } catch (err) {}
+            if (denied) window.clearInterval(boostTimer);
+          }
         }
       };
       const boostTimer = window.setInterval(boostCheck, 5000);
@@ -5490,7 +5502,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.106] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.107] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
