@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_102__) {
+  if (window.__YD_FOOTER_V3_103__) {
     return;
   }
-  window.__YD_FOOTER_V3_102__ = true;
+  window.__YD_FOOTER_V3_103__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -18,7 +18,7 @@
     MEMBERSHIP_STATE_ENDPOINT: '',
     MEMBERSHIP_SCHEMA: 'yundiet-membership-ui/v1',
     MEMBERSHIP_REQUEST_TIMEOUT: 5000,
-    BOOST_COUPON_URL: '/?coupon=c20260826636a5f11ef00c&utm_source=onsite_popup&utm_medium=popup&utm_campaign=first_buy_boost&utm_content=coupon2000',
+    BOOST_COUPON_URL: '/?coupon=7C18FC5909F58&utm_source=onsite_popup&utm_medium=popup&utm_campaign=first_buy_boost&utm_content=coupon2000',
     DISCOUNT_MAP_URL: 'https://2019yundiet-cloud.github.io/yundiet-web-assets/discount-map.json',
     DAYS: ['일', '월', '화', '수', '목', '금', '토'],
     TOP_BANNER_AB: {
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.102', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.103', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -5126,7 +5126,27 @@
   const EXIT_CART_POPUP_ENABLED = false; /* ③ 이탈 리마인드 — 대표 결정 대기(코드는 유지) */
 
   function bindOnsitePopups() {
-    if (IS_IFRAME) { ydMark('onsitePopups', true, 'iframe 제외'); return; }
+    if (IS_IFRAME) {
+      /* 레이어(iframe) 상세: 팝업은 부모창이 그린다(z-index가 모달 위) — 여기선 조건 감지·릴레이만.
+         2026-08-26 수리: 상세 대부분이 레이어로 열려 iframe 전체 제외 시 ①이 실사용에서 발화 안 하던 결함. */
+      if (isProductDetailPage() && isGuestUser() && !isWholesalePage()) {
+        let dwellMs = 0;
+        let lastTick = Date.now();
+        const relayTimer = window.setInterval(function() {
+          const now = Date.now();
+          if (document.visibilityState === 'visible') dwellMs += now - lastTick;
+          lastTick = now;
+          if (dwellMs >= 20000) {
+            window.clearInterval(relayTimer);
+            try { window.parent.postMessage({ __yd_pop: true, id: 'signup_dwell' }, location.origin); } catch (err) {}
+          }
+        }, 1000);
+        ydMark('onsitePopups', true, 'iframe: signup_dwell 릴레이 무장');
+        return;
+      }
+      ydMark('onsitePopups', true, 'iframe 제외');
+      return;
+    }
     if (isWholesalePage()) { ydMark('onsitePopups', true, '도매몰 — 팝업 전체 제외'); return; }
     /* 세션 시작 시각(부스터 6분 기준) · 구매 완료 마커 */
     try {
@@ -5149,6 +5169,18 @@
     };
 
     const armed = [];
+
+    /* 레이어(iframe) 상세에서 온 팝업 릴레이 수신 — 같은 오리진 + 화이트리스트만 */
+    window.addEventListener('message', function(e) {
+      try {
+        if (e.origin !== location.origin) return;
+        const d = e.data;
+        if (!d || d.__yd_pop !== true) return;
+        if (d.id !== 'signup_dwell') return;
+        if (!isGuestUser()) return;
+        popShowCard(POPUP_DEFS.signup_dwell());
+      } catch (err) {}
+    });
 
     /* #7 가입 직후 장바구니 도착 토스트 — 세션 캡 제외(가입 보상 확인은 항상 보여준다) */
     if (pageIs('/shop_cart') && !isGuestUser()) {
@@ -5433,7 +5465,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.102] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.103] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
