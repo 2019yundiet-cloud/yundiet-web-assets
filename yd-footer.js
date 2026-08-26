@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_99__) {
+  if (window.__YD_FOOTER_V3_100__) {
     return;
   }
-  window.__YD_FOOTER_V3_99__ = true;
+  window.__YD_FOOTER_V3_100__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.99', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.100', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4890,6 +4890,7 @@
     var path = window.location.pathname || '';
     if (/^\/login|^\/site_join|^\/oauth/.test(path)) return;
     if (/yd_autopay=1/.test(window.location.search)) return;
+    if (/^\/shop_cart/.test(path)) { try { window.sessionStorage.removeItem('yd_pay_resume'); } catch (err) {} return; }
     var raw = null;
     try { raw = window.sessionStorage.getItem('yd_pay_resume'); } catch (err) {}
     if (!raw) return;
@@ -4900,9 +4901,11 @@
     }
     if (isGuestUser()) { ydMark('signupPayResume', true, '비회원 상태 — 재개 대기'); return; }
     try { window.sessionStorage.removeItem('yd_pay_resume'); } catch (err) {}
-    ydMark('signupPayResume', true, '가입/로그인 확인 — 장바구니 결제 재개');
-    try { (window.top || window).location.href = '/shop_cart?yd_autopay=1'; }
-    catch (err) { window.location.href = '/shop_cart?yd_autopay=1'; }
+    /* 소유자 지시(2026-08-26 2차): 가입/로그인 완료 후에는 결제 자동 진행이 아니라
+       장바구니에 랜딩시켜 담은 상품·지급된 쿠폰을 확인하고 직접 주문하게 한다 */
+    ydMark('signupPayResume', true, '가입/로그인 확인 — 장바구니 랜딩');
+    try { (window.top || window).location.href = '/shop_cart'; }
+    catch (err) { window.location.href = '/shop_cart'; }
   }
 
   /* 옵션 플로우는 본문 파싱 직후 즉시 부팅 (yd-bs-root 가드로 중복 방지) */
@@ -4951,7 +4954,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.99] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.100] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
