@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_109__) {
+  if (window.__YD_FOOTER_V3_110__) {
     return;
   }
-  window.__YD_FOOTER_V3_109__ = true;
+  window.__YD_FOOTER_V3_110__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.109', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.110', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2975,12 +2975,18 @@
       }
 
       let found = false;
-      qsa('button').forEach(function(btn) {
+      /* 주문하기 표면이 button 외에 a 태그로도 존재(2026-08-27 대표 실화면 실증) — 둘 다 잡는다 */
+      qsa('button, a').forEach(function(btn) {
         if (!/^주문하기/.test((btn.textContent || '').trim())) {
           return;
         }
+        if (btn.closest('#yd-guest-orderbar')) return;
+        const isAnchor = btn.tagName === 'A';
         found = true;
-        const wrap = btn.parentElement || btn;
+        /* a 태그는 부모가 콘텐츠 컨테이너일 수 있어 자신만 숨긴다 */
+        const wrap = isAnchor ? btn : (btn.parentElement || btn);
+
+        if (!guest && isAnchor) return; /* 회원 화면의 a 주문하기는 원형 유지 */
 
         if (guest) {
           if (wrap.style.display !== 'none') {
@@ -5544,7 +5550,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.109] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.110] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
