@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_100__) {
+  if (window.__YD_FOOTER_V3_101__) {
     return;
   }
-  window.__YD_FOOTER_V3_100__ = true;
+  window.__YD_FOOTER_V3_101__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.100', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.101', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4908,6 +4908,107 @@
     catch (err) { window.location.href = '/shop_cart'; }
   }
 
+  /* ═══ 상세페이지(레이어 포함) 행동 계측 → GA4 (2026-08-26 대표 지시) ═══
+     GA4 기본 계측은 레이어(iframe) 상세 내부의 스크롤·클릭을 잡지 못한다 — 여기서 직접 심는다.
+     - yd_detail_scroll : 스크롤 깊이 25/50/75/90% 최초 도달 시 1회씩 (depth)
+     - yd_detail_dwell  : 탭이 실제로 보인 시간 10/30/60초 도달 시 1회씩 (seconds)
+     - yd_detail_click  : 주요 버튼 클릭 — 옵션 보기/리뷰/장바구니/결제·주문/쿠폰 (element_label)
+     공통 파라미터: product_idx, surface('layer'=팝업형 상세 | 'page'=직접 진입) */
+  function ydGaEvent(name, params) {
+    try {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', name, params);
+        return;
+      }
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push(Object.assign({ event: name }, params));
+    } catch (err) {}
+  }
+
+  /* 레이어(iframe)에 GA 태그가 없을 때 부모 창이 대신 발사해 주는 릴레이.
+     같은 오리진 + yd_ 접두 이벤트만 통과시킨다. */
+  function bindGaRelay() {
+    if (IS_IFRAME) return;
+    window.addEventListener('message', function(e) {
+      try {
+        if (e.origin !== location.origin) return;
+        const d = e.data;
+        if (!d || d.__yd_ga !== true) return;
+        if (!/^yd_[a-z0-9_]{1,40}$/.test(String(d.name || ''))) return;
+        ydGaEvent(d.name, (d.params && typeof d.params === 'object') ? d.params : {});
+      } catch (err) {}
+    });
+  }
+
+  function bindDetailEngagement() {
+    if (!isProductDetailPage()) return;
+    const surface = IS_IFRAME ? 'layer' : 'page';
+    const idx = (location.search.match(/[?&]idx=(\d+)/) || [])[1] || '';
+    const base = { product_idx: idx, surface: surface };
+
+    const send = function(name, extra) {
+      const params = Object.assign({}, base, extra || {});
+      const hasGa = (typeof window.gtag === 'function') || !!window.google_tag_manager;
+      if (!hasGa && IS_IFRAME) {
+        try { window.parent.postMessage({ __yd_ga: true, name: name, params: params }, location.origin); return; } catch (err) {}
+      }
+      ydGaEvent(name, params);
+    };
+
+    /* 스크롤 깊이 — 문서 기준, 임계값별 최초 1회 */
+    const depthFired = {};
+    let scrollQueued = false;
+    const checkDepth = function() {
+      scrollQueued = false;
+      const doc = document.scrollingElement || document.documentElement;
+      const total = doc.scrollHeight;
+      if (!total || total <= doc.clientHeight) return;
+      const depth = Math.round(((doc.scrollTop + doc.clientHeight) / total) * 100);
+      [25, 50, 75, 90].forEach(function(th) {
+        if (depth >= th && !depthFired[th]) {
+          depthFired[th] = true;
+          send('yd_detail_scroll', { depth: th });
+        }
+      });
+    };
+    window.addEventListener('scroll', function() {
+      if (scrollQueued) return;
+      scrollQueued = true;
+      window.requestAnimationFrame(checkDepth);
+    }, { passive: true });
+
+    /* 체류 시간 — 탭이 보이는 시간만 누적 */
+    const dwellFired = {};
+    let dwellMs = 0;
+    let lastTick = Date.now();
+    const dwellTimer = window.setInterval(function() {
+      const now = Date.now();
+      if (document.visibilityState === 'visible') dwellMs += now - lastTick;
+      lastTick = now;
+      [10, 30, 60].forEach(function(sec) {
+        if (dwellMs >= sec * 1000 && !dwellFired[sec]) {
+          dwellFired[sec] = true;
+          send('yd_detail_dwell', { seconds: sec });
+        }
+      });
+      if (dwellFired[60]) window.clearInterval(dwellTimer);
+    }, 1000);
+
+    /* 주요 버튼 클릭 — 의미 있는 라벨만 골라 보낸다 (노이즈 방지) */
+    const CLICK_LABEL_RE = /옵션\s*보기|리뷰|장바구니|바로\s*결제|주문하기|쿠폰|구매|건강담기|회원가입/;
+    document.addEventListener('click', function(e) {
+      try {
+        const el = e.target && e.target.closest ? e.target.closest('button, a') : null;
+        if (!el) return;
+        const label = String(el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 24);
+        if (!label || !CLICK_LABEL_RE.test(label)) return;
+        send('yd_detail_click', { element_label: label });
+      } catch (err) {}
+    }, true);
+
+    ydMark('detailEngagement', true, surface + (idx ? ' idx=' + idx : ''));
+  }
+
   /* 옵션 플로우는 본문 파싱 직후 즉시 부팅 (yd-bs-root 가드로 중복 방지) */
   try { bindOptionFlow(); } catch (err) {}
 
@@ -4938,6 +5039,8 @@
     bindGuestKakaoDirectLogin();
     bindSignupPayResume();
     bindFriendPackCouponHide();
+    bindGaRelay();
+    bindDetailEngagement();
     bindCartUx();
     bindPaymentCompletePatches();
     bindMembershipFoundation();
@@ -4954,7 +5057,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.100] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.101] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
