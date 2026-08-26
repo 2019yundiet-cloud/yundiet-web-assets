@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_108__) {
+  if (window.__YD_FOOTER_V3_109__) {
     return;
   }
-  window.__YD_FOOTER_V3_108__ = true;
+  window.__YD_FOOTER_V3_109__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.108', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.109', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2760,8 +2760,8 @@
            비회원 그대로 사고 싶은 고객은 [장바구니 담기] → 장바구니 주문하기(로그인 전 바로 주문 허용 ON)로 구매 가능. */
         if (payIsGuest()) {
           try {
-            window.sessionStorage.setItem('yd_kakao_direct', String(Date.now()));
-            window.sessionStorage.setItem('yd_pay_resume', String(Date.now()));
+            window.localStorage.setItem('yd_kakao_direct', String(Date.now()));
+            window.localStorage.setItem('yd_pay_resume', String(Date.now()));
           } catch (err) {}
           try { (window.top || window).location.href = '/login'; }
           catch (err) { window.location.href = '/login'; }
@@ -2997,8 +2997,8 @@
             document.body.appendChild(bar);
             qs('.yd-gob-join', bar).addEventListener('click', function() {
               try {
-                window.sessionStorage.setItem('yd_kakao_direct', String(Date.now()));
-                window.sessionStorage.setItem('yd_pay_resume', String(Date.now()));
+                window.localStorage.setItem('yd_kakao_direct', String(Date.now()));
+                window.localStorage.setItem('yd_pay_resume', String(Date.now()));
               } catch (err) {}
               try { (window.top || window).location.href = '/login'; }
               catch (err) { window.location.href = '/login'; }
@@ -4854,11 +4854,11 @@
     var path = window.location.pathname || '';
     if (!/^\/login\/?$/.test(path) && !/^\/site_join_type_choice\/?$/.test(path)) return;
     var raw = null;
-    try { raw = window.sessionStorage.getItem('yd_kakao_direct'); } catch (err) {}
+    try { raw = window.localStorage.getItem('yd_kakao_direct'); } catch (err) {}
     if (!raw) { ydMark('guestKakaoDirect', true, '마커 없음(일반 로그인 화면 유지)'); return; }
     var age = Date.now() - Number(raw);
     if (!(age >= 0 && age < 10 * 60 * 1000)) {
-      try { window.sessionStorage.removeItem('yd_kakao_direct'); } catch (err) {}
+      try { window.localStorage.removeItem('yd_kakao_direct'); } catch (err) {}
       ydMark('guestKakaoDirect', true, '마커 만료 폐기');
       return;
     }
@@ -4869,13 +4869,13 @@
       var btn = qs('#custom-login-btn') || qs('a.btn-kakao');
       if (btn && btn.offsetParent !== null && /kauth\.kakao\.com/.test(btn.href || '')) {
         clicked = true;
-        try { window.sessionStorage.removeItem('yd_kakao_direct'); } catch (err) {}
+        try { window.localStorage.removeItem('yd_kakao_direct'); } catch (err) {}
         ydMark('guestKakaoDirect', true, '카카오 간편로그인 자동 진입');
         btn.click();
         return;
       }
       if (Date.now() - started < 6000) { window.setTimeout(tryClick, 250); return; }
-      try { window.sessionStorage.removeItem('yd_kakao_direct'); } catch (err) {}
+      try { window.localStorage.removeItem('yd_kakao_direct'); } catch (err) {}
       ydMark('guestKakaoDirect', false, '카카오 버튼 미발견 — 일반 로그인 화면 유지');
     };
     tryClick();
@@ -4917,24 +4917,24 @@
     var path = window.location.pathname || '';
     if (/^\/login|^\/site_join|^\/oauth/.test(path)) return;
     if (/yd_autopay=1/.test(window.location.search)) return;
-    if (/^\/shop_cart/.test(path)) { try { window.sessionStorage.removeItem('yd_pay_resume'); } catch (err) {} return; }
+    if (/^\/shop_cart/.test(path)) { try { window.localStorage.removeItem('yd_pay_resume'); } catch (err) {} return; }
     var raw = null;
-    try { raw = window.sessionStorage.getItem('yd_pay_resume'); } catch (err) {}
+    try { raw = window.localStorage.getItem('yd_pay_resume'); } catch (err) {}
     if (!raw) return;
     var age = Date.now() - Number(raw);
     if (!(age >= 0 && age < 10 * 60 * 1000)) {
-      try { window.sessionStorage.removeItem('yd_pay_resume'); } catch (err) {}
+      try { window.localStorage.removeItem('yd_pay_resume'); } catch (err) {}
       return;
     }
     if (isGuestUser()) { ydMark('signupPayResume', true, '비회원 상태 — 재개 대기'); return; }
-    try { window.sessionStorage.removeItem('yd_pay_resume'); } catch (err) {}
+    try { window.localStorage.removeItem('yd_pay_resume'); } catch (err) {}
     /* 소유자 지시(2026-08-26 2차): 가입/로그인 완료 후에는 결제 자동 진행이 아니라
        장바구니에 랜딩시켜 담은 상품·지급된 쿠폰을 확인하고 직접 주문하게 한다 */
     ydMark('signupPayResume', true, '가입/로그인 확인 — 장바구니 랜딩');
     /* 장바구니 도착 시 가입 보상 토스트(#7)를 띄우도록 마커를 남긴다 */
     try {
-      window.sessionStorage.setItem('yd_pop_signup_welcome', String(Date.now()));
-      window.sessionStorage.setItem('yd_new_member_session', '1');
+      window.localStorage.setItem('yd_pop_signup_welcome', String(Date.now()));
+      window.localStorage.setItem('yd_new_member_session', String(Date.now()));
     } catch (err) {}
     try { (window.top || window).location.href = '/shop_cart'; }
     catch (err) { window.location.href = '/shop_cart'; }
@@ -5078,8 +5078,8 @@
           /* 가입 복귀 시 장바구니 랜딩 + 웰컴 토스트까지 잇는다 (2026-08-26 결함 수리:
              yd_pay_resume 없이는 가입 후 랜딩·토스트 체인이 끊겼음) */
           try {
-            window.sessionStorage.setItem('yd_kakao_direct', String(Date.now()));
-            window.sessionStorage.setItem('yd_pay_resume', String(Date.now()));
+            window.localStorage.setItem('yd_kakao_direct', String(Date.now()));
+            window.localStorage.setItem('yd_pay_resume', String(Date.now()));
           } catch (err) {}
           try { (window.top || window).location.href = '/login'; }
           catch (err) { window.location.href = '/login'; }
@@ -5112,9 +5112,9 @@
                yd_kakao_direct가 카카오 버튼 자동 클릭 → 가입 후 back_url 복귀로 자동 발급.
                yd_boost_pending은 back_url이 유실되는 경로의 백업 체인. */
             try {
-              window.sessionStorage.setItem('yd_kakao_direct', String(Date.now()));
-              window.sessionStorage.setItem('yd_boost_pending', String(Date.now()));
-              window.sessionStorage.removeItem('yd_pay_resume');
+              window.localStorage.setItem('yd_kakao_direct', String(Date.now()));
+              window.localStorage.setItem('yd_boost_pending', String(Date.now()));
+              window.localStorage.removeItem('yd_pay_resume');
             } catch (err) {}
             try { (window.top || window).location.href = CONFIG.BOOST_COUPON_URL; }
             catch (err) { window.location.href = CONFIG.BOOST_COUPON_URL; }
@@ -5186,6 +5186,8 @@
     /* 세션 시작 시각(부스터 6분 기준) · 구매 완료 마커 */
     try {
       if (!window.sessionStorage.getItem('yd_sess_t0')) window.sessionStorage.setItem('yd_sess_t0', String(Date.now()));
+      /* 카카오 앱 전환 복귀 시 세션 소실 대비 — 백업을 매 페이지 갱신(30분 유효) */
+      window.localStorage.setItem('yd_sess_t0_bak', JSON.stringify({ t0: Number(window.sessionStorage.getItem('yd_sess_t0')), at: Date.now() }));
       if (/\/shop_payment_complete/.test(location.pathname)) window.sessionStorage.setItem('yd_purchased', '1');
     } catch (err) {}
 
@@ -5220,25 +5222,38 @@
     /* #7 가입 직후 장바구니 도착 토스트 — 세션 캡 제외(가입 보상 확인은 항상 보여준다) */
     if (pageIs('/shop_cart') && !isGuestUser()) {
       let welcomeRaw = null;
-      try { welcomeRaw = window.sessionStorage.getItem('yd_pop_signup_welcome'); } catch (err) {}
+      try { welcomeRaw = window.localStorage.getItem('yd_pop_signup_welcome'); } catch (err) {}
       const welcomeAge = Date.now() - Number(welcomeRaw);
       if (welcomeRaw && welcomeAge >= 0 && welcomeAge < 10 * 60 * 1000) {
-        try { window.sessionStorage.removeItem('yd_pop_signup_welcome'); } catch (err) {}
-        window.setTimeout(function() {
-          popShowToast({
-            id: 'signup_welcome',
-            bodyHtml: '🎉 회원가입 완료!<br><span style="white-space:nowrap">쿠폰함에 <strong>18,000원 쿠폰팩</strong>이 들어왔어요</span>'
-          });
-        }, 1200);
-        /* 가입 전 6분 이상 고민한 신규 회원 = 부스터 대상 — 토스트 뒤에 카드로 이어서 지급 */
-        window.setTimeout(function() {
-          let claimed = null, t0 = Date.now();
-          try {
-            claimed = window.localStorage.getItem('yd_boost_claimed');
-            t0 = Number(window.sessionStorage.getItem('yd_sess_t0') || Date.now());
-          } catch (err) {}
-          if (!claimed && Date.now() - t0 >= 6 * 60 * 1000) popShowCard(POPUP_DEFS.first_buy_boost());
-        }, 8500);
+        try { window.localStorage.removeItem('yd_pop_signup_welcome'); } catch (err) {}
+        /* 신규가입 확인: 쿠폰함에 [회원가입-첫구매](만료 3일)가 있으면 신규 — 기존 회원이
+           팝업 경유 '로그인'만 한 경우의 "회원가입 완료" 오표기를 막는다. 조회 실패 시엔 표시(fail-open). */
+        fetch('/mypage/coupon', { credentials: 'same-origin' })
+          .then(function(res) { return res.ok ? res.text() : null; })
+          .then(function(html) {
+            const isNew = (html === null) || html.indexOf('회원가입-첫구매') !== -1;
+            if (!isNew) { ydMark('signupWelcomeToast', true, '기존 회원 로그인 — 토스트 생략'); return; }
+            window.setTimeout(function() {
+              popShowToast({
+                id: 'signup_welcome',
+                bodyHtml: '🎉 회원가입 완료!<br><span style="white-space:nowrap">쿠폰함에 <strong>18,000원 쿠폰팩</strong>이 들어왔어요</span>'
+              });
+            }, 400);
+            /* 가입 전 6분 이상 고민한 신규 회원 = 부스터 대상 — 토스트 뒤에 카드로 이어서 지급.
+               t0는 세션값 우선, 카카오 앱 전환으로 세션이 끊겼으면 30분 내 백업 사용 */
+            window.setTimeout(function() {
+              let claimed = null, t0 = 0;
+              try {
+                claimed = window.localStorage.getItem('yd_boost_claimed');
+                t0 = Number(window.sessionStorage.getItem('yd_sess_t0') || 0);
+                const bak = JSON.parse(window.localStorage.getItem('yd_sess_t0_bak') || 'null');
+                if (bak && Date.now() - bak.at < 30 * 60 * 1000 && (!t0 || bak.t0 < t0)) t0 = bak.t0;
+              } catch (err) {}
+              if (!t0) t0 = Date.now();
+              if (!claimed && Date.now() - t0 >= 6 * 60 * 1000) popShowCard(POPUP_DEFS.first_buy_boost());
+            }, 7700);
+          })
+          .catch(function() {});
         armed.push('signup_welcome');
       }
     }
@@ -5313,8 +5328,9 @@
       try {
         claimed = window.localStorage.getItem('yd_boost_claimed');
         purchased = window.sessionStorage.getItem('yd_purchased');
-        newMember = window.sessionStorage.getItem('yd_new_member_session');
+        newMember = window.localStorage.getItem('yd_new_member_session');
       } catch (err) {}
+      if (newMember && Date.now() - Number(newMember) > 30 * 60 * 1000) newMember = null; /* 30분 TTL */
       if (claimed || purchased) return;
       if (!isGuestUser() && !newMember) return; /* 기존 회원(구매이력 미상)에겐 노출 안 함 */
       const t0 = (function() {
@@ -5358,17 +5374,17 @@
   function bindBoostCouponResume() {
     if (IS_IFRAME) return;
     let raw = null;
-    try { raw = window.sessionStorage.getItem('yd_boost_pending'); } catch (err) {}
+    try { raw = window.localStorage.getItem('yd_boost_pending'); } catch (err) {}
     if (!raw) return;
     const age = Date.now() - Number(raw);
     if (!(age >= 0 && age < 10 * 60 * 1000)) {
-      try { window.sessionStorage.removeItem('yd_boost_pending'); } catch (err) {}
+      try { window.localStorage.removeItem('yd_boost_pending'); } catch (err) {}
       return;
     }
     if (isGuestUser()) { ydMark('boostCouponResume', true, '비회원 — 가입 복귀 대기'); return; }
     if (/[?&]coupon=/.test(location.search)) {
       /* 쿠폰 랜딩 도착 = 발급 완료 */
-      try { window.sessionStorage.removeItem('yd_boost_pending'); } catch (err) {}
+      try { window.localStorage.removeItem('yd_boost_pending'); } catch (err) {}
       ydMark('boostCouponResume', true, '가입 복귀 — 쿠폰 발급 랜딩 완료');
       return;
     }
@@ -5528,7 +5544,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.108] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.109] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
