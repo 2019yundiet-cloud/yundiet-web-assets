@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_97__) {
+  if (window.__YD_FOOTER_V3_98__) {
     return;
   }
-  window.__YD_FOOTER_V3_97__ = true;
+  window.__YD_FOOTER_V3_98__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -49,7 +49,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.97', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.98', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -137,12 +137,10 @@
         assignment = { variant: preview, preview: true };
         return assignment;
       }
-      let variant = storedVariant();
-      if (!variant) {
-        variant = randomVariant();
-        try { window.localStorage.setItem(exp.storageKey, variant); } catch (err) {}
-      }
-      assignment = { variant: variant, preview: false };
+      /* 실험 종료(2026-08-26 소유자 확정): 가입 자동발행 쿠폰이 실지급되므로 A안 고정.
+         B안(카카오채널 18,000원)은 채널 쿠폰 지급 중단과 함께 은퇴. storedVariant/randomVariant는
+         계측 연속성 참고용으로 남긴다. */
+      assignment = { variant: 'A', preview: false };
       return assignment;
     }
 
@@ -2754,10 +2752,19 @@
       dismissNativeCartModal();
       [250, 600, 1200, 2000].forEach(function(ms) { setTimeout(dismissNativeCartModal, ms); });
       if (afterAddMode === 'pay') {
-        /* 비회원: 로그인 페이지 도착 시 카카오 간편로그인으로 직행하도록 10분 유효 마커를 남긴다
-           (sessionStorage는 같은 탭·같은 오리진에서 iframe/top이 공유한다 — 2026-08-26) */
+        /* 비회원(2026-08-26 소유자 지시 3차): [3초 회원가입쿠폰]은 게스트 결제로 새지 않고
+           카카오 가입을 경유해 쿠폰팩(가입 자동발행)을 받게 한다.
+           로그인 페이지로 직행 → yd_kakao_direct가 카카오 버튼 자동 클릭 →
+           가입/로그인 복귀 후 yd_pay_resume이 장바구니 자동결제(yd_autopay)로 재개.
+           비회원 그대로 사고 싶은 고객은 [장바구니 담기] → 장바구니 주문하기(로그인 전 바로 주문 허용 ON)로 구매 가능. */
         if (payIsGuest()) {
-          try { window.sessionStorage.setItem('yd_kakao_direct', String(Date.now())); } catch (err) {}
+          try {
+            window.sessionStorage.setItem('yd_kakao_direct', String(Date.now()));
+            window.sessionStorage.setItem('yd_pay_resume', String(Date.now()));
+          } catch (err) {}
+          try { (window.top || window).location.href = '/login'; }
+          catch (err) { window.location.href = '/login'; }
+          return;
         }
         /* yd_autopay=1: 장바구니 도착 즉시 네이티브 주문하기를 자동 클릭해 결제 단계로 직행 */
         try { (window.top || window).location.href = '/shop_cart?yd_autopay=1'; }
@@ -4847,6 +4854,29 @@
     tryClick();
   }
 
+  /* ═══ 가입쿠폰 결제 재개 (2026-08-26) ═══
+     [3초 회원가입쿠폰] → 카카오 가입/로그인 → 복귀(홈 등) 시, 회원 상태가 확인되면
+     yd_pay_resume 마커(10분 유효)를 소비하고 장바구니 자동결제(yd_autopay)로 이어간다.
+     비회원 상태(로그인 미완)에서는 절대 발화하지 않고, 로그인/가입/OAuth 페이지에서는 대기한다. */
+  function bindSignupPayResume() {
+    var path = window.location.pathname || '';
+    if (/^\/login|^\/site_join|^\/oauth/.test(path)) return;
+    if (/yd_autopay=1/.test(window.location.search)) return;
+    var raw = null;
+    try { raw = window.sessionStorage.getItem('yd_pay_resume'); } catch (err) {}
+    if (!raw) return;
+    var age = Date.now() - Number(raw);
+    if (!(age >= 0 && age < 10 * 60 * 1000)) {
+      try { window.sessionStorage.removeItem('yd_pay_resume'); } catch (err) {}
+      return;
+    }
+    if (isGuestUser()) { ydMark('signupPayResume', true, '비회원 상태 — 재개 대기'); return; }
+    try { window.sessionStorage.removeItem('yd_pay_resume'); } catch (err) {}
+    ydMark('signupPayResume', true, '가입/로그인 확인 — 장바구니 결제 재개');
+    try { (window.top || window).location.href = '/shop_cart?yd_autopay=1'; }
+    catch (err) { window.location.href = '/shop_cart?yd_autopay=1'; }
+  }
+
   /* 옵션 플로우는 본문 파싱 직후 즉시 부팅 (yd-bs-root 가드로 중복 방지) */
   try { bindOptionFlow(); } catch (err) {}
 
@@ -4875,6 +4905,7 @@
     ensureObserver('patchLayerPopupButtons', patchLayerPopupButtons);
     bindShippingSchedule();
     bindGuestKakaoDirectLogin();
+    bindSignupPayResume();
     bindCartUx();
     bindPaymentCompletePatches();
     bindMembershipFoundation();
@@ -4891,7 +4922,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.97] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.98] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
