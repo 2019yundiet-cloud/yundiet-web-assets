@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_104__) {
+  if (window.__YD_FOOTER_V3_105__) {
     return;
   }
-  window.__YD_FOOTER_V3_104__ = true;
+  window.__YD_FOOTER_V3_105__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.104', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.105', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4997,10 +4997,10 @@
       dim.classList.add('yd-pop-on');
       card.classList.add('yd-pop-on');
     });
-    popTrack('yd_pop_view', def.id);
+    if (!opts.silent) popTrack('yd_pop_view', def.id);
 
     function close(reason) {
-      popTrack(reason === 'cta' ? 'yd_pop_click' : 'yd_pop_close', def.id);
+      if (!opts.silent) popTrack(reason === 'cta' ? 'yd_pop_click' : 'yd_pop_close', def.id);
       dim.classList.remove('yd-pop-on');
       card.classList.remove('yd-pop-on');
       window.setTimeout(function() {
@@ -5164,8 +5164,8 @@
           bodyHtml: '🎉 회원가입 완료!<br><span style="white-space:nowrap">쿠폰함에 <strong>18,000원 쿠폰팩</strong>이 들어왔어요</span>'
         });
       }
-      if (id === 'exit_cart') return popShowCard(POPUP_DEFS.exit_cart({ count: 2, price: 41800 }), { force: true });
-      if (POPUP_DEFS[id]) return popShowCard(POPUP_DEFS[id](), { force: true });
+      if (id === 'exit_cart') return popShowCard(POPUP_DEFS.exit_cart({ count: 2, price: 41800 }), { force: true, silent: true });
+      if (POPUP_DEFS[id]) return popShowCard(POPUP_DEFS[id](), { force: true, silent: true });
       console.warn('[YD] 알 수 없는 팝업 id: ' + id + ' (signup_dwell|exit_cart|checkout_stall|signup_welcome)');
       return null;
     };
@@ -5289,6 +5289,13 @@
       }, 15000);
       armed.push('first_buy_boost(6m)');
     })();
+
+    /* 미리보기: ?yd_pop=<팝업id> — 캡·대상조건 무시 강제 렌더(계측 제외, 소유자 검수용) */
+    const previewId = (location.search.match(/[?&]yd_pop=([a-z_]+)/) || [])[1];
+    if (previewId) {
+      window.setTimeout(function() { window.YD_POPUP_TEST(previewId); }, 1500);
+      armed.push('preview:' + previewId);
+    }
 
     ydMark('onsitePopups', true, '무장: ' + (armed.join(', ') || '없음'));
   }
@@ -5467,7 +5474,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.104] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.105] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
