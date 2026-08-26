@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_105__) {
+  if (window.__YD_FOOTER_V3_106__) {
     return;
   }
-  window.__YD_FOOTER_V3_105__ = true;
+  window.__YD_FOOTER_V3_106__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.105', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.106', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -5049,7 +5049,12 @@
         ctaKakao: true,
         laterLabel: '괜찮아요, 더 둘러볼게요',
         onCta: function() {
-          try { window.sessionStorage.setItem('yd_kakao_direct', String(Date.now())); } catch (err) {}
+          /* 가입 복귀 시 장바구니 랜딩 + 웰컴 토스트까지 잇는다 (2026-08-26 결함 수리:
+             yd_pay_resume 없이는 가입 후 랜딩·토스트 체인이 끊겼음) */
+          try {
+            window.sessionStorage.setItem('yd_kakao_direct', String(Date.now()));
+            window.sessionStorage.setItem('yd_pay_resume', String(Date.now()));
+          } catch (err) {}
           try { (window.top || window).location.href = '/login'; }
           catch (err) { window.location.href = '/login'; }
         }
@@ -5197,6 +5202,15 @@
             bodyHtml: '🎉 회원가입 완료!<br><span style="white-space:nowrap">쿠폰함에 <strong>18,000원 쿠폰팩</strong>이 들어왔어요</span>'
           });
         }, 1200);
+        /* 가입 전 6분 이상 고민한 신규 회원 = 부스터 대상 — 토스트 뒤에 카드로 이어서 지급 */
+        window.setTimeout(function() {
+          let claimed = null, t0 = Date.now();
+          try {
+            claimed = window.localStorage.getItem('yd_boost_claimed');
+            t0 = Number(window.sessionStorage.getItem('yd_sess_t0') || Date.now());
+          } catch (err) {}
+          if (!claimed && Date.now() - t0 >= 6 * 60 * 1000) popShowCard(POPUP_DEFS.first_buy_boost());
+        }, 8500);
         armed.push('signup_welcome');
       }
     }
@@ -5278,7 +5292,7 @@
       const t0 = (function() {
         try { return Number(window.sessionStorage.getItem('yd_sess_t0') || Date.now()); } catch (err) { return Date.now(); }
       })();
-      const boostTimer = window.setInterval(function() {
+      const boostCheck = function() {
         let bought = null;
         try { bought = window.sessionStorage.getItem('yd_purchased'); } catch (err) {}
         if (bought) { window.clearInterval(boostTimer); return; }
@@ -5286,7 +5300,9 @@
           window.clearInterval(boostTimer);
           popShowCard(POPUP_DEFS.first_buy_boost());
         }
-      }, 15000);
+      };
+      const boostTimer = window.setInterval(boostCheck, 5000);
+      window.setTimeout(boostCheck, 2500);
       armed.push('first_buy_boost(6m)');
     })();
 
@@ -5474,7 +5490,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.105] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.106] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
