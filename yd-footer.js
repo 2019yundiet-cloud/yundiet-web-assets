@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_114__) {
+  if (window.__YD_FOOTER_V3_115__) {
     return;
   }
-  window.__YD_FOOTER_V3_114__ = true;
+  window.__YD_FOOTER_V3_115__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.114', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.115', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -5170,6 +5170,16 @@
         ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
     },
 
+    boost_e: function() { /* E. 현재본 카피 + A안 쿠폰 티켓 결합 (8/28 대표 지시) */
+      return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
+        bodyHtml: '<div class="yd-pop-body"><p class="yd-pop-kicker">첫 구매 응원 쿠폰</p>' +
+          '<p class="yd-pop-amount">첫 주문 응원 <strong>2,000원</strong><br>발급 되었습니다!</p>' +
+          '<div class="yd-bt-wrap"><div class="yd-bt-amt"><b>2,000원</b><span>COUPON</span></div>' +
+          '<div class="yd-bt-body"><div class="t">지금 받으면<br>바로 쓸 수 있어요</div>' +
+          '<div class="d">웰컴 쿠폰팩과 중복 사용 · 오늘 하루만</div></div></div></div>',
+        ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
+    },
+
     /* #3 이탈 직전(exit intent) + 장바구니에 상품 있음 */
     exit_cart: function(cartInfo) {
       const count = cartInfo && cartInfo.count ? cartInfo.count : 0;
@@ -5637,7 +5647,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.114] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.115] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
