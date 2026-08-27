@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_116__) {
+  if (window.__YD_FOOTER_V3_117__) {
     return;
   }
-  window.__YD_FOOTER_V3_116__ = true;
+  window.__YD_FOOTER_V3_117__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.116', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.117', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4957,6 +4957,8 @@
   /* 부스터 발화 대기: 6분→2분 (2026-08-27 대표 지시 — 신규 평균 세션 95초 실측,
      6분은 평균의 3.8배라 노출 전에 대부분 이탈. 2분 내 구매완료자는 8.5%뿐이라 선수 낭비도 적음) */
   const BOOST_FIRE_AFTER_MS = 2 * 60 * 1000;
+  /* 가입 팝업 체류 조건: 20초→40초 (2026-08-28 대표 지시) */
+  const SIGNUP_DWELL_MS = 40 * 1000;
 
   function popTrack(name, popupId) {
     try {
@@ -5076,7 +5078,7 @@
 
   /* 팝업 정의 4종 — id는 계측 popup_id와 동일 */
   const POPUP_DEFS = {
-    /* #1 비회원 상세페이지 20초 체류 → 가입 쿠폰팩 */
+    /* #1 비회원 상세페이지 40초 체류 → 가입 쿠폰팩 */
     signup_dwell: function() {
       return {
         id: 'signup_dwell',
@@ -5232,7 +5234,7 @@
           const now = Date.now();
           if (document.visibilityState === 'visible') dwellMs += now - lastTick;
           lastTick = now;
-          if (dwellMs >= 20000) {
+          if (dwellMs >= SIGNUP_DWELL_MS) {
             window.clearInterval(relayTimer);
             try { window.parent.postMessage({ __yd_pop: true, id: 'signup_dwell' }, location.origin); } catch (err) {}
           }
@@ -5361,14 +5363,14 @@
       armStall();
       armed.push('checkout_stall');
     } else if (isProductDetailPage() && isGuestUser()) {
-      /* #1 비회원 상세 20초 체류 (탭이 보이는 시간만 카운트) */
+      /* #1 비회원 상세 40초 체류 (탭이 보이는 시간만 카운트) */
       let dwellMs = 0;
       let lastTick = Date.now();
       const dwellTimer = window.setInterval(function() {
         const now = Date.now();
         if (document.visibilityState === 'visible') dwellMs += now - lastTick;
         lastTick = now;
-        if (dwellMs >= 20000) {
+        if (dwellMs >= SIGNUP_DWELL_MS) {
           window.clearInterval(dwellTimer);
           popShowCard(POPUP_DEFS.signup_dwell());
         }
@@ -5658,7 +5660,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.116] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.117] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
