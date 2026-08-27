@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_111__) {
+  if (window.__YD_FOOTER_V3_112__) {
     return;
   }
-  window.__YD_FOOTER_V3_111__ = true;
+  window.__YD_FOOTER_V3_112__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.111', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.112', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2998,8 +2998,8 @@
             const bar = document.createElement('div');
             bar.id = 'yd-guest-orderbar';
             bar.innerHTML =
-              '<button type="button" class="yd-gob-join">3초 회원가입 후 구매하기</button>' +
-              '<button type="button" class="yd-gob-guest">비회원 구매</button>';
+              '<button type="button" class="yd-gob-guest">비회원 구매</button>' +
+              '<button type="button" class="yd-gob-join">3초 회원가입 후 구매하기</button>';
             document.body.appendChild(bar);
             qs('.yd-gob-join', bar).addEventListener('click', function() {
               try {
@@ -5042,6 +5042,10 @@
     qs('.yd-pop-later', card).addEventListener('click', function() { close('later'); });
     dim.addEventListener('click', function() { close('dim'); });
     qs('.yd-pop-cta', card).addEventListener('click', function() {
+      /* 전환 귀속: 클릭한 팝업 id를 30분 기록 — 가입/쿠폰발급/구매 완료 시 yd_pop_convert로 연결 */
+      if (!opts.silent) {
+        try { window.localStorage.setItem('yd_pop_attrib', JSON.stringify({ id: def.id, at: Date.now() })); } catch (err) {}
+      }
       close('cta');
       if (typeof def.onCta === 'function') def.onCta();
     });
@@ -5212,6 +5216,29 @@
 
     const armed = [];
 
+    /* 전환 연결: 팝업 CTA 클릭 후 30분 내 목표 행동 도달 시 yd_pop_convert 1회 발사 */
+    const popConvert = function(action) {
+      try {
+        const raw = window.localStorage.getItem('yd_pop_attrib');
+        if (!raw) return;
+        const a = JSON.parse(raw);
+        if (!a || !a.id || Date.now() - Number(a.at) > 30 * 60 * 1000) {
+          window.localStorage.removeItem('yd_pop_attrib');
+          return;
+        }
+        const doneKey = 'done_' + action;
+        if (a[doneKey]) return;
+        a[doneKey] = 1;
+        window.localStorage.setItem('yd_pop_attrib', JSON.stringify(a));
+        ydGaEvent('yd_pop_convert', { popup_id: a.id, convert_action: action, page_path: location.pathname });
+        if (action === 'purchase') window.localStorage.removeItem('yd_pop_attrib');
+      } catch (err) {}
+    };
+    /* 지점 1: 구매 완료 */
+    if (/\/shop_payment_complete/.test(location.pathname)) popConvert('purchase');
+    /* 지점 2: 쿠폰 발급 랜딩 도착 */
+    if (/[?&]coupon=/.test(location.search) && !isGuestUser()) popConvert('coupon_issued');
+
     /* 레이어(iframe) 상세에서 온 팝업 릴레이 수신 — 같은 오리진 + 화이트리스트만 */
     window.addEventListener('message', function(e) {
       try {
@@ -5238,6 +5265,7 @@
           .then(function(html) {
             const isNew = (html === null) || html.indexOf('회원가입-첫구매') !== -1;
             if (!isNew) { ydMark('signupWelcomeToast', true, '기존 회원 로그인 — 토스트 생략'); return; }
+            popConvert('signup');
             window.setTimeout(function() {
               popShowToast({
                 id: 'signup_welcome',
@@ -5499,6 +5527,30 @@
     ydMark('detailEngagement', true, surface + (idx ? ' idx=' + idx : ''));
   }
 
+  /* 게스트 카트 조기 스위퍼(2026-08-27): 주문 표면이 렌더 직후 0.1~0.2초 보였다
+     사라지던 잔상 제거 — 디바운스 없이 MutationObserver 동기 콜백(페인트 전)으로 즉시 숨긴다.
+     숨김만 담당하고 듀얼 주문바 생성은 bindCartUx의 정식 로직이 맡는다. */
+  try {
+    if (/^\/shop_cart/.test(location.pathname) && !IS_IFRAME && isGuestUser()) {
+      const ydEarlySweep = function() {
+        try {
+          const nodes = document.querySelectorAll('button, a');
+          for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i];
+            if (!/^주문하기/.test((n.textContent || '').trim())) continue;
+            if (n.closest('#yd-guest-orderbar')) continue;
+            const tgt = n.tagName === 'A' ? n : (n.parentElement || n);
+            if (tgt.style.display !== 'none') tgt.style.display = 'none';
+          }
+          const legacyBanner = document.getElementById('agp-persistent-banner');
+          if (legacyBanner) legacyBanner.remove();
+        } catch (err) {}
+      };
+      ydEarlySweep();
+      new MutationObserver(ydEarlySweep).observe(document.documentElement, { childList: true, subtree: true });
+    }
+  } catch (err) {}
+
   /* 옵션 플로우는 본문 파싱 직후 즉시 부팅 (yd-bs-root 가드로 중복 방지) */
   try { bindOptionFlow(); } catch (err) {}
 
@@ -5549,7 +5601,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.111] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.112] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
