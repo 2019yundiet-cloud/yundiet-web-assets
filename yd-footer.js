@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_112__) {
+  if (window.__YD_FOOTER_V3_113__) {
     return;
   }
-  window.__YD_FOOTER_V3_112__ = true;
+  window.__YD_FOOTER_V3_113__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.112', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.113', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4954,6 +4954,9 @@
     lastPrefix: 'yd_pop_last_',
     cooldownMs: 24 * 60 * 60 * 1000
   };
+  /* 부스터 발화 대기: 6분→2분 (2026-08-27 대표 지시 — 신규 평균 세션 95초 실측,
+     6분은 평균의 3.8배라 노출 전에 대부분 이탈. 2분 내 구매완료자는 8.5%뿐이라 선수 낭비도 적음) */
+  const BOOST_FIRE_AFTER_MS = 2 * 60 * 1000;
 
   function popTrack(name, popupId) {
     try {
@@ -5097,7 +5100,7 @@
     },
     /* #2 첫구매 응원 부스터 (2026-08-26 대표 확정)
        대상: 미회원 + 신규가입 세션 회원(구매이력 없는 층 근사 — 클라이언트에서 구매이력 조회 불가).
-       발동: 방문 후 6분 미구매(실측: 첫구매의 41%가 6분 내 완료 — 이후가 이탈 위험 구간).
+       발동: 방문 후 2분 미구매(신규 평균 세션 95초 — 평균 직후가 고민층 분기점, 8/27 조정).
        쿠폰: [첫구매 응원] 2,000원 시크릿 다운로드(1인 1회·1일 만료·도매 9종 제외·중복사용 가능). */
     first_buy_boost: function() {
       return {
@@ -5283,7 +5286,7 @@
                 if (bak && Date.now() - bak.at < 30 * 60 * 1000 && (!t0 || bak.t0 < t0)) t0 = bak.t0;
               } catch (err) {}
               if (!t0) t0 = Date.now();
-              if (!claimed && Date.now() - t0 >= 6 * 60 * 1000) popShowCard(POPUP_DEFS.first_buy_boost());
+              if (!claimed && Date.now() - t0 >= BOOST_FIRE_AFTER_MS) popShowCard(POPUP_DEFS.first_buy_boost());
             }, 7700);
           })
           .catch(function() {});
@@ -5354,7 +5357,7 @@
       armed.push('exit_cart(armed-if-cart)');
     }
 
-    /* #2 첫구매 응원 부스터 — 방문 6분 경과 + 미구매 + (비회원 || 신규가입 세션) */
+    /* #2 첫구매 응원 부스터 — 방문 2분 경과 + 미구매 + (비회원 || 신규가입 세션) */
     (function armBoost() {
       if (pageIs('/shop_payment') || pageIs('/shop_cart') || pageIs('/login') || pageIs('/site_join')) return;
       let claimed = null, purchased = null, newMember = null;
@@ -5373,7 +5376,7 @@
         let bought = null;
         try { bought = window.sessionStorage.getItem('yd_purchased'); } catch (err) {}
         if (bought) { window.clearInterval(boostTimer); return; }
-        if (Date.now() - t0 >= 6 * 60 * 1000) {
+        if (Date.now() - t0 >= BOOST_FIRE_AFTER_MS) {
           if (qs('.yd-pop-wrap')) return; /* 다른 카드 표시 중 — 닫힌 뒤 다음 틱에 재시도 */
           const card = popShowCard(POPUP_DEFS.first_buy_boost());
           if (card) window.clearInterval(boostTimer);
@@ -5390,7 +5393,7 @@
       };
       const boostTimer = window.setInterval(boostCheck, 5000);
       window.setTimeout(boostCheck, 2500);
-      armed.push('first_buy_boost(6m)');
+      armed.push('first_buy_boost(2m)');
     })();
 
     /* 미리보기: ?yd_pop=<팝업id> — 캡·대상조건 무시 강제 렌더(계측 제외, 소유자 검수용) */
@@ -5601,7 +5604,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.112] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.113] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
