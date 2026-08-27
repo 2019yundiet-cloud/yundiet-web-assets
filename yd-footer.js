@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_117__) {
+  if (window.__YD_FOOTER_V3_118__) {
     return;
   }
-  window.__YD_FOOTER_V3_117__ = true;
+  window.__YD_FOOTER_V3_118__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.117', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.118', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4999,12 +4999,14 @@
     if (qs('.yd-pop-wrap')) return null;
     if (!opts.force) {
       if (def.capExempt) {
-        /* 세션당 1개 캡 예외(부스터·결제정체) — 수령 이력(claimedKey)·팝업별 24h 캡만 적용 */
+        /* 세션당 1개 캡 예외(부스터·결제정체) — 수령 이력(claimedKey)·24h 캡·총 노출 캡(seenCapKey) */
         try {
           if (def.claimedKey && window.localStorage.getItem(def.claimedKey)) return null;
+          if (def.seenCapKey && Number(window.localStorage.getItem(def.seenCapKey) || 0) >= (def.seenCapMax || 3)) return null;
           const last = Number(window.localStorage.getItem(POPUP_RULES.lastPrefix + def.id) || 0);
           if (last && Date.now() - last < POPUP_RULES.cooldownMs) return null;
           window.localStorage.setItem(POPUP_RULES.lastPrefix + def.id, String(Date.now()));
+          if (def.seenCapKey) window.localStorage.setItem(def.seenCapKey, String(Number(window.localStorage.getItem(def.seenCapKey) || 0) + 1));
         } catch (err) {}
       } else {
         if (!popCapOk(def.id)) return null;
@@ -5109,19 +5111,30 @@
        발동: 방문 후 2분 미구매(신규 평균 세션 95초 — 평균 직후가 고민층 분기점, 8/27 조정).
        쿠폰: [첫구매 응원] 2,000원 시크릿 다운로드(1인 1회·1일 만료·도매 9종 제외·중복사용 가능). */
     first_buy_boost: function() {
-      return {
-        id: 'first_buy_boost',
-        capExempt: true,
-        claimedKey: 'yd_boost_claimed',
-        /* E안(8/28 대표 확정): 현재 카피 + 쿠폰 티켓 비주얼 */
-        bodyHtml:
+      /* 노출 3회 캡(8/28 대표 확정): 1·2회차 = E안, 3회차(마지막) = D안 합계 프레임, 이후 미노출 */
+      let seen = 0;
+      try { seen = Number(window.localStorage.getItem('yd_boost_seen_count') || 0); } catch (err) {}
+      const finalRound = seen >= 2;
+      const bodyE =
           '<div class="yd-pop-body">' +
           '<p class="yd-pop-kicker">첫 구매 응원 쿠폰</p>' +
           '<p class="yd-pop-amount">첫 주문 응원 <strong>2,000원</strong><br>발급 되었습니다!</p>' +
           '<div class="yd-bt-wrap"><div class="yd-bt-amt"><b>2,000원</b><span>COUPON</span></div>' +
           '<div class="yd-bt-body"><div class="t">지금 받으면<br>바로 쓸 수 있어요</div>' +
           '<div class="d">웰컴 쿠폰팩과 중복 사용 · 오늘 하루만</div></div></div>' +
-          '</div>',
+          '</div>';
+      const bodyFinal =
+          '<div class="yd-pop-body"><p class="yd-pop-kicker">첫 주문 혜택 합계</p>' +
+          '<div class="yd-stack"><span class="chip">웰컴팩 18,000원</span><span class="plus">+</span><span class="chip red">2,000원</span></div>' +
+          '<p class="yd-pop-amount">오늘은 총 <strong>20,000원</strong><br>아끼고 시작할 수 있어요</p>' +
+          '<p class="yd-pop-desc">추가 2,000원은 <strong>오늘 하루만</strong> 받을 수 있어요</p></div>';
+      return {
+        id: 'first_buy_boost',
+        capExempt: true,
+        claimedKey: 'yd_boost_claimed',
+        seenCapKey: 'yd_boost_seen_count',
+        seenCapMax: 3,
+        bodyHtml: finalRound ? bodyFinal : bodyE,
         ctaLabel: '2,000원 바로 받기',
         ctaRed: true,
         laterLabel: '괜찮아요',
@@ -5660,7 +5673,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.117] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.118] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
