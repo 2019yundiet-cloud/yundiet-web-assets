@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_115__) {
+  if (window.__YD_FOOTER_V3_116__) {
     return;
   }
-  window.__YD_FOOTER_V3_115__ = true;
+  window.__YD_FOOTER_V3_116__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.115', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.116', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -5031,7 +5031,11 @@
       dim.classList.add('yd-pop-on');
       card.classList.add('yd-pop-on');
     });
-    if (!opts.silent) popTrack('yd_pop_view', def.id);
+    if (!opts.silent) {
+      popTrack('yd_pop_view', def.id);
+      /* 팝업 간격 리셋 기준(8/28 대표 지시): 어떤 카드든 뜨면 부스터 카운트는 그 시점부터 다시 2분 */
+      try { window.sessionStorage.setItem('yd_last_card_at', String(Date.now())); } catch (err) {}
+    }
 
     function close(reason) {
       if (!opts.silent) popTrack(reason === 'cta' ? 'yd_pop_click' : 'yd_pop_close', def.id);
@@ -5107,12 +5111,14 @@
         id: 'first_buy_boost',
         capExempt: true,
         claimedKey: 'yd_boost_claimed',
+        /* E안(8/28 대표 확정): 현재 카피 + 쿠폰 티켓 비주얼 */
         bodyHtml:
           '<div class="yd-pop-body">' +
           '<p class="yd-pop-kicker">첫 구매 응원 쿠폰</p>' +
           '<p class="yd-pop-amount">첫 주문 응원 <strong>2,000원</strong><br>발급 되었습니다!</p>' +
-          '<div class="yd-pop-chips"><span>웰컴 쿠폰팩과 중복 사용</span><span>1인 1회</span></div>' +
-          '<p class="yd-pop-desc">이 쿠폰은 <strong>오늘 하루만</strong> 쓸 수 있어요<br>지금 받아서 첫 주문에 써보세요</p>' +
+          '<div class="yd-bt-wrap"><div class="yd-bt-amt"><b>2,000원</b><span>COUPON</span></div>' +
+          '<div class="yd-bt-body"><div class="t">지금 받으면<br>바로 쓸 수 있어요</div>' +
+          '<div class="d">웰컴 쿠폰팩과 중복 사용 · 오늘 하루만</div></div></div>' +
           '</div>',
         ctaLabel: '2,000원 바로 받기',
         ctaRed: true,
@@ -5416,10 +5422,15 @@
         try { return Number(window.sessionStorage.getItem('yd_sess_t0') || Date.now()); } catch (err) { return Date.now(); }
       })();
       const boostCheck = function() {
-        let bought = null;
-        try { bought = window.sessionStorage.getItem('yd_purchased'); } catch (err) {}
+        let bought = null, lastCard = 0;
+        try {
+          bought = window.sessionStorage.getItem('yd_purchased');
+          lastCard = Number(window.sessionStorage.getItem('yd_last_card_at') || 0);
+        } catch (err) {}
         if (bought) { window.clearInterval(boostTimer); return; }
-        if (Date.now() - t0 >= BOOST_FIRE_AFTER_MS) {
+        /* 다른 팝업이 떴다면 그 시점부터 다시 2분을 센다 (연속 팝업 방지 — 8/28 대표 지시) */
+        const baseT = Math.max(t0, lastCard);
+        if (Date.now() - baseT >= BOOST_FIRE_AFTER_MS) {
           if (qs('.yd-pop-wrap')) return; /* 다른 카드 표시 중 — 닫힌 뒤 다음 틱에 재시도 */
           const card = popShowCard(POPUP_DEFS.first_buy_boost());
           if (card) window.clearInterval(boostTimer);
@@ -5647,7 +5658,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.115] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.116] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
