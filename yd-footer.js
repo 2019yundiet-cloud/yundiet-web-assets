@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_110__) {
+  if (window.__YD_FOOTER_V3_111__) {
     return;
   }
-  window.__YD_FOOTER_V3_110__ = true;
+  window.__YD_FOOTER_V3_111__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.110', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.111', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4786,13 +4786,12 @@
     }
 
     function renderBanner() {
+      /* 2026-08-27 폐기: 비회원 카트 주문 진입은 듀얼 주문바(#yd-guest-orderbar)가 전담.
+         이 배너(7/21 제작)는 중복 표면이라 생성 중단 — 잔존분만 제거한다. */
       const existing = qs('#agp-persistent-banner');
-      if (!isGuestUser() || !isCartKeywordPage()) {
-        if (existing) {
-          existing.remove();
-        }
-        return;
-      }
+      if (existing) existing.remove();
+      ydMark('cartKakaoBanner', true, '듀얼 주문바로 대체 — 배너 비활성');
+      if (true) return;
 
       if (existing) {
         return;
@@ -5550,7 +5549,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.110] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.111] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
