@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_113__) {
+  if (window.__YD_FOOTER_V3_114__) {
     return;
   }
-  window.__YD_FOOTER_V3_113__ = true;
+  window.__YD_FOOTER_V3_114__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.113', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.114', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -5137,6 +5137,39 @@
         }
       };
     },
+    /* ── 부스터 디자인 시안 4종(검토용 임시) ── */
+    boost_a: function() { /* A. 쿠폰 티켓 실물감 */
+      return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
+        bodyHtml: '<div class="yd-pop-body"><p class="yd-pop-kicker">잠깐! 첫 주문 응원 쿠폰이 나왔어요</p>' +
+          '<div class="yd-bt-wrap"><div class="yd-bt-amt"><b>2,000원</b><span>COUPON</span></div>' +
+          '<div class="yd-bt-body"><div class="t">지금 받으면<br>바로 쓸 수 있어요</div>' +
+          '<div class="d">웰컴 쿠폰팩과 중복 사용 · 오늘 하루만</div></div></div></div>',
+        ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
+    },
+    boost_b: function() { /* B. 브랜드 올리브 헤더 */
+      return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
+        bodyHtml: '<div class="yd-pop-body"><div class="yd-ol-head">윤식단이 첫 끼니를 응원해요 <em>+2,000원</em></div>' +
+          '<p class="yd-pop-amount">고민되는 지금,<br><strong>2,000원</strong> 더 아껴드릴게요</p>' +
+          '<p class="yd-pop-desc">웰컴 쿠폰팩과 함께 쓸 수 있어요<br>이 쿠폰은 <strong>오늘 하루만</strong> 살아있어요</p></div>',
+        ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
+    },
+    boost_c: function() { /* C. 미니멀 금액 초강조 */
+      return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
+        bodyHtml: '<div class="yd-pop-body" style="padding-top:30px;">' +
+          '<p style="font-size:44px;font-weight:900;color:#E60000;line-height:1;margin:0 0 10px;">2,000원</p>' +
+          '<p class="yd-pop-title" style="font-size:16px;">첫 주문 응원 쿠폰, 지금 발급 되었습니다</p>' +
+          '<p class="yd-pop-desc">오늘 하루만 · 웰컴 쿠폰팩과 중복 사용</p></div>',
+        ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
+    },
+    boost_d: function() { /* D. 웰컴팩 스택(합계 강조) */
+      return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
+        bodyHtml: '<div class="yd-pop-body"><p class="yd-pop-kicker">첫 주문 혜택 합계</p>' +
+          '<div class="yd-stack"><span class="chip">웰컴팩 18,000원</span><span class="plus">+</span><span class="chip red">2,000원</span></div>' +
+          '<p class="yd-pop-amount">오늘은 총 <strong>20,000원</strong><br>아끼고 시작할 수 있어요</p>' +
+          '<p class="yd-pop-desc">추가 2,000원은 <strong>오늘 하루만</strong> 받을 수 있어요</p></div>',
+        ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
+    },
+
     /* #3 이탈 직전(exit intent) + 장바구니에 상품 있음 */
     exit_cart: function(cartInfo) {
       const count = cartInfo && cartInfo.count ? cartInfo.count : 0;
@@ -5604,7 +5637,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.113] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.114] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

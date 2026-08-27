@@ -2385,6 +2385,30 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 .yd-pop-toast.yd-pop-on { opacity: 1; transform: translate(-50%, 0); }
 .yd-pop-toast strong { color: #FEE500; font-weight: 800; }
 
+/* 팝업 CTA 모션(2026-08-28 대표 지시) — 은은한 펄스 + 광택 스침, 과하지 않게 */
+@keyframes ydPopPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+@keyframes ydPopShine { 0% { left: -60%; } 55% { left: 130%; } 100% { left: 130%; } }
+.yd-pop-cta { position: relative; overflow: hidden; animation: ydPopPulse 2.4s ease-in-out infinite; }
+.yd-pop-cta::after { content: ''; position: absolute; top: 0; left: -60%; width: 38%; height: 100%; background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.45), transparent); transform: skewX(-20deg); animation: ydPopShine 3.8s ease-in-out infinite; }
+.yd-pop-cta.yd-pop-red { box-shadow: 0 5px 16px rgba(230, 0, 0, 0.3); }
+.yd-pop-cta.yd-pop-kakao { box-shadow: 0 5px 16px rgba(0, 0, 0, 0.16); }
+@media (prefers-reduced-motion: reduce) { .yd-pop-cta, .yd-pop-cta::after { animation: none; } }
+
+/* ── 부스터 시안 전용 스타일(검토용 — 확정 전 임시) ── */
+.yd-bt-wrap { display: flex; border: 1.5px dashed #E0DACB; border-radius: 14px; overflow: hidden; margin: 4px 2px 14px; }
+.yd-bt-amt { flex: 0 0 108px; background: #E60000; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 18px 8px; }
+.yd-bt-amt b { font-size: 24px; line-height: 1; }
+.yd-bt-amt span { font-size: 11px; margin-top: 4px; opacity: .9; }
+.yd-bt-body { flex: 1; padding: 14px 12px; text-align: left; }
+.yd-bt-body .t { font-size: 15px; font-weight: 800; color: #191919; line-height: 1.35; }
+.yd-bt-body .d { font-size: 12px; color: #777; margin-top: 6px; line-height: 1.5; }
+.yd-ol-head { background: #3B4024; color: #fff; margin: -20px -20px 14px; padding: 14px 20px; font-size: 13px; font-weight: 800; letter-spacing: .02em; }
+.yd-ol-head em { font-style: normal; color: #FEE500; }
+.yd-stack { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 6px 0 14px; }
+.yd-stack .chip { background: #FEE500; color: #191919; font-weight: 800; font-size: 13px; border-radius: 10px; padding: 8px 12px; }
+.yd-stack .plus { font-weight: 900; color: #999; }
+.yd-stack .chip.red { background: #E60000; color: #fff; }
+
 /* 비회원 장바구니 듀얼 주문바 (2026-08-27 복구 — 게스트 주문 진입 소실 결함) */
 #yd-guest-orderbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000; background: #fff; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08); display: flex; gap: 8px; }
 #yd-guest-orderbar button { border: 0; border-radius: 12px; font-weight: 800; font-size: 15px; padding: 14px 8px; cursor: pointer; }
