@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_122__) {
+  if (window.__YD_FOOTER_V3_123__) {
     return;
   }
-  window.__YD_FOOTER_V3_122__ = true;
+  window.__YD_FOOTER_V3_123__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.122', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.123', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4938,7 +4938,21 @@
     var path = window.location.pathname || '';
     if (/^\/login|^\/site_join|^\/oauth/.test(path)) return;
     if (/yd_autopay=1/.test(window.location.search)) return;
-    if (/^\/shop_cart/.test(path)) { try { window.localStorage.removeItem('yd_pay_resume'); } catch (err) {} return; }
+    if (/^\/shop_cart/.test(path)) {
+      /* back_url 관통으로 홈 경유 없이 장바구니에 직행하는 경로(2026-08-28) —
+         마커가 살아있고 회원이면 가입 보상 토스트 마커를 여기서 심는다(기존 홈 경유 UX 보존) */
+      try {
+        var cartRaw = window.localStorage.getItem('yd_pay_resume');
+        var cartAge = cartRaw ? Date.now() - Number(cartRaw) : -1;
+        if (cartRaw && cartAge >= 0 && cartAge < 10 * 60 * 1000 && !isGuestUser()) {
+          window.localStorage.setItem('yd_pop_signup_welcome', String(Date.now()));
+          window.localStorage.setItem('yd_new_member_session', String(Date.now()));
+          ydTrace('장바구니 직행 도착 — 가입 보상 토스트 마커 심기');
+        }
+        window.localStorage.removeItem('yd_pay_resume');
+      } catch (err) {}
+      return;
+    }
     var raw = null;
     try { raw = window.localStorage.getItem('yd_pay_resume'); } catch (err) {}
     if (!raw) return;
@@ -5871,7 +5885,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.122] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.123] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
