@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_120__) {
+  if (window.__YD_FOOTER_V3_121__) {
     return;
   }
-  window.__YD_FOOTER_V3_120__ = true;
+  window.__YD_FOOTER_V3_121__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.120', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.121', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4936,6 +4936,7 @@
     /* 소유자 지시(2026-08-26 2차): 가입/로그인 완료 후에는 결제 자동 진행이 아니라
        장바구니에 랜딩시켜 담은 상품·지급된 쿠폰을 확인하고 직접 주문하게 한다 */
     ydMark('signupPayResume', true, '가입/로그인 확인 — 장바구니 랜딩');
+    ydTrace('가입쿠폰 재개 — 장바구니로 이동');
     /* 장바구니 도착 시 가입 보상 토스트(#7)를 띄우도록 마커를 남긴다 */
     try {
       window.localStorage.setItem('yd_pop_signup_welcome', String(Date.now()));
@@ -4952,6 +4953,42 @@
      2차 안전망: 도매몰 비회원이 로그인/가입 링크를 누르는 순간 복귀 마커(10분)를 남기고,
           카카오싱크 등으로 back_url이 유실돼 홈에 떨어지면 회원 확인 후 도매몰 원위치로 1회 복귀.
           (yd_pay_resume과 동일 패턴 — 로그인/가입/OAuth 페이지에서는 대기, 소비는 홈에서만) */
+  /* 여정 추적: 도매몰 복귀 진단용 브레드크럼(최근 60건 유지).
+     폰에서 아무 페이지나 주소 뒤에 ?yd_trace 를 붙이면 여정 오버레이가 뜬다. */
+  function ydTrace(step) {
+    try {
+      var buf = [];
+      try { buf = JSON.parse(window.localStorage.getItem('yd_trace') || '[]'); } catch (e2) { buf = []; }
+      buf.push({
+        t: Date.now(),
+        p: (window.location.pathname + window.location.search).slice(0, 80),
+        g: isGuestUser() ? 1 : 0,
+        s: String(step).slice(0, 90)
+      });
+      if (buf.length > 60) { buf = buf.slice(buf.length - 60); }
+      window.localStorage.setItem('yd_trace', JSON.stringify(buf));
+    } catch (err) {}
+  }
+  function bindTraceOverlay() {
+    if (!/[?&#]yd_trace/.test(window.location.search + window.location.hash)) { return; }
+    var buf = [];
+    try { buf = JSON.parse(window.localStorage.getItem('yd_trace') || '[]'); } catch (err) {}
+    var box = document.createElement('div');
+    box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;max-height:70vh;overflow:auto;z-index:2147483000;background:rgba(12,16,12,.96);color:#d7f36e;font:11px/1.5 ui-monospace,monospace;padding:12px;border-radius:12px;white-space:pre-wrap;word-break:break-all;';
+    var lines = buf.map(function(b) {
+      var d = new Date(b.t);
+      var hh = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2);
+      return hh + (b.g ? ' [게스트] ' : ' [회원] ') + b.p + '\n  → ' + b.s;
+    });
+    box.textContent = 'YD 여정 추적 (v' + ydStatus.version + ') — 최근 ' + buf.length + '건\n\n' + (lines.join('\n') || '기록 없음');
+    var x = document.createElement('button');
+    x.textContent = '닫기';
+    x.style.cssText = 'position:sticky;top:0;float:right;background:#d7f36e;color:#111;border:0;border-radius:8px;padding:4px 10px;font-weight:800;';
+    x.onclick = function() { box.remove(); };
+    box.insertBefore(x, box.firstChild);
+    document.body.appendChild(box);
+  }
+
   function bindWholesaleReturn() {
     var KEY = 'yd_wholesale_return';
     var TTL = 10 * 60 * 1000;
@@ -4983,8 +5020,10 @@
         try {
           window.localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), to: window.location.pathname + window.location.search }));
         } catch (err) {}
+        ydTrace('도매몰에서 로그인/가입 클릭 — 마커 저장: ' + (a.getAttribute('href') || '').slice(0, 60));
       }, true);
       ydMark('wholesaleReturn', true, isGuestUser() ? '도매몰 비회원 — 복귀 마커 대기' : '도매몰 회원 도착');
+      ydTrace(isGuestUser() ? '도매몰 도착(비회원)' : '도매몰 도착(회원) — 복귀 여정 종료');
       return;
     }
     /* 가입/로그인/OAuth 진행 중: back_url이 도매몰이면 이 자리에서 마커를 심는다.
@@ -4999,7 +5038,10 @@
           if (decoded.indexOf('/wholesale') === 0) {
             window.localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), to: decoded }));
             ydMark('wholesaleReturn', true, '로그인/가입 페이지 — back_url 회수·마커 갱신');
+            ydTrace('로그인/가입 페이지 — back_url 회수: ' + decoded.slice(0, 50));
           }
+        } else {
+          ydTrace('로그인/가입 페이지 — back_url 없음');
         }
       } catch (err) {}
       return;
@@ -5013,17 +5055,32 @@
     if (!(t > 0 && Date.now() - t >= 0 && Date.now() - t < TTL)) {
       try { window.localStorage.removeItem(KEY); } catch (err) {}
       ydMark('wholesaleReturn', true, '마커 만료 폐기');
+      ydTrace('복귀 마커 만료 폐기');
       return;
     }
     /* 소비는 홈에서만: 가입/로그인 완료 후 홈으로 떨어진 바로 그 증상만 교정.
        다른 페이지는 사용자가 의도한 이동일 수 있어 대기만 한다(TTL로 자연 소멸). */
-    if (!isHomePage()) { ydMark('wholesaleReturn', true, '홈 아님 — 복귀 대기'); return; }
-    if (isGuestUser()) { ydMark('wholesaleReturn', true, '비회원 — 로그인 완료 대기'); return; }
-    try { window.localStorage.removeItem(KEY); } catch (err) {}
-    var to = (data && typeof data.to === 'string' && data.to.indexOf('/wholesale') === 0) ? data.to : '/wholesale';
-    ydMark('wholesaleReturn', true, '가입/로그인 확인 — 도매몰 복귀: ' + to);
-    try { (window.top || window).location.href = to; }
-    catch (err) { window.location.href = to; }
+    if (!isHomePage()) { ydMark('wholesaleReturn', true, '홈 아님 — 복귀 대기'); ydTrace('마커 있음·홈 아님 — 대기'); return; }
+    var goWholesale = function() {
+      /* 다른 복귀 장치(가입쿠폰 결제 재개·부스터 쿠폰 랜딩)가 뒤에서 행선지를 덮어쓰지 않도록 선제 정리 */
+      try { window.localStorage.removeItem(KEY); } catch (err) {}
+      try { window.localStorage.removeItem('yd_pay_resume'); } catch (err) {}
+      try { window.localStorage.removeItem('yd_boost_pending'); } catch (err) {}
+      var to = (data && typeof data.to === 'string' && data.to.indexOf('/wholesale') === 0) ? data.to : '/wholesale';
+      ydMark('wholesaleReturn', true, '가입/로그인 확인 — 도매몰 복귀: ' + to);
+      ydTrace('홈 낙하 — 도매몰 복귀 실행: ' + to);
+      try { (window.top || window).location.href = to; }
+      catch (err) { window.location.href = to; }
+    };
+    if (!isGuestUser()) { goWholesale(); return; }
+    /* OAuth 직후 세션/헤더가 늦게 회원으로 바뀌는 경우 — 20초간 관찰 후 전환 시 복귀 */
+    ydMark('wholesaleReturn', true, '비회원 — 로그인 완료 대기(20초 관찰)');
+    ydTrace('홈 낙하(비회원 판정) — 회원 전환 관찰 시작');
+    var began = Date.now();
+    var watch = window.setInterval(function() {
+      if (!isGuestUser()) { window.clearInterval(watch); goWholesale(); return; }
+      if (Date.now() - began > 20000) { window.clearInterval(watch); ydTrace('회원 전환 미발생 — 관찰 종료'); }
+    }, 500);
   }
 
   /* ═══ 온사이트 팝업 엔진 v1 (2026-08-26 · 검토용 시안 — 대표 승인 전 미배포) ═══
@@ -5574,6 +5631,7 @@
       return;
     }
     ydMark('boostCouponResume', true, '가입 복귀 — 쿠폰 발급 랜딩 이동');
+    ydTrace('부스터 재개 — 쿠폰 랜딩으로 이동');
     try { (window.top || window).location.href = CONFIG.BOOST_COUPON_URL; }
     catch (err) { window.location.href = CONFIG.BOOST_COUPON_URL; }
   }
@@ -5732,6 +5790,7 @@
     bindShippingSchedule();
     bindGuestKakaoDirectLogin();
     bindWholesaleReturn();
+    bindTraceOverlay();
     bindSignupPayResume();
     bindFriendPackCouponHide();
     bindOnsitePopups();
@@ -5754,7 +5813,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.120] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.121] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
