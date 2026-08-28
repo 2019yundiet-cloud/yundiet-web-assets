@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_124__) {
+  if (window.__YD_FOOTER_V3_125__) {
     return;
   }
-  window.__YD_FOOTER_V3_124__ = true;
+  window.__YD_FOOTER_V3_125__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.124', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.125', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2704,7 +2704,7 @@
       var s = flowState();
       var sheetOpen = root.classList.contains('is-open');
       root.classList.toggle('is-top', cartPopup);
-      root.innerHTML = '<div class="yd-bs-dock"><button class="yd-bs-review-btn" type="button">리뷰보기</button><button class="yd-bs-open"><span>옵션 보기</span></button></div><button class="yd-bs-backdrop" aria-label="옵션 창 닫기"></button><section class="yd-bs-sheet" role="dialog" aria-modal="true" aria-hidden="' + (sheetOpen ? 'false' : 'true') + '" aria-label="상품 옵션 선택"><div class="yd-bs-grab"></div><header class="yd-bs-head"><div class="yd-bs-head-text"><span class="yd-bs-mode">' + escT(cfg.title) + '</span><h2>상품 옵션 선택</h2></div><button class="yd-bs-close" aria-label="옵션 창 닫기">닫기</button></header><div class="yd-bs-scroll">' + (sheetOpen ? shippingGauge(s) : '') + stepContent(s) + '</div><footer class="yd-bs-foot">' + '<div class="yd-bs-total" aria-live="polite"><span>' + escT(cfg.unit) + ' ' + s.reqQty + '개 · 추가상품 ' + s.optQty + '개</span><strong>' + escT(s.total) + '</strong></div>' + (step === 3 ? '<div class="yd-bs-step3-backrow"><button class="yd-bs-back yd-bs-back-mini" ' + (addingCart ? 'disabled' : '') + '>뒤로가기</button></div><div class="yd-bs-actions"><button class="yd-bs-primary' + (payIsGuest() ? ' yd-bs-primary-kakao' : '') + '" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + payButtonLabel(addingCart && afterAddMode === 'pay') + '</button><button class="yd-bs-back yd-bs-cart-add" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode === 'close' ? '담는 중…' : '장바구니 담기') + '</button></div>' : '<div class="yd-bs-actions"><button class="yd-bs-back">이전으로 돌아가기</button><button class="yd-bs-primary" ' + (canNext(s) ? '' : 'disabled') + '>' + primaryLabel() + '</button></div>') + '</footer></section>' + cartChoice();
+      root.innerHTML = '<div class="yd-bs-dock"><button class="yd-bs-review-btn" type="button">리뷰보기</button><button class="yd-bs-open"><span>옵션 보기</span></button></div><button class="yd-bs-backdrop" aria-label="옵션 창 닫기"></button><section class="yd-bs-sheet" role="dialog" aria-modal="true" aria-hidden="' + (sheetOpen ? 'false' : 'true') + '" aria-label="상품 옵션 선택"><div class="yd-bs-grab"></div><header class="yd-bs-head"><div class="yd-bs-head-text"><span class="yd-bs-mode">' + escT(cfg.title) + '</span><h2>상품 옵션 선택</h2></div><button class="yd-bs-close" aria-label="옵션 창 닫기">닫기</button></header><div class="yd-bs-scroll">' + (sheetOpen ? shippingGauge(s) : '') + stepContent(s) + '</div><footer class="yd-bs-foot">' + '<div class="yd-bs-total" aria-live="polite"><span>' + escT(cfg.unit) + ' ' + s.reqQty + '개 · 추가상품 ' + s.optQty + '개</span><strong>' + escT(s.total) + '</strong></div>' + (step === 3 ? '<div class="yd-bs-step3-backrow"><button class="yd-bs-back yd-bs-back-mini" ' + (addingCart ? 'disabled' : '') + '>뒤로가기</button></div>' + (payIsGuest() ? '<div class="yd-bs-actions"><button class="yd-bs-primary yd-bs-cart-add" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart ? '담는 중…' : '장바구니 담기') + '</button></div>' : '<div class="yd-bs-actions"><button class="yd-bs-primary" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + payButtonLabel(addingCart && afterAddMode === 'pay') + '</button><button class="yd-bs-back yd-bs-cart-add" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode === 'close' ? '담는 중…' : '장바구니 담기') + '</button></div>') : '<div class="yd-bs-actions"><button class="yd-bs-back">이전으로 돌아가기</button><button class="yd-bs-primary" ' + (canNext(s) ? '' : 'disabled') + '>' + primaryLabel() + '</button></div>') + '</footer></section>' + cartChoice();
       root.classList.toggle('is-cart-result', cartPopup);
       var scroll = root.querySelector('.yd-bs-scroll');
       if (scroll) scroll.scrollTop = previousScroll;
@@ -5123,6 +5123,113 @@
     }, 500);
   }
 
+  /* ═══ 게스트 장바구니 이관 (2026-08-28 소유자 지시) ═══
+     증상: 비회원으로 담은 장바구니가 로그인/가입 후 회원 장바구니로 합쳐지지 않음(아임웹 세션 교체).
+     장치: 로그인/가입/OAuth 페이지에 게스트로 도착한 순간(게스트 세션이 아직 살아있음)
+     장바구니를 스냅샷(yd_cart_carry, 15분) → 로그인 완료(회원 확인) 후 회원 장바구니와 대조해
+     누락 옵션행만 add_cart.cm으로 재담기 → 장바구니 페이지면 새로고침으로 반영.
+     option_detail_code 대조로 중복 담김을 막아 아임웹이 자체 병합하는 경우에도 안전(멱등). */
+  function bindGuestCartCarry() {
+    if (IS_IFRAME) { return; }
+    var KEY = 'yd_cart_carry';
+    var TTL = 15 * 60 * 1000;
+    var path = window.location.pathname || '';
+    if (/^\/login|^\/site_join|^\/oauth/.test(path)) {
+      if (!isGuestUser()) { return; }
+      fetch('/shop/cart/get_cart_content.cm?cart_type=normal', { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(j) {
+          var items = (j && j.data && j.data.cart && j.data.cart.items) || [];
+          if (!items.length) { return; }
+          var slim = items.slice(0, 15).map(function(it) {
+            return {
+              prodIdx: it.product && it.product.prod_idx,
+              tpl: (it.shipping_service && it.shipping_service.template_code) || '',
+              options: (it.options || []).slice(0, 10).map(function(o) {
+                return { dc: o.option_detail_code, req: !!o.required, cnt: o.count || 1,
+                         up: o.total_unit_price || o.original_unit_price || 0,
+                         oc: o.option_code_list || [], vc: o.value_code_list || [],
+                         on: o.option_name_list || [], vn: o.value_name_list || [] };
+              })
+            };
+          }).filter(function(x) { return x.prodIdx && x.options.length; });
+          if (!slim.length) { return; }
+          try { window.localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), items: slim })); } catch (err) {}
+          ydTrace('게스트 장바구니 스냅샷 ' + slim.length + '개 상품 — 이관 대기');
+        }).catch(function() {});
+      return;
+    }
+    var raw = null;
+    try { raw = window.localStorage.getItem(KEY); } catch (err) {}
+    if (!raw) { return; }
+    var data = null;
+    try { data = JSON.parse(raw); } catch (err) {}
+    var t = data && Number(data.t);
+    if (!(t > 0 && Date.now() - t >= 0 && Date.now() - t < TTL)) {
+      try { window.localStorage.removeItem(KEY); } catch (err) {}
+      return;
+    }
+    if (isGuestUser()) { return; }
+    fetch('/shop/cart/get_cart_content.cm?cart_type=normal', { credentials: 'include' })
+      .then(function(r) { return r.json(); })
+      .then(function(j) {
+        var have = {};
+        var items = (j && j.data && j.data.cart && j.data.cart.items) || [];
+        items.forEach(function(it) { (it.options || []).forEach(function(o) { have[o.option_detail_code] = 1; }); });
+        var jobs = [];
+        (data.items || []).forEach(function(it) {
+          var missing = (it.options || []).filter(function(o) { return o.dc && !have[o.dc]; });
+          if (!missing.length) { return; }
+          var body = new URLSearchParams();
+          body.set('prodIdx', String(it.prodIdx));
+          missing.forEach(function(o, i) {
+            var p = 'options[' + i + ']';
+            body.set(p + '[idx]', String(i));
+            body.set(p + '[option_detail_code]', o.dc);
+            (o.oc || []).forEach(function(code, k) {
+              var q = p + '[options][' + k + ']';
+              body.set(q + '[value_type]', 'SELECT');
+              body.set(q + '[option_code]', code);
+              body.set(q + '[value_code]', (o.vc || [])[k] || '');
+              body.set(q + '[value_name]', (o.vn || [])[k] || '');
+              body.set(q + '[option_name]', (o.on || [])[k] || '');
+            });
+            body.set(p + '[price]', String(o.up || 0));
+            body.set(p + '[count]', String(o.cnt || 1));
+            body.set(p + '[require]', o.req ? 'true' : 'false');
+            body.append(p + '[sku_no][]', '');
+            body.set(p + '[use_stock]', 'false');
+            body.set(p + '[stock]', '0');
+            body.set(p + '[stock_un_limit]', 'false');
+            body.set(p + '[option_mix_type]', 'SINGLE');
+          });
+          body.set('orderCount', '0');
+          body.set('deliv_type', 'parcel');
+          body.set('deliv_pay_type', 'price');
+          body.set('deliv_country', 'KR');
+          body.set('shipping_template_code', it.tpl || '');
+          jobs.push(fetch('/shop/add_cart.cm', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest' },
+            body: body.toString()
+          }));
+        });
+        if (!jobs.length) {
+          try { window.localStorage.removeItem(KEY); } catch (err) {}
+          ydMark('guestCartCarry', true, '이관 대상 없음(이미 반영)');
+          return;
+        }
+        Promise.all(jobs.map(function(p2) { return p2.then(function(r2) { return r2.ok; }).catch(function() { return false; }); }))
+          .then(function(rs) {
+            var ok = rs.filter(Boolean).length;
+            try { window.localStorage.removeItem(KEY); } catch (err) {}
+            ydMark('guestCartCarry', true, '게스트 장바구니 이관 ' + ok + '/' + rs.length);
+            ydTrace('게스트 장바구니 이관 완료 ' + ok + '/' + rs.length);
+            if (ok && /^\/shop_cart/.test(window.location.pathname)) { window.location.reload(); }
+          });
+      }).catch(function() {});
+  }
+
   /* ═══ 온사이트 팝업 엔진 v1 (2026-08-26 · 검토용 시안 — 대표 승인 전 미배포) ═══
      발화 규칙: 카드 팝업은 세션당 1개 + 팝업별 24시간 재노출 금지(토스트는 캡 제외).
      계측: GA4 dataLayer 이벤트 yd_pop_view / yd_pop_click / yd_pop_close (popup_id 포함).
@@ -5295,15 +5402,16 @@
       let seen = 0;
       try { seen = Number(window.localStorage.getItem('yd_boost_seen_count') || 0); } catch (err) {}
       const finalRound = seen >= 2;
-      /* 단일 팝업 체제(8/28): 전 회차 합계 프레임(가입 유인 18,000 포함) — 3회차는 마지막 안내 킥커 */
-      const bodyStack = function(kicker) {
-        return '<div class="yd-pop-body"><p class="yd-pop-kicker">' + kicker + '</p>' +
-          '<div class="yd-stack"><span class="chip">웰컴팩 18,000원</span><span class="plus">+</span><span class="chip red">2,000원</span></div>' +
-          '<p class="yd-pop-amount">가입하면 오늘 총 <strong>20,000원</strong><br>아끼고 시작할 수 있어요</p>' +
-          '<p class="yd-pop-desc">첫 주문 응원 2,000원은 <strong>오늘 하루만</strong> 받을 수 있어요</p></div>';
+      /* 본체 = U1 긴급성 디자인(8/28 대표 선택): "오늘 지나면 사라져요" 헤드 — 3회차는 마지막 안내 킥커 */
+      const bodyU1 = function(kicker) {
+        return '<div class="yd-pop-body" style="padding-top:30px;">' +
+          '<p class="yd-sc-line" style="font-size:15px;color:#8A8378;">' + kicker + '</p>' +
+          '<p class="yd-sc-num" style="font-size:44px;">2,000원</p>' +
+          '<p class="yd-pop-title" style="font-size:21px;margin:2px 0 4px;"><span style="color:#E60000;">오늘 지나면 사라져요</span></p>' +
+          '<p class="yd-sc-sub">지금 받으면 첫 주문에 바로 사용</p></div>';
       };
-      const bodyE = bodyStack('첫 주문 혜택 합계');
-      const bodyFinal = bodyStack('오늘이 마지막 안내예요');
+      const bodyE = bodyU1('첫 주문 응원 쿠폰');
+      const bodyFinal = bodyU1('오늘이 마지막 안내예요');
       return {
         id: 'first_buy_boost',
         capExempt: true,
@@ -5890,6 +5998,7 @@
     bindShippingSchedule();
     bindGuestKakaoDirectLogin();
     bindWholesaleReturn();
+    bindGuestCartCarry();
     bindTraceOverlay();
     bindSignupPayResume();
     bindFriendPackCouponHide();
@@ -5913,7 +6022,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.124] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.125] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
