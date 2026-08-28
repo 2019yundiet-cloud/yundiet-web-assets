@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_121__) {
+  if (window.__YD_FOOTER_V3_122__) {
     return;
   }
-  window.__YD_FOOTER_V3_121__ = true;
+  window.__YD_FOOTER_V3_122__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.121', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.122', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2759,12 +2759,23 @@
            가입/로그인 복귀 후 yd_pay_resume이 장바구니 자동결제(yd_autopay)로 재개.
            비회원 그대로 사고 싶은 고객은 [장바구니 담기] → 장바구니 주문하기(로그인 전 바로 주문 허용 ON)로 구매 가능. */
         if (payIsGuest()) {
-          try {
-            window.localStorage.setItem('yd_kakao_direct', String(Date.now()));
-            window.localStorage.setItem('yd_pay_resume', String(Date.now()));
-          } catch (err) {}
-          try { (window.top || window).location.href = '/login'; }
-          catch (err) { window.location.href = '/login'; }
+          try { window.localStorage.setItem('yd_kakao_direct', String(Date.now())); } catch (err) {}
+          /* 복귀 주소를 카카오 OAuth까지 관통시킨다(2026-08-28 소유자 지시):
+             도매몰이면 가입 후 도매몰 원위치, 그 외엔 장바구니 랜딩(8/26 승인 동작). */
+          var payDest = '/login';
+          if (isWholesalePage()) {
+            try {
+              window.localStorage.setItem('yd_wholesale_return', JSON.stringify({ t: Date.now(), to: window.location.pathname + window.location.search }));
+            } catch (err) {}
+            try { payDest = '/login?back_url=' + encodeURIComponent(window.btoa(window.location.pathname + window.location.search)); } catch (err) {}
+            ydTrace('옵션탭 3초가입(도매몰) — 마커+back_url 부착');
+          } else {
+            try { window.localStorage.setItem('yd_pay_resume', String(Date.now())); } catch (err) {}
+            try { payDest = '/login?back_url=' + encodeURIComponent(window.btoa('/shop_cart')); } catch (err) {}
+            ydTrace('옵션탭 3초가입 — 장바구니 back_url 부착');
+          }
+          try { (window.top || window).location.href = payDest; }
+          catch (err) { window.location.href = payDest; }
           return;
         }
         /* yd_autopay=1: 장바구니 도착 즉시 네이티브 주문하기를 자동 클릭해 결제 단계로 직행 */
@@ -3005,9 +3016,14 @@
               try {
                 window.localStorage.setItem('yd_kakao_direct', String(Date.now()));
                 window.localStorage.setItem('yd_pay_resume', String(Date.now()));
+                /* 장바구니 여정이 우선 — 이전 도매몰 마커가 가입 후 장바구니 복귀를 가로채지 않게 정리 */
+                window.localStorage.removeItem('yd_wholesale_return');
               } catch (err) {}
-              try { (window.top || window).location.href = '/login'; }
-              catch (err) { window.location.href = '/login'; }
+              ydTrace('장바구니 3초가입 — 장바구니 back_url 부착');
+              var gobDest = '/login';
+              try { gobDest = '/login?back_url=' + encodeURIComponent(window.btoa('/shop_cart')); } catch (err) {}
+              try { (window.top || window).location.href = gobDest; }
+              catch (err) { window.location.href = gobDest; }
             });
             qs('.yd-gob-guest', bar).addEventListener('click', function() {
               /* 네이티브 주문하기 트리거 — '로그인 전 바로 주문 허용' ON이라 비회원 주문서로 진행 */
@@ -4931,19 +4947,29 @@
       try { window.localStorage.removeItem('yd_pay_resume'); } catch (err) {}
       return;
     }
-    if (isGuestUser()) { ydMark('signupPayResume', true, '비회원 상태 — 재개 대기'); return; }
-    try { window.localStorage.removeItem('yd_pay_resume'); } catch (err) {}
     /* 소유자 지시(2026-08-26 2차): 가입/로그인 완료 후에는 결제 자동 진행이 아니라
        장바구니에 랜딩시켜 담은 상품·지급된 쿠폰을 확인하고 직접 주문하게 한다 */
-    ydMark('signupPayResume', true, '가입/로그인 확인 — 장바구니 랜딩');
-    ydTrace('가입쿠폰 재개 — 장바구니로 이동');
-    /* 장바구니 도착 시 가입 보상 토스트(#7)를 띄우도록 마커를 남긴다 */
-    try {
-      window.localStorage.setItem('yd_pop_signup_welcome', String(Date.now()));
-      window.localStorage.setItem('yd_new_member_session', String(Date.now()));
-    } catch (err) {}
-    try { (window.top || window).location.href = '/shop_cart'; }
-    catch (err) { window.location.href = '/shop_cart'; }
+    var resumeToCart = function() {
+      try { window.localStorage.removeItem('yd_pay_resume'); } catch (err) {}
+      ydMark('signupPayResume', true, '가입/로그인 확인 — 장바구니 랜딩');
+      ydTrace('가입쿠폰 재개 — 장바구니로 이동');
+      /* 장바구니 도착 시 가입 보상 토스트(#7)를 띄우도록 마커를 남긴다 */
+      try {
+        window.localStorage.setItem('yd_pop_signup_welcome', String(Date.now()));
+        window.localStorage.setItem('yd_new_member_session', String(Date.now()));
+      } catch (err) {}
+      try { (window.top || window).location.href = '/shop_cart'; }
+      catch (err) { window.location.href = '/shop_cart'; }
+    };
+    if (!isGuestUser()) { resumeToCart(); return; }
+    /* OAuth 직후 세션/헤더가 늦게 회원으로 바뀌는 경우 — 20초간 관찰 후 전환 시 재개 (2026-08-28) */
+    ydMark('signupPayResume', true, '비회원 상태 — 재개 대기(20초 관찰)');
+    ydTrace('가입쿠폰 재개 대기(비회원 판정) — 회원 전환 관찰 시작');
+    var payBegan = Date.now();
+    var payWatch = window.setInterval(function() {
+      if (!isGuestUser()) { window.clearInterval(payWatch); resumeToCart(); return; }
+      if (Date.now() - payBegan > 20000) { window.clearInterval(payWatch); ydTrace('가입쿠폰 재개 — 회원 전환 미발생, 관찰 종료'); }
+    }, 500);
   }
 
   /* ═══ 도매몰 가입/로그인 후 원위치 복귀 (2026-08-28 소유자 지시) ═══
@@ -5325,6 +5351,38 @@
           '<p class="yd-pop-amount">오늘은 총 <strong>20,000원</strong><br>아끼고 시작할 수 있어요</p>' +
           '<p class="yd-pop-desc">추가 2,000원은 <strong>오늘 하루만</strong> 받을 수 있어요</p></div>',
         ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
+    },
+
+    /* ── 스캔형 시안 4종(8/28 "읽지 않고 본다") — 미리보기 전용 ── */
+    pop_a: function() { /* A. 초미니멀 — 숫자 하나 */
+      return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
+        bodyHtml: '<div class="yd-pop-body" style="padding-top:34px;">' +
+          '<p class="yd-sc-num">20,000<small>원</small></p>' +
+          '<p class="yd-sc-line">가입하면 바로 드려요</p>' +
+          '<p class="yd-sc-sub">첫 주문 쿠폰팩 · 오늘 하루</p></div>',
+        ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
+    },
+    pop_b: function() { /* B. 쿠폰 티켓 원샷 — 그림이 전부 */
+      return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
+        bodyHtml: '<div class="yd-pop-body" style="padding-top:30px;">' +
+          '<div class="yd-sc-ticket"><div class="n">20,000원</div><div class="l">첫 주문 쿠폰팩 · 오늘 가입 시</div></div>' +
+          '<p class="yd-sc-sub" style="margin-top:12px;">3초 카카오 가입으로 즉시 지급</p></div>',
+        ctaLabel: '쿠폰 받고 시작하기', laterLabel: '괜찮아요', onCta: function() {} };
+    },
+    pop_c: function() { /* C. 옐로 임팩트 — 카카오 톤 */
+      return { id: 'first_buy_boost', capExempt: true,
+        bodyHtml: '<div class="yd-pop-body">' +
+          '<div class="yd-sc-yellow"><div class="n">20,000원</div><div class="l">3초 가입하면 끝</div></div>' +
+          '<p class="yd-sc-sub" style="margin-top:14px;">첫 주문 쿠폰팩 · 오늘 하루만</p></div>',
+        ctaLabel: '2,000원 바로 받기', ctaKakao: true, laterLabel: '괜찮아요', onCta: function() {} };
+    },
+    pop_d: function() { /* D. 수식 한 줄 — 스택 미니 */
+      return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
+        bodyHtml: '<div class="yd-pop-body" style="padding-top:30px;">' +
+          '<p class="yd-sc-eq">18,000 + 2,000 =</p>' +
+          '<p class="yd-sc-num">20,000<small>원</small></p>' +
+          '<p class="yd-sc-line">오늘 가입하면 전부 드려요</p></div>',
+        ctaLabel: '쿠폰 받고 시작하기', laterLabel: '괜찮아요', onCta: function() {} };
     },
 
     boost_e: function() { /* E. 현재본 카피 + A안 쿠폰 티켓 결합 (8/28 대표 지시) */
@@ -5813,7 +5871,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.121] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.122] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

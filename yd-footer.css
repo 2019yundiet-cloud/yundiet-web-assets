@@ -2394,6 +2394,22 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 .yd-pop-cta.yd-pop-kakao { box-shadow: 0 5px 16px rgba(0, 0, 0, 0.16); }
 @media (prefers-reduced-motion: reduce) { .yd-pop-cta, .yd-pop-cta::after { animation: none; } }
 
+/* ── 스캔형(안 읽고 보는) 시안 스타일 ── */
+.yd-sc-num { font-size: 56px; font-weight: 900; color: #E60000; line-height: 1; letter-spacing: -0.02em; margin: 10px 0 12px; }
+.yd-sc-num small { font-size: 30px; font-weight: 900; }
+.yd-sc-line { font-size: 17px; font-weight: 700; color: #191919; margin: 0 0 6px; }
+.yd-sc-sub { font-size: 13px; color: #999; margin: 0; }
+.yd-sc-ticket { margin: 6px 14px 4px; background: #E60000; border-radius: 18px; padding: 26px 16px 22px; color: #fff; position: relative; }
+.yd-sc-ticket:before, .yd-sc-ticket:after { content: ''; position: absolute; top: 50%; width: 22px; height: 22px; background: #fff; border-radius: 50%; transform: translateY(-50%); }
+.yd-sc-ticket:before { left: -11px; } .yd-sc-ticket:after { right: -11px; }
+.yd-sc-ticket .n { font-size: 46px; font-weight: 900; line-height: 1; }
+.yd-sc-ticket .l { font-size: 15px; font-weight: 700; margin-top: 8px; opacity: .95; }
+.yd-sc-yellow { margin: -20px -20px 0; background: #FEE500; padding: 30px 20px 24px; border-radius: 20px 20px 0 0; }
+.yd-sc-yellow .n { font-size: 52px; font-weight: 900; color: #191919; line-height: 1; }
+.yd-sc-yellow .l { font-size: 16px; font-weight: 800; color: #191919; margin-top: 8px; }
+.yd-sc-eq { font-size: 20px; font-weight: 800; color: #8A8378; margin: 4px 0 2px; }
+.yd-sc-eq b { color: #191919; }
+
 /* ── 부스터 시안 전용 스타일(검토용 — 확정 전 임시) ── */
 .yd-bt-wrap { display: flex; border: 1.5px dashed #E0DACB; border-radius: 14px; overflow: hidden; margin: 4px 2px 14px; }
 .yd-bt-amt { flex: 0 0 108px; background: #E60000; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 18px 8px; }
