@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_127__) {
+  if (window.__YD_FOOTER_V3_128__) {
     return;
   }
-  window.__YD_FOOTER_V3_127__ = true;
+  window.__YD_FOOTER_V3_128__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.127', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.128', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2385,8 +2385,9 @@
       showPendingSelection(name, nextQty);
       trigger();
       scheduleRender(true);
-      /* 안전망: 네이티브가 1.5초 내 목표에 못 오면 낙관 표시 해제(실상태로 복귀) */
-      setTimeout(function() { if (pendingNames.delete(name)) { pendingQty.delete(name); scheduleRender(false); } }, 1500);
+      /* 안전망: 네이티브가 4초 내 목표에 못 오면 낙관 표시 해제(실상태로 복귀)
+         — 아임웹 개편 후 행 생성이 비동기화되어 1.5초로는 정상 응답도 오탈락 */
+      setTimeout(function() { if (pendingNames.delete(name)) { pendingQty.delete(name); scheduleRender(false); } }, 4000);
     }
     function changeQty(item, dir) {
       var links = item.row.querySelectorAll('.option_btn_tools a');
@@ -2926,11 +2927,33 @@
         wrapLabels[i] = normalizeT(wrap.previousElementSibling ? wrap.previousElementSibling.textContent : '') ||
                         normalizeT((wrap.querySelector('.dropdown-toggle') || {}).textContent || '');
       });
-      var observer = new MutationObserver(function() { scheduleRender(false); });
-      observer.observe(selected, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['value'] });
-      /* 조합형 2단 옵션이 늦게 채워지는 것을 감지 */
-      var optionsBox = document.getElementById('prod_options');
-      if (optionsBox) observer.observe(optionsBox, { childList: true, subtree: true });
+      /* 아임웹 2026-08-28 플랫폼 개편 대응: 옵션 컨테이너 노드가 통째로 교체되고
+         행 생성이 비동기(지연)화됨 — 부팅 시점 노드에 건 관찰자는 교체와 함께 실명해
+         시트 합계가 0개에 멈추고 [다음으로]가 영구 잠김(주문 전멸 사고의 원인).
+         body 레벨 관찰(교체 생존) + 열림 중 하트비트 폴링으로 이중화한다. */
+      var isOptionDomNode = function(t) {
+        var el = t && (t.nodeType === 1 ? t : t.parentElement);
+        return !!(el && el.closest && (el.closest('#prod_selected_options') || el.closest('#prod_options')));
+      };
+      var observer = new MutationObserver(function(muts) {
+        for (var mi = 0; mi < muts.length; mi++) {
+          if (isOptionDomNode(muts[mi].target)) { rehideNativeSource(); scheduleRender(false); return; }
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['value'] });
+      /* 컨테이너 교체 시 숨김 클래스도 함께 증발하므로 재적용 */
+      var rehideNativeSource = function() {
+        document.querySelectorAll(HIDE_SELECTORS).forEach(function(el) {
+          if (!el.classList.contains('yd-bs-native-source')) el.classList.add('yd-bs-native-source');
+        });
+      };
+      var lastNativeSig = '';
+      window.setInterval(function() {
+        if (!root.isConnected || !root.classList.contains('is-open')) return;
+        var sel = document.getElementById('prod_selected_options');
+        var sig = sel ? (sel.textContent || '').replace(/\s+/g, '') : '';
+        if (sig !== lastNativeSig) { lastNativeSig = sig; rehideNativeSource(); scheduleRender(false); }
+      }, 600);
       render();
       loadCartSubtotal();
       ydMark('optionFlow', true, cfg.title + ' 활성 (' + cfg.scheme + ')');
@@ -6125,7 +6148,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.127] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.128] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
