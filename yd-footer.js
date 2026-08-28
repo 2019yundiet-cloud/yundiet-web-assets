@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_118__) {
+  if (window.__YD_FOOTER_V3_119__) {
     return;
   }
-  window.__YD_FOOTER_V3_118__ = true;
+  window.__YD_FOOTER_V3_119__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.118', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.119', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4945,6 +4945,72 @@
     catch (err) { window.location.href = '/shop_cart'; }
   }
 
+  /* ═══ 도매몰 가입/로그인 후 원위치 복귀 (2026-08-28 소유자 지시) ═══
+     증상: 도매몰에서 회원가입하면 홈으로 떨어져 도매몰로 못 돌아감(back_url 유실 경로).
+     1차: 도매몰 페이지의 로그인/가입 링크 중 back_url이 없는 것에 imweb 표준
+          back_url=<b64 현재주소>를 주입해 네이티브 자동 복귀를 살린다.
+     2차 안전망: 도매몰 비회원이 로그인/가입 링크를 누르는 순간 복귀 마커(10분)를 남기고,
+          카카오싱크 등으로 back_url이 유실돼 홈에 떨어지면 회원 확인 후 도매몰 원위치로 1회 복귀.
+          (yd_pay_resume과 동일 패턴 — 로그인/가입/OAuth 페이지에서는 대기, 소비는 홈에서만) */
+  function bindWholesaleReturn() {
+    var KEY = 'yd_wholesale_return';
+    var TTL = 10 * 60 * 1000;
+    var path = window.location.pathname || '';
+    if (isWholesalePage()) {
+      /* 도매몰 도착 = 복귀 여정 종료. 마커 정리 */
+      try { window.localStorage.removeItem(KEY); } catch (err) {}
+      /* 1차: back_url 없는 로그인/가입 링크에 현재 주소 주입 (지연 렌더 대비 스윕) */
+      var here = window.location.pathname + window.location.search;
+      var b64 = null;
+      try { b64 = encodeURIComponent(window.btoa(here)); } catch (err) {}
+      function sweepLinks() {
+        if (!b64) { return; }
+        var patched = 0;
+        qsa('a[href^="/login"], a[href^="/site_join"]').forEach(function(a) {
+          var href = a.getAttribute('href') || '';
+          if (href.indexOf('back_url=') !== -1) { return; }
+          a.setAttribute('href', href + (href.indexOf('?') === -1 ? '?' : '&') + 'back_url=' + b64);
+          patched++;
+        });
+        if (patched) { ydMark('wholesaleReturn', true, 'back_url 주입 ' + patched + '건'); }
+      }
+      sweepLinks();
+      ensureObserver('wholesaleReturnLinks', sweepLinks);
+      /* 2차: 비회원이 로그인/가입 링크 클릭 시 복귀 마커 저장 (캡처 단계 — 이탈 전 기록) */
+      document.addEventListener('click', function(e) {
+        var a = e.target && e.target.closest ? e.target.closest('a[href*="/login"], a[href*="/site_join"]') : null;
+        if (!a || !isGuestUser()) { return; }
+        try {
+          window.localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), to: window.location.pathname + window.location.search }));
+        } catch (err) {}
+      }, true);
+      ydMark('wholesaleReturn', true, isGuestUser() ? '도매몰 비회원 — 복귀 마커 대기' : '도매몰 회원 도착');
+      return;
+    }
+    /* 가입/로그인/OAuth 진행 중에는 대기(마커 유지) */
+    if (/^\/login|^\/site_join|^\/oauth/.test(path)) { return; }
+    var raw = null;
+    try { raw = window.localStorage.getItem(KEY); } catch (err) {}
+    if (!raw) { return; }
+    var data = null;
+    try { data = JSON.parse(raw); } catch (err) {}
+    var t = data && Number(data.t);
+    if (!(t > 0 && Date.now() - t >= 0 && Date.now() - t < TTL)) {
+      try { window.localStorage.removeItem(KEY); } catch (err) {}
+      ydMark('wholesaleReturn', true, '마커 만료 폐기');
+      return;
+    }
+    /* 소비는 홈에서만: 가입/로그인 완료 후 홈으로 떨어진 바로 그 증상만 교정.
+       다른 페이지는 사용자가 의도한 이동일 수 있어 대기만 한다(TTL로 자연 소멸). */
+    if (!isHomePage()) { ydMark('wholesaleReturn', true, '홈 아님 — 복귀 대기'); return; }
+    if (isGuestUser()) { ydMark('wholesaleReturn', true, '비회원 — 로그인 완료 대기'); return; }
+    try { window.localStorage.removeItem(KEY); } catch (err) {}
+    var to = (data && typeof data.to === 'string' && data.to.indexOf('/wholesale') === 0) ? data.to : '/wholesale';
+    ydMark('wholesaleReturn', true, '가입/로그인 확인 — 도매몰 복귀: ' + to);
+    try { (window.top || window).location.href = to; }
+    catch (err) { window.location.href = to; }
+  }
+
   /* ═══ 온사이트 팝업 엔진 v1 (2026-08-26 · 검토용 시안 — 대표 승인 전 미배포) ═══
      발화 규칙: 카드 팝업은 세션당 1개 + 팝업별 24시간 재노출 금지(토스트는 캡 제외).
      계측: GA4 dataLayer 이벤트 yd_pop_view / yd_pop_click / yd_pop_close (popup_id 포함).
@@ -5651,6 +5717,7 @@
     ensureObserver('patchLayerPopupButtons', patchLayerPopupButtons);
     bindShippingSchedule();
     bindGuestKakaoDirectLogin();
+    bindWholesaleReturn();
     bindSignupPayResume();
     bindFriendPackCouponHide();
     bindOnsitePopups();
@@ -5673,7 +5740,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.118] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.119] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
