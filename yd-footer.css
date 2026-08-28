@@ -606,6 +606,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 .yd-bs-total span{color:var(--yd-muted); font-size:12px;}
 .yd-bs-total strong{font-size:20px; letter-spacing:-.03em;}
 .yd-bs-actions{display:grid; grid-template-columns:auto minmax(0,1fr); gap:9px;}
+.yd-bs-actions .yd-bs-solo{grid-column:1 / -1; width:100%;}
 .yd-bs-back{min-width:132px; min-height:52px; padding:0 16px; border:1px solid var(--yd-line); border-radius:13px; background:#fff; color:var(--yd-ink); font-weight:800; cursor:pointer;}
 .yd-bs-primary{min-height:52px; border:0; border-radius:13px; background:var(--yd-green); color:#fff; font-size:16px; font-weight:900; cursor:pointer; box-shadow:none;}
 #yd-bs-root[data-mode="size"] .yd-bs-primary{background:var(--yd-green);}
