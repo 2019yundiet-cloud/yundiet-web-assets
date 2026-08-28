@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_123__) {
+  if (window.__YD_FOOTER_V3_124__) {
     return;
   }
-  window.__YD_FOOTER_V3_123__ = true;
+  window.__YD_FOOTER_V3_124__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.123', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.124', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -5367,6 +5367,34 @@
         ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
     },
 
+    /* ── 긴급성 시안 3종(8/28 "오늘만 1도 안 느껴짐" 피드백) — 미리보기 전용 ── */
+    pop_u1: function() { /* U1. 사라져요 헤드라인 */
+      return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
+        bodyHtml: '<div class="yd-pop-body" style="padding-top:30px;">' +
+          '<p class="yd-sc-line" style="font-size:15px;color:#8A8378;">첫 주문 응원 쿠폰</p>' +
+          '<p class="yd-sc-num" style="font-size:44px;">2,000원</p>' +
+          '<p class="yd-pop-title" style="font-size:21px;margin:2px 0 4px;"><span style="color:#E60000;">오늘 지나면 사라져요</span></p>' +
+          '<p class="yd-sc-sub">지금 받으면 첫 주문에 바로 사용</p></div>',
+        ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
+    },
+    pop_u2: function() { /* U2. 마감 스트립 + 합계 */
+      return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
+        bodyHtml: '<div class="yd-pop-body">' +
+          '<div style="margin:-20px -20px 16px;background:#E60000;color:#fff;font-weight:900;font-size:16px;padding:12px;border-radius:20px 20px 0 0;letter-spacing:.02em;">⏰ 오늘 밤 12시 마감</div>' +
+          '<p class="yd-sc-num" style="font-size:46px;">2,000원</p>' +
+          '<p class="yd-sc-line">가입하면 웰컴팩 18,000원까지 함께</p>' +
+          '<p class="yd-sc-sub">내일이면 받을 수 없어요</p></div>',
+        ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
+    },
+    pop_u3: function() { /* U3. TODAY ONLY 스탬프 + 티켓 */
+      return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
+        bodyHtml: '<div class="yd-pop-body" style="padding-top:34px;position:relative;">' +
+          '<div style="position:absolute;top:8px;right:6px;transform:rotate(8deg);border:3px solid #E60000;color:#E60000;font-weight:900;font-size:14px;border-radius:9px;padding:4px 10px;letter-spacing:.05em;background:rgba(255,255,255,.75);">TODAY ONLY</div>' +
+          '<div class="yd-sc-ticket"><div class="n">2,000원</div><div class="l">오늘 밤 12시에 사라져요</div></div>' +
+          '<p class="yd-sc-sub" style="margin-top:12px;">첫 주문 응원 쿠폰 · 웰컴팩과 중복 사용</p></div>',
+        ctaLabel: '2,000원 바로 받기', laterLabel: '괜찮아요', onCta: function() {} };
+    },
+
     /* ── 스캔형 시안 4종(8/28 "읽지 않고 본다") — 미리보기 전용 ── */
     pop_a: function() { /* A. 초미니멀 — 숫자 하나 */
       return { id: 'first_buy_boost', capExempt: true, ctaRed: true,
@@ -5885,7 +5913,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.123] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.124] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
