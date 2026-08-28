@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_126__) {
+  if (window.__YD_FOOTER_V3_127__) {
     return;
   }
-  window.__YD_FOOTER_V3_126__ = true;
+  window.__YD_FOOTER_V3_127__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.126', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.127', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -3022,8 +3022,23 @@
               ydTrace('장바구니 3초가입 — 장바구니 back_url 부착');
               var gobDest = '/login';
               try { gobDest = '/login?back_url=' + encodeURIComponent(window.btoa('/shop_cart')); } catch (err) {}
-              try { (window.top || window).location.href = gobDest; }
-              catch (err) { window.location.href = gobDest; }
+              /* 장바구니 페이지에서 게스트 세션이 확실할 때 먼저 스냅샷을 완료한다.
+                 로그인 페이지에는 .member-info.guest가 없어 게스트 판별을 신뢰할 수 없다. */
+              var leaveForLogin = function() {
+                try { (window.top || window).location.href = gobDest; }
+                catch (err) { window.location.href = gobDest; }
+              };
+              var carryReady = captureGuestCartCarry(true);
+              window.__ydCarryReady = carryReady;
+              var carrySettled = false;
+              var carryFuse = window.setTimeout(function() {
+                if (!carrySettled) { carrySettled = true; leaveForLogin(); }
+              }, 2000);
+              carryReady.then(function() {
+                if (!carrySettled) { carrySettled = true; window.clearTimeout(carryFuse); leaveForLogin(); }
+              }, function() {
+                if (!carrySettled) { carrySettled = true; window.clearTimeout(carryFuse); leaveForLogin(); }
+              });
             });
             qs('.yd-gob-guest', bar).addEventListener('click', function() {
               /* 네이티브 주문하기 트리거 — '로그인 전 바로 주문 허용' ON이라 비회원 주문서로 진행 */
@@ -5133,111 +5148,189 @@
 
   /* ═══ 게스트 장바구니 이관 (2026-08-28 소유자 지시) ═══
      증상: 비회원으로 담은 장바구니가 로그인/가입 후 회원 장바구니로 합쳐지지 않음(아임웹 세션 교체).
-     장치: 로그인/가입/OAuth 페이지에 게스트로 도착한 순간(게스트 세션이 아직 살아있음)
+     장치: 장바구니의 3초가입 클릭 순간(게스트 세션이 확실함)에 먼저 스냅샷,
+     로그인/가입/OAuth 페이지에서는 게스트 DOM 마커 없이 스냅샷 유무를 보강한다.
      장바구니를 스냅샷(yd_cart_carry, 15분) → 로그인 완료(회원 확인) 후 회원 장바구니와 대조해
      누락 옵션행만 add_cart.cm으로 재담기 → 장바구니 페이지면 새로고침으로 반영.
-     option_detail_code 대조로 중복 담김을 막아 아임웹이 자체 병합하는 경우에도 안전(멱등). */
-  function bindGuestCartCarry() {
-    if (IS_IFRAME) { return; }
-    var KEY = 'yd_cart_carry';
-    var TTL = 15 * 60 * 1000;
-    var path = window.location.pathname || '';
-    if (/^\/login|^\/site_join|^\/oauth/.test(path)) {
-      if (!isGuestUser()) { window.__ydCarryReady = Promise.resolve(); return; }
-      /* 카카오 자동 진입(guestKakaoDirect)이 스냅샷 완료를 기다릴 수 있게 약속을 노출한다.
-         자동 클릭이 스냅샷보다 먼저 페이지를 떠나면 이관 정보가 유실되는 레이스의 봉인. */
-      window.__ydCarryReady = fetch('/shop/cart/get_cart_content.cm?cart_type=normal', { credentials: 'include' })
-        .then(function(r) { return r.json(); })
-        .then(function(j) {
-          var items = (j && j.data && j.data.cart && j.data.cart.items) || [];
-          if (!items.length) { ydTrace('게스트 장바구니 스냅샷 — 담긴 상품 없음'); return; }
-          var slim = items.slice(0, 15).map(function(it) {
-            return {
-              prodIdx: it.product && it.product.prod_idx,
-              tpl: (it.shipping_service && it.shipping_service.template_code) || '',
-              options: (it.options || []).slice(0, 10).map(function(o) {
-                return { dc: o.option_detail_code, req: !!o.required, cnt: o.count || 1,
-                         up: o.total_unit_price || o.original_unit_price || 0,
-                         oc: o.option_code_list || [], vc: o.value_code_list || [],
-                         on: o.option_name_list || [], vn: o.value_name_list || [] };
-              })
-            };
-          }).filter(function(x) { return x.prodIdx && x.options.length; });
-          if (!slim.length) { return; }
-          try { window.localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), items: slim })); } catch (err) {}
-          ydTrace('게스트 장바구니 스냅샷 ' + slim.length + '개 상품 — 이관 대기');
-        }).catch(function() {});
-      return;
-    }
+     product+option_detail_code 대조로 중복 담김을 막고, POST 후 장바구니 API 재조회로 이관을 확증한 때만 스냅샷을 삭제한다. */
+  var CART_CARRY_KEY = 'yd_cart_carry';
+  var CART_CARRY_TTL = 15 * 60 * 1000;
+
+  function cartCarryReadFresh() {
     var raw = null;
-    try { raw = window.localStorage.getItem(KEY); } catch (err) {}
-    if (!raw) { return; }
+    try { raw = window.localStorage.getItem(CART_CARRY_KEY); } catch (err) {}
+    if (!raw) { return null; }
     var data = null;
     try { data = JSON.parse(raw); } catch (err) {}
     var t = data && Number(data.t);
-    if (!(t > 0 && Date.now() - t >= 0 && Date.now() - t < TTL)) {
-      try { window.localStorage.removeItem(KEY); } catch (err) {}
+    if (!(t > 0 && Date.now() - t >= 0 && Date.now() - t < CART_CARRY_TTL && Array.isArray(data.items))) {
+      try { window.localStorage.removeItem(CART_CARRY_KEY); } catch (err) {}
+      return null;
+    }
+    return data;
+  }
+
+  function cartCarryItems(payload) {
+    return (payload && payload.data && payload.data.cart && payload.data.cart.items) || [];
+  }
+
+  function cartCarryOptionKey(prodIdx, option) {
+    return String(prodIdx || '') + ':' + String(option && option.option_detail_code || option && option.dc || '');
+  }
+
+  function captureGuestCartCarry(forceRefresh) {
+    var existing = cartCarryReadFresh();
+    if (!forceRefresh && existing && existing.items.length) {
+      ydMark('guestCartCarryCapture', true, '이미 저장된 게스트 장바구니 재사용');
+      return Promise.resolve(true);
+    }
+    return fetch('/shop/cart/get_cart_content.cm?cart_type=normal', {
+      credentials: 'include', cache: 'no-store'
+    }).then(function(r) {
+      if (!r.ok) { throw new Error('cart_snapshot_http_' + r.status); }
+      return r.json();
+    }).then(function(j) {
+      var items = cartCarryItems(j);
+      if (!items.length) {
+        ydTrace('게스트 장바구니 스냅샷 — 담긴 상품 없음');
+        ydMark('guestCartCarryCapture', true, '담긴 상품 없음');
+        return false;
+      }
+      var slim = items.slice(0, 15).map(function(it) {
+        return {
+          prodIdx: it.product && it.product.prod_idx,
+          tpl: (it.shipping_service && it.shipping_service.template_code) || '',
+          options: (it.options || []).slice(0, 10).map(function(o) {
+            return { dc: o.option_detail_code, req: !!o.required, cnt: o.count || 1,
+                     up: o.total_unit_price || o.original_unit_price || 0,
+                     oc: o.option_code_list || [], vc: o.value_code_list || [],
+                     on: o.option_name_list || [], vn: o.value_name_list || [] };
+          })
+        };
+      }).filter(function(x) { return x.prodIdx && x.options.length; });
+      if (!slim.length) { throw new Error('cart_snapshot_schema_empty'); }
+      try { window.localStorage.setItem(CART_CARRY_KEY, JSON.stringify({ t: Date.now(), items: slim })); }
+      catch (err) { throw new Error('cart_snapshot_storage_failed'); }
+      ydTrace('게스트 장바구니 스냅샷 ' + slim.length + '개 상품 — 이관 대기');
+      ydMark('guestCartCarryCapture', true, '게스트 장바구니 ' + slim.length + '개 저장');
+      return true;
+    }).catch(function(err) {
+      ydTrace('게스트 장바구니 스냅샷 실패: ' + String(err && err.message || err).slice(0, 60));
+      ydMark('guestCartCarryCapture', false, '스냅샷 실패 — 로그인은 진행');
+      return false;
+    });
+  }
+
+  function cartCarryFetch() {
+    return fetch('/shop/cart/get_cart_content.cm?cart_type=normal', {
+      credentials: 'include', cache: 'no-store'
+    }).then(function(r) {
+      if (!r.ok) { throw new Error('cart_readback_http_' + r.status); }
+      return r.json();
+    });
+  }
+
+  function cartCarryAddItem(item, missing) {
+    var body = new URLSearchParams();
+    body.set('prodIdx', String(item.prodIdx));
+    missing.forEach(function(o, i) {
+      var p = 'options[' + i + ']';
+      body.set(p + '[idx]', String(i));
+      body.set(p + '[option_detail_code]', o.dc);
+      (o.oc || []).forEach(function(code, k) {
+        var q = p + '[options][' + k + ']';
+        body.set(q + '[value_type]', 'SELECT');
+        body.set(q + '[option_code]', code);
+        body.set(q + '[value_code]', (o.vc || [])[k] || '');
+        body.set(q + '[value_name]', (o.vn || [])[k] || '');
+        body.set(q + '[option_name]', (o.on || [])[k] || '');
+      });
+      body.set(p + '[price]', String(o.up || 0));
+      body.set(p + '[count]', String(o.cnt || 1));
+      body.set(p + '[require]', o.req ? 'true' : 'false');
+      body.append(p + '[sku_no][]', '');
+      body.set(p + '[use_stock]', 'false');
+      body.set(p + '[stock]', '0');
+      body.set(p + '[stock_un_limit]', 'false');
+      body.set(p + '[option_mix_type]', 'SINGLE');
+    });
+    body.set('orderCount', '0');
+    body.set('deliv_type', 'parcel');
+    body.set('deliv_pay_type', 'price');
+    body.set('deliv_country', 'KR');
+    body.set('shipping_template_code', item.tpl || '');
+    return fetch('/shop/add_cart.cm', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest' },
+      body: body.toString()
+    }).then(function(r) {
+      if (!r.ok) { throw new Error('cart_restore_http_' + r.status); }
+      return true;
+    });
+  }
+
+  function restoreGuestCartCarry(data, attempt) {
+    attempt = attempt || 1;
+    var expectedKeys = [];
+    (data.items || []).forEach(function(item) {
+      (item.options || []).forEach(function(o) {
+        if (o.dc) { expectedKeys.push(cartCarryOptionKey(item.prodIdx, o)); }
+      });
+    });
+    if (!expectedKeys.length) {
+      ydMark('guestCartCarry', false, '이관 스냅샷 형식 오류 — 스냅샷 보존');
+      return Promise.resolve(false);
+    }
+    return cartCarryFetch().then(function(current) {
+      var have = {};
+      cartCarryItems(current).forEach(function(item) {
+        var prodIdx = item.product && item.product.prod_idx;
+        (item.options || []).forEach(function(o) { have[cartCarryOptionKey(prodIdx, o)] = 1; });
+      });
+      var jobs = [];
+      (data.items || []).forEach(function(item) {
+        var missing = (item.options || []).filter(function(o) {
+          return o.dc && !have[cartCarryOptionKey(item.prodIdx, o)];
+        });
+        if (missing.length) { jobs.push(cartCarryAddItem(item, missing)); }
+      });
+      return Promise.all(jobs).then(cartCarryFetch);
+    }).then(function(readback) {
+      var verified = {};
+      cartCarryItems(readback).forEach(function(item) {
+        var prodIdx = item.product && item.product.prod_idx;
+        (item.options || []).forEach(function(o) { verified[cartCarryOptionKey(prodIdx, o)] = 1; });
+      });
+      var missingAfterWrite = expectedKeys.filter(function(key) { return !verified[key]; });
+      if (missingAfterWrite.length) { throw new Error('cart_restore_readback_missing_' + missingAfterWrite.length); }
+      try { window.localStorage.removeItem(CART_CARRY_KEY); } catch (err) {}
+      ydMark('guestCartCarry', true, '게스트 장바구니 이관 후 재조회 확인');
+      ydTrace('게스트 장바구니 이관 확증 완료 ' + expectedKeys.length + '개 옵션');
+      if (/^\/shop_cart/.test(window.location.pathname)) { window.location.reload(); }
+      return true;
+    }).catch(function(err) {
+      if (attempt < 2) {
+        return new Promise(function(resolve) { window.setTimeout(resolve, 500); })
+          .then(function() { return restoreGuestCartCarry(data, attempt + 1); });
+      }
+      ydMark('guestCartCarry', false, '이관 재조회 실패 — 스냅샷 보존');
+      ydTrace('게스트 장바구니 이관 실패: ' + String(err && err.message || err).slice(0, 60));
+      return false;
+    });
+  }
+
+  function bindGuestCartCarry() {
+    if (IS_IFRAME) { return; }
+    var path = window.location.pathname || '';
+    if (/^\/login|^\/site_join|^\/oauth/.test(path)) {
+      /* 로그인 페이지에는 .member-info.guest가 없을 수 있으므로 DOM 게스트 판정으로 조기 종료하지 않는다. */
+      window.__ydCarryReady = captureGuestCartCarry();
       return;
     }
+    var data = cartCarryReadFresh();
+    if (!data) { return; }
     if (isGuestUser()) { return; }
-    fetch('/shop/cart/get_cart_content.cm?cart_type=normal', { credentials: 'include' })
-      .then(function(r) { return r.json(); })
-      .then(function(j) {
-        var have = {};
-        var items = (j && j.data && j.data.cart && j.data.cart.items) || [];
-        items.forEach(function(it) { (it.options || []).forEach(function(o) { have[o.option_detail_code] = 1; }); });
-        var jobs = [];
-        (data.items || []).forEach(function(it) {
-          var missing = (it.options || []).filter(function(o) { return o.dc && !have[o.dc]; });
-          if (!missing.length) { return; }
-          var body = new URLSearchParams();
-          body.set('prodIdx', String(it.prodIdx));
-          missing.forEach(function(o, i) {
-            var p = 'options[' + i + ']';
-            body.set(p + '[idx]', String(i));
-            body.set(p + '[option_detail_code]', o.dc);
-            (o.oc || []).forEach(function(code, k) {
-              var q = p + '[options][' + k + ']';
-              body.set(q + '[value_type]', 'SELECT');
-              body.set(q + '[option_code]', code);
-              body.set(q + '[value_code]', (o.vc || [])[k] || '');
-              body.set(q + '[value_name]', (o.vn || [])[k] || '');
-              body.set(q + '[option_name]', (o.on || [])[k] || '');
-            });
-            body.set(p + '[price]', String(o.up || 0));
-            body.set(p + '[count]', String(o.cnt || 1));
-            body.set(p + '[require]', o.req ? 'true' : 'false');
-            body.append(p + '[sku_no][]', '');
-            body.set(p + '[use_stock]', 'false');
-            body.set(p + '[stock]', '0');
-            body.set(p + '[stock_un_limit]', 'false');
-            body.set(p + '[option_mix_type]', 'SINGLE');
-          });
-          body.set('orderCount', '0');
-          body.set('deliv_type', 'parcel');
-          body.set('deliv_pay_type', 'price');
-          body.set('deliv_country', 'KR');
-          body.set('shipping_template_code', it.tpl || '');
-          jobs.push(fetch('/shop/add_cart.cm', {
-            method: 'POST', credentials: 'include',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest' },
-            body: body.toString()
-          }));
-        });
-        if (!jobs.length) {
-          try { window.localStorage.removeItem(KEY); } catch (err) {}
-          ydMark('guestCartCarry', true, '이관 대상 없음(이미 반영)');
-          return;
-        }
-        Promise.all(jobs.map(function(p2) { return p2.then(function(r2) { return r2.ok; }).catch(function() { return false; }); }))
-          .then(function(rs) {
-            var ok = rs.filter(Boolean).length;
-            try { window.localStorage.removeItem(KEY); } catch (err) {}
-            ydMark('guestCartCarry', true, '게스트 장바구니 이관 ' + ok + '/' + rs.length);
-            ydTrace('게스트 장바구니 이관 완료 ' + ok + '/' + rs.length);
-            if (ok && /^\/shop_cart/.test(window.location.pathname)) { window.location.reload(); }
-          });
-      }).catch(function() {});
+    window.__ydCartCarryRestoreReady = restoreGuestCartCarry(data, 1);
   }
 
   /* ═══ 온사이트 팝업 엔진 v1 (2026-08-26 · 검토용 시안 — 대표 승인 전 미배포) ═══
@@ -6032,7 +6125,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.126] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.127] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
