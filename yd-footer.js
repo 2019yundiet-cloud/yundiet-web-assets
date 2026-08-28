@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_119__) {
+  if (window.__YD_FOOTER_V3_120__) {
     return;
   }
-  window.__YD_FOOTER_V3_119__ = true;
+  window.__YD_FOOTER_V3_120__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.119', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.120', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4987,8 +4987,23 @@
       ydMark('wholesaleReturn', true, isGuestUser() ? '도매몰 비회원 — 복귀 마커 대기' : '도매몰 회원 도착');
       return;
     }
-    /* 가입/로그인/OAuth 진행 중에는 대기(마커 유지) */
-    if (/^\/login|^\/site_join|^\/oauth/.test(path)) { return; }
+    /* 가입/로그인/OAuth 진행 중: back_url이 도매몰이면 이 자리에서 마커를 심는다.
+       카카오 간편로그인 등 OAuth 왕복에서 back_url이 유실돼도, 로그인 페이지가 뜬
+       바로 이 origin의 localStorage에 복귀 지점이 남아 홈 낙하 시 복귀된다.
+       (도매몰→로그인 진입이 도메인을 넘어도 back_url은 서버 링크로 전달되므로 여기서 회수됨) */
+    if (/^\/login|^\/site_join|^\/oauth/.test(path)) {
+      try {
+        var m = /[?&]back_url=([^&]+)/.exec(window.location.search || '');
+        if (m) {
+          var decoded = window.atob(decodeURIComponent(m[1]));
+          if (decoded.indexOf('/wholesale') === 0) {
+            window.localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), to: decoded }));
+            ydMark('wholesaleReturn', true, '로그인/가입 페이지 — back_url 회수·마커 갱신');
+          }
+        }
+      } catch (err) {}
+      return;
+    }
     var raw = null;
     try { raw = window.localStorage.getItem(KEY); } catch (err) {}
     if (!raw) { return; }
@@ -5025,6 +5040,8 @@
   const BOOST_FIRE_AFTER_MS = 2 * 60 * 1000;
   /* 가입 팝업 체류 조건: 20초→40초 (2026-08-28 대표 지시) */
   const SIGNUP_DWELL_MS = 40 * 1000;
+  /* 단일 팝업 체제(8/28 대표 승인): 가입 팝업 OFF — 부스터(합계 프레임)가 가입 유도까지 겸한다 */
+  const SIGNUP_POPUP_ENABLED = false;
 
   function popTrack(name, popupId) {
     try {
@@ -5181,19 +5198,15 @@
       let seen = 0;
       try { seen = Number(window.localStorage.getItem('yd_boost_seen_count') || 0); } catch (err) {}
       const finalRound = seen >= 2;
-      const bodyE =
-          '<div class="yd-pop-body">' +
-          '<p class="yd-pop-kicker">첫 구매 응원 쿠폰</p>' +
-          '<p class="yd-pop-amount">첫 주문 응원 <strong>2,000원</strong><br>발급 되었습니다!</p>' +
-          '<div class="yd-bt-wrap"><div class="yd-bt-amt"><b>2,000원</b><span>COUPON</span></div>' +
-          '<div class="yd-bt-body"><div class="t">지금 받으면<br>바로 쓸 수 있어요</div>' +
-          '<div class="d">웰컴 쿠폰팩과 중복 사용 · 오늘 하루만</div></div></div>' +
-          '</div>';
-      const bodyFinal =
-          '<div class="yd-pop-body"><p class="yd-pop-kicker">첫 주문 혜택 합계</p>' +
+      /* 단일 팝업 체제(8/28): 전 회차 합계 프레임(가입 유인 18,000 포함) — 3회차는 마지막 안내 킥커 */
+      const bodyStack = function(kicker) {
+        return '<div class="yd-pop-body"><p class="yd-pop-kicker">' + kicker + '</p>' +
           '<div class="yd-stack"><span class="chip">웰컴팩 18,000원</span><span class="plus">+</span><span class="chip red">2,000원</span></div>' +
-          '<p class="yd-pop-amount">오늘은 총 <strong>20,000원</strong><br>아끼고 시작할 수 있어요</p>' +
-          '<p class="yd-pop-desc">추가 2,000원은 <strong>오늘 하루만</strong> 받을 수 있어요</p></div>';
+          '<p class="yd-pop-amount">가입하면 오늘 총 <strong>20,000원</strong><br>아끼고 시작할 수 있어요</p>' +
+          '<p class="yd-pop-desc">첫 주문 응원 2,000원은 <strong>오늘 하루만</strong> 받을 수 있어요</p></div>';
+      };
+      const bodyE = bodyStack('첫 주문 혜택 합계');
+      const bodyFinal = bodyStack('오늘이 마지막 안내예요');
       return {
         id: 'first_buy_boost',
         capExempt: true,
@@ -5306,7 +5319,7 @@
     if (IS_IFRAME) {
       /* 레이어(iframe) 상세: 팝업은 부모창이 그린다(z-index가 모달 위) — 여기선 조건 감지·릴레이만.
          2026-08-26 수리: 상세 대부분이 레이어로 열려 iframe 전체 제외 시 ①이 실사용에서 발화 안 하던 결함. */
-      if (isProductDetailPage() && isGuestUser() && !isWholesalePage()) {
+      if (SIGNUP_POPUP_ENABLED && isProductDetailPage() && isGuestUser() && !isWholesalePage()) {
         let dwellMs = 0;
         let lastTick = Date.now();
         const relayTimer = window.setInterval(function() {
@@ -5379,6 +5392,7 @@
         const d = e.data;
         if (!d || d.__yd_pop !== true) return;
         if (d.id !== 'signup_dwell') return;
+        if (!SIGNUP_POPUP_ENABLED) return;
         if (!isGuestUser()) return;
         popShowCard(POPUP_DEFS.signup_dwell());
       } catch (err) {}
@@ -5441,7 +5455,7 @@
       document.addEventListener('keydown', armStall, true);
       armStall();
       armed.push('checkout_stall');
-    } else if (isProductDetailPage() && isGuestUser()) {
+    } else if (SIGNUP_POPUP_ENABLED && isProductDetailPage() && isGuestUser()) {
       /* #1 비회원 상세 40초 체류 (탭이 보이는 시간만 카운트) */
       let dwellMs = 0;
       let lastTick = Date.now();
@@ -5740,7 +5754,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.119] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.120] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
