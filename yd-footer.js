@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_131__) {
+  if (window.__YD_FOOTER_V3_132__) {
     return;
   }
-  window.__YD_FOOTER_V3_131__ = true;
+  window.__YD_FOOTER_V3_132__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.131', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.132', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -5190,9 +5190,9 @@
      증상: 비회원으로 담은 장바구니가 로그인/가입 후 회원 장바구니로 합쳐지지 않음(아임웹 세션 교체).
      장치: 장바구니의 3초가입 클릭 순간(게스트 세션이 확실함)에 먼저 스냅샷,
      로그인/가입/OAuth 페이지에서는 게스트 DOM 마커 없이 스냅샷 유무를 보강한다.
-     장바구니를 스냅샷(yd_cart_carry, 15분) → 로그인 완료(회원 확인) 후 회원 장바구니와 대조해
-     누락 옵션행만 add_cart.cm으로 재담기 → 장바구니 페이지면 새로고침으로 반영.
-     product+option_detail_code 대조로 중복 담김을 막고, POST 후 장바구니 API 재조회로 이관을 확증한 때만 스냅샷을 삭제한다. */
+     장바구니를 스냅샷(yd_cart_carry, 15분) → 로그인 완료(명시적 회원 DOM 확인) 후 회원 장바구니와 대조해
+     최초 회원 수량 + 게스트 수량을 고정 목표로 저장하고 부족 수량만 add_cart.cm으로 재담기한다.
+     POST 후 장바구니 API 재조회에서 모든 상품·옵션의 목표 수량을 확증한 때만 스냅샷을 삭제한다. */
   var CART_CARRY_KEY = 'yd_cart_carry';
   var CART_CARRY_TTL = 15 * 60 * 1000;
 
@@ -5215,7 +5215,81 @@
   }
 
   function cartCarryOptionKey(prodIdx, option) {
-    return String(prodIdx || '') + ':' + String(option && option.option_detail_code || option && option.dc || '');
+    return String(prodIdx || '') + ':' + String(option && option.option_detail_code || option && option.dc || '__base__');
+  }
+
+  function cartCarryCount(value) {
+    var count = Math.floor(Number(value) || 0);
+    return count > 0 ? count : 0;
+  }
+
+  function cartCarryBaseCount(item) {
+    var direct = cartCarryCount(item && (item.count || item.order_count || item.orderCount || item.quantity || item.product_count));
+    if (direct) { return direct; }
+    var optionTotal = (item && item.options || []).reduce(function(sum, option) {
+      return sum + cartCarryCount(option && (option.count || option.cnt));
+    }, 0);
+    return optionTotal || 1;
+  }
+
+  function cartCarrySnapshotCounts(data) {
+    var counts = {};
+    (data && data.items || []).forEach(function(item) {
+      var options = (item.options || []).filter(function(option) { return !!option.dc; });
+      if (options.length) {
+        options.forEach(function(option) {
+          var key = cartCarryOptionKey(item.prodIdx, option);
+          counts[key] = (counts[key] || 0) + (cartCarryCount(option.cnt) || 1);
+        });
+        return;
+      }
+      var baseKey = cartCarryOptionKey(item.prodIdx, null);
+      counts[baseKey] = (counts[baseKey] || 0) + (cartCarryCount(item.baseCnt) || 1);
+    });
+    return counts;
+  }
+
+  function cartCarryPayloadCounts(payload) {
+    var counts = {};
+    cartCarryItems(payload).forEach(function(item) {
+      var prodIdx = item.product && item.product.prod_idx;
+      var options = (item.options || []).filter(function(option) { return !!option.option_detail_code; });
+      if (options.length) {
+        options.forEach(function(option) {
+          var key = cartCarryOptionKey(prodIdx, option);
+          counts[key] = (counts[key] || 0) + (cartCarryCount(option.count) || 1);
+        });
+        return;
+      }
+      var baseKey = cartCarryOptionKey(prodIdx, null);
+      counts[baseKey] = (counts[baseKey] || 0) + cartCarryBaseCount(item);
+    });
+    return counts;
+  }
+
+  function cartCarrySave(data) {
+    try { window.localStorage.setItem(CART_CARRY_KEY, JSON.stringify(data)); }
+    catch (err) { throw new Error('cart_snapshot_storage_failed'); }
+  }
+
+  function cartCarryTargets(data, currentCounts) {
+    if (data.targets && typeof data.targets === 'object' && !Array.isArray(data.targets)) {
+      return data.targets;
+    }
+    var guestCounts = cartCarrySnapshotCounts(data);
+    var targets = {};
+    Object.keys(guestCounts).forEach(function(key) {
+      targets[key] = (cartCarryCount(currentCounts[key]) || 0) + guestCounts[key];
+    });
+    data.targets = targets;
+    data.planT = Date.now();
+    cartCarrySave(data); /* 목표를 쓰기 전에 고정해야 재시도·새로고침에서 중복 추가되지 않는다. */
+    return targets;
+  }
+
+  function cartCarryMemberReady() {
+    var memberInfo = document.querySelector('.member-info');
+    return !!(memberInfo && !memberInfo.classList.contains('guest'));
   }
 
   function captureGuestCartCarry(forceRefresh) {
@@ -5236,21 +5310,22 @@
         ydMark('guestCartCarryCapture', true, '담긴 상품 없음');
         return false;
       }
-      var slim = items.slice(0, 15).map(function(it) {
+      var slim = items.map(function(it) {
+        var validOptions = (it.options || []).map(function(o) {
+          return { dc: o.option_detail_code, req: !!o.required, cnt: cartCarryCount(o.count) || 1,
+                   up: o.total_unit_price || o.original_unit_price || 0,
+                   oc: o.option_code_list || [], vc: o.value_code_list || [],
+                   on: o.option_name_list || [], vn: o.value_name_list || [] };
+        }).filter(function(option) { return !!option.dc; });
         return {
           prodIdx: it.product && it.product.prod_idx,
           tpl: (it.shipping_service && it.shipping_service.template_code) || '',
-          options: (it.options || []).slice(0, 10).map(function(o) {
-            return { dc: o.option_detail_code, req: !!o.required, cnt: o.count || 1,
-                     up: o.total_unit_price || o.original_unit_price || 0,
-                     oc: o.option_code_list || [], vc: o.value_code_list || [],
-                     on: o.option_name_list || [], vn: o.value_name_list || [] };
-          })
+          baseCnt: validOptions.length ? 0 : cartCarryBaseCount(it),
+          options: validOptions
         };
-      }).filter(function(x) { return x.prodIdx && x.options.length; });
+      }).filter(function(x) { return x.prodIdx && (x.options.length || x.baseCnt > 0); });
       if (!slim.length) { throw new Error('cart_snapshot_schema_empty'); }
-      try { window.localStorage.setItem(CART_CARRY_KEY, JSON.stringify({ t: Date.now(), items: slim })); }
-      catch (err) { throw new Error('cart_snapshot_storage_failed'); }
+      cartCarrySave({ v: 2, t: Date.now(), items: slim });
       ydTrace('게스트 장바구니 스냅샷 ' + slim.length + '개 상품 — 이관 대기');
       ydMark('guestCartCarryCapture', true, '게스트 장바구니 ' + slim.length + '개 저장');
       return true;
@@ -5270,7 +5345,7 @@
     });
   }
 
-  function cartCarryAddItem(item, missing) {
+  function cartCarryAddItem(item, missing, baseCount) {
     var body = new URLSearchParams();
     body.set('prodIdx', String(item.prodIdx));
     missing.forEach(function(o, i) {
@@ -5294,7 +5369,7 @@
       body.set(p + '[stock_un_limit]', 'false');
       body.set(p + '[option_mix_type]', 'SINGLE');
     });
-    body.set('orderCount', '0');
+    body.set('orderCount', String(cartCarryCount(baseCount) || 0));
     body.set('deliv_type', 'parcel');
     body.set('deliv_pay_type', 'price');
     body.set('deliv_country', 'KR');
@@ -5311,41 +5386,45 @@
 
   function restoreGuestCartCarry(data, attempt) {
     attempt = attempt || 1;
-    var expectedKeys = [];
-    (data.items || []).forEach(function(item) {
-      (item.options || []).forEach(function(o) {
-        if (o.dc) { expectedKeys.push(cartCarryOptionKey(item.prodIdx, o)); }
-      });
-    });
-    if (!expectedKeys.length) {
+    var guestCounts = cartCarrySnapshotCounts(data);
+    if (!Object.keys(guestCounts).length) {
       ydMark('guestCartCarry', false, '이관 스냅샷 형식 오류 — 스냅샷 보존');
       return Promise.resolve(false);
     }
     return cartCarryFetch().then(function(current) {
-      var have = {};
-      cartCarryItems(current).forEach(function(item) {
-        var prodIdx = item.product && item.product.prod_idx;
-        (item.options || []).forEach(function(o) { have[cartCarryOptionKey(prodIdx, o)] = 1; });
-      });
+      var have = cartCarryPayloadCounts(current);
+      var targets = cartCarryTargets(data, have);
       var jobs = [];
       (data.items || []).forEach(function(item) {
-        var missing = (item.options || []).filter(function(o) {
-          return o.dc && !have[cartCarryOptionKey(item.prodIdx, o)];
-        });
-        if (missing.length) { jobs.push(cartCarryAddItem(item, missing)); }
+        var missing = (item.options || []).filter(function(o) { return !!o.dc; }).map(function(o) {
+          var key = cartCarryOptionKey(item.prodIdx, o);
+          var deficit = Math.max(0, cartCarryCount(targets[key]) - (cartCarryCount(have[key]) || 0));
+          if (!deficit) { return null; }
+          var copy = Object.assign({}, o);
+          copy.cnt = deficit;
+          have[key] = (cartCarryCount(have[key]) || 0) + deficit; /* 중복 행이 있어도 한 번만 목표까지 배정 */
+          return copy;
+        }).filter(function(o) { return !!o; });
+        var baseKey = cartCarryOptionKey(item.prodIdx, null);
+        var baseMissing = (item.options || []).some(function(o) { return !!o.dc; }) ? 0 :
+          Math.max(0, cartCarryCount(targets[baseKey]) - (cartCarryCount(have[baseKey]) || 0));
+        if (baseMissing) { have[baseKey] = (cartCarryCount(have[baseKey]) || 0) + baseMissing; }
+        if (missing.length || baseMissing) {
+          jobs.push(cartCarryAddItem(item, missing, baseMissing));
+        }
       });
-      return Promise.all(jobs).then(cartCarryFetch);
-    }).then(function(readback) {
-      var verified = {};
-      cartCarryItems(readback).forEach(function(item) {
-        var prodIdx = item.product && item.product.prod_idx;
-        (item.options || []).forEach(function(o) { verified[cartCarryOptionKey(prodIdx, o)] = 1; });
+      return Promise.all(jobs).then(cartCarryFetch).then(function(readback) {
+        return { readback: readback, targets: targets };
       });
-      var missingAfterWrite = expectedKeys.filter(function(key) { return !verified[key]; });
+    }).then(function(result) {
+      var verified = cartCarryPayloadCounts(result.readback);
+      var missingAfterWrite = Object.keys(result.targets).filter(function(key) {
+        return (cartCarryCount(verified[key]) || 0) < cartCarryCount(result.targets[key]);
+      });
       if (missingAfterWrite.length) { throw new Error('cart_restore_readback_missing_' + missingAfterWrite.length); }
       try { window.localStorage.removeItem(CART_CARRY_KEY); } catch (err) {}
-      ydMark('guestCartCarry', true, '게스트 장바구니 이관 후 재조회 확인');
-      ydTrace('게스트 장바구니 이관 확증 완료 ' + expectedKeys.length + '개 옵션');
+      ydMark('guestCartCarry', true, '게스트 장바구니 상품·옵션·수량 이관 후 재조회 확인');
+      ydTrace('게스트 장바구니 이관 확증 완료 ' + Object.keys(result.targets).length + '개 항목');
       if (/^\/shop_cart/.test(window.location.pathname)) { window.location.reload(); }
       return true;
     }).catch(function(err) {
@@ -5362,15 +5441,42 @@
   function bindGuestCartCarry() {
     if (IS_IFRAME) { return; }
     var path = window.location.pathname || '';
+    var restoreStarted = false;
+    var restoreWatch = null;
+    var beginRestoreWatch = function() {
+      var began = Date.now();
+      var tryRestore = function() {
+        var fresh = cartCarryReadFresh();
+        if (!fresh) {
+          if (restoreWatch) { window.clearInterval(restoreWatch); }
+          return true;
+        }
+        if (!cartCarryMemberReady()) { return false; }
+        if (restoreStarted) { return true; }
+        restoreStarted = true;
+        if (restoreWatch) { window.clearInterval(restoreWatch); }
+        window.__ydCartCarryRestoreReady = restoreGuestCartCarry(fresh, 1);
+        return true;
+      };
+      if (tryRestore()) { return; }
+      restoreWatch = window.setInterval(function() {
+        if (tryRestore()) { return; }
+        if (Date.now() - began >= 60000) {
+          window.clearInterval(restoreWatch);
+          ydMark('guestCartCarry', false, '회원 전환 미확인 — 스냅샷 보존');
+        }
+      }, 500);
+      window.__ydCartCarryRestoreWatch = restoreWatch;
+    };
     if (/^\/login|^\/site_join|^\/oauth/.test(path)) {
       /* 로그인 페이지에는 .member-info.guest가 없을 수 있으므로 DOM 게스트 판정으로 조기 종료하지 않는다. */
       window.__ydCarryReady = captureGuestCartCarry();
+      window.__ydCarryReady.then(beginRestoreWatch);
       return;
     }
     var data = cartCarryReadFresh();
     if (!data) { return; }
-    if (isGuestUser()) { return; }
-    window.__ydCartCarryRestoreReady = restoreGuestCartCarry(data, 1);
+    beginRestoreWatch();
   }
 
   /* ═══ 온사이트 팝업 엔진 v1 (2026-08-26 · 검토용 시안 — 대표 승인 전 미배포) ═══
@@ -6178,7 +6284,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.131] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.132] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
