@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_132__) {
+  if (window.__YD_FOOTER_V3_133__) {
     return;
   }
-  window.__YD_FOOTER_V3_132__ = true;
+  window.__YD_FOOTER_V3_133__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.132', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.133', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -5488,17 +5488,34 @@
     lastPrefix: 'yd_pop_last_',
     cooldownMs: 24 * 60 * 60 * 1000
   };
-  /* 부스터 발화 대기: 6분→2분 (2026-08-27 대표 지시 — 신규 평균 세션 95초 실측,
-     6분은 평균의 3.8배라 노출 전에 대부분 이탈. 2분 내 구매완료자는 8.5%뿐이라 선수 낭비도 적음) */
-  const BOOST_FIRE_AFTER_MS = 2 * 60 * 1000;
+  /* 부스터 발화 대기: 상품 목록·상세 진입 후 30초 (2026-08-31 대표 지시).
+     매거진·가이드 등 콘텐츠 문맥에서는 발화하지 않고 구매 탐색 문맥에서만 센다. */
+  const BOOST_FIRE_AFTER_MS = 30 * 1000;
+  const BOOST_PENDING_TTL_MS = 10 * 60 * 1000;
   /* 가입 팝업 체류 조건: 20초→40초 (2026-08-28 대표 지시) */
   const SIGNUP_DWELL_MS = 40 * 1000;
   /* 단일 팝업 체제(8/28 대표 승인): 가입 팝업 OFF — 부스터(합계 프레임)가 가입 유도까지 겸한다 */
   const SIGNUP_POPUP_ENABLED = false;
 
-  function popTrack(name, popupId) {
+  function isMagazinePage() {
+    return /^\/magazine(?:\/|$)/i.test(location.pathname || '');
+  }
+
+  function isProductListPage() {
+    if (isMagazinePage() || isProductDetailPage()) return false;
+    return !!qs('.shop-item._shop_item[data-product-properties], .shop-item[data-product-properties], a[href*="/shop_view"]');
+  }
+
+  function boostSurface() {
+    if (isMagazinePage()) return '';
+    if (isProductDetailPage()) return 'product_detail';
+    if (isProductListPage()) return 'product_list';
+    return '';
+  }
+
+  function popTrack(name, popupId, extra) {
     try {
-      const params = { popup_id: popupId, page_path: location.pathname };
+      const params = Object.assign({ popup_id: popupId, page_path: location.pathname }, extra || {});
       if (typeof window.gtag === 'function') {
         window.gtag('event', name, params);
       } else {
@@ -5572,13 +5589,13 @@
       card.classList.add('yd-pop-on');
     });
     if (!opts.silent) {
-      popTrack('yd_pop_view', def.id);
-      /* 팝업 간격 리셋 기준(8/28 대표 지시): 어떤 카드든 뜨면 부스터 카운트는 그 시점부터 다시 2분 */
+      popTrack('yd_pop_view', def.id, def.trackParams);
+      /* 팝업 간격 리셋 기준: 어떤 카드든 뜨면 부스터 카운트는 그 시점부터 다시 센다. */
       try { window.sessionStorage.setItem('yd_last_card_at', String(Date.now())); } catch (err) {}
     }
 
     function close(reason) {
-      if (!opts.silent) popTrack(reason === 'cta' ? 'yd_pop_click' : 'yd_pop_close', def.id);
+      if (!opts.silent) popTrack(reason === 'cta' ? 'yd_pop_click' : 'yd_pop_close', def.id, def.trackParams);
       dim.classList.remove('yd-pop-on');
       card.classList.remove('yd-pop-on');
       window.setTimeout(function() {
@@ -5644,9 +5661,9 @@
     },
     /* #2 첫구매 응원 부스터 (2026-08-26 대표 확정)
        대상: 미회원 + 신규가입 세션 회원(구매이력 없는 층 근사 — 클라이언트에서 구매이력 조회 불가).
-       발동: 방문 후 2분 미구매(신규 평균 세션 95초 — 평균 직후가 고민층 분기점, 8/27 조정).
+       발동: 상품 목록·상세 진입 후 30초 미구매(매거진·콘텐츠 문맥 제외, 8/31 조정).
        쿠폰: [첫구매 응원] 2,000원 시크릿 다운로드(1인 1회·1일 만료·도매 9종 제외·중복사용 가능). */
-    first_buy_boost: function() {
+    first_buy_boost: function(triggerSurface) {
       /* 노출 3회 캡(8/28 대표 확정): 1·2회차 = E안, 3회차(마지막) = D안 합계 프레임, 이후 미노출 */
       let seen = 0;
       try { seen = Number(window.localStorage.getItem('yd_boost_seen_count') || 0); } catch (err) {}
@@ -5664,22 +5681,30 @@
       return {
         id: 'first_buy_boost',
         capExempt: true,
-        claimedKey: 'yd_boost_claimed',
         seenCapKey: 'yd_boost_seen_count',
         seenCapMax: 3,
+        trackParams: {
+          trigger_surface: triggerSurface || 'preview',
+          trigger_delay_seconds: Math.round(BOOST_FIRE_AFTER_MS / 1000)
+        },
         bodyHtml: finalRound ? bodyFinal : bodyE,
         ctaLabel: '2,000원 바로 받기',
         ctaRed: true,
         laterLabel: '괜찮아요',
         onCta: function() {
-          try { window.localStorage.setItem('yd_boost_claimed', String(Date.now())); } catch (err) {}
+          /* 클릭은 수령 완료가 아니다. 발급 대기만 남기고 쿠폰함 확인 성공 뒤에만 완료 처리한다. */
+          try {
+            window.localStorage.setItem('yd_boost_pending', JSON.stringify({
+              at: Date.now(), popup_id: 'first_buy_boost'
+            }));
+            window.localStorage.removeItem('yd_boost_claimed');
+          } catch (err) {}
           if (isGuestUser()) {
             /* 비회원: 쿠폰 링크 직행 — imweb이 /login?back_url=쿠폰링크로 보내고(실측),
                yd_kakao_direct가 카카오 버튼 자동 클릭 → 가입 후 back_url 복귀로 자동 발급.
                yd_boost_pending은 back_url이 유실되는 경로의 백업 체인. */
             try {
               window.localStorage.setItem('yd_kakao_direct', String(Date.now()));
-              window.localStorage.setItem('yd_boost_pending', String(Date.now()));
               window.localStorage.removeItem('yd_pay_resume');
             } catch (err) {}
             try { (window.top || window).location.href = CONFIG.BOOST_COUPON_URL; }
@@ -5829,6 +5854,86 @@
 
   const EXIT_CART_POPUP_ENABLED = false; /* ③ 이탈 리마인드 — 대표 결정 대기(코드는 유지) */
 
+  /* CTA 클릭 뒤의 목표 행동은 실제 확인된 지점에서만 전환으로 기록한다. */
+  function popConvert(action) {
+    try {
+      const raw = window.localStorage.getItem('yd_pop_attrib');
+      if (!raw) return;
+      const a = JSON.parse(raw);
+      if (!a || !a.id || Date.now() - Number(a.at) > 30 * 60 * 1000) {
+        window.localStorage.removeItem('yd_pop_attrib');
+        return;
+      }
+      const doneKey = 'done_' + action;
+      if (a[doneKey]) return;
+      a[doneKey] = 1;
+      window.localStorage.setItem('yd_pop_attrib', JSON.stringify(a));
+      ydGaEvent('yd_pop_convert', { popup_id: a.id, convert_action: action, page_path: location.pathname });
+      if (action === 'purchase') window.localStorage.removeItem('yd_pop_attrib');
+    } catch (err) {}
+  }
+
+  /* 매거진 방문 뒤 상품 탐색으로 이어진 첫 이동을 세션 단위로 집계한다.
+     개인 식별값은 저장하지 않고 경로·이동 유형·경과 초만 GA4로 전송한다. */
+  function bindMagazineJourney() {
+    if (IS_IFRAME) return;
+    const markerKey = 'yd_magazine_journey';
+    const ttlMs = 30 * 60 * 1000;
+    const readMarker = function() {
+      try {
+        const marker = JSON.parse(window.sessionStorage.getItem(markerKey) || 'null');
+        if (!marker || !marker.at || Date.now() - Number(marker.at) >= ttlMs) {
+          window.sessionStorage.removeItem(markerKey);
+          return null;
+        }
+        return marker;
+      } catch (err) { return null; }
+    };
+    const recordTransition = function(surface, destinationPath) {
+      const marker = readMarker();
+      if (!marker) return false;
+      ydGaEvent(surface === 'product_detail' ? 'yd_magazine_to_product_detail' : 'yd_magazine_to_product_list', {
+        source_path: marker.path || '/Magazine/',
+        destination_path: destinationPath || location.pathname,
+        destination_surface: surface,
+        elapsed_seconds: Math.max(0, Math.round((Date.now() - Number(marker.at)) / 1000))
+      });
+      try { window.sessionStorage.removeItem(markerKey); } catch (err) {}
+      return true;
+    };
+
+    if (isMagazinePage()) {
+      try {
+        window.sessionStorage.setItem(markerKey, JSON.stringify({
+          at: Date.now(), path: location.pathname
+        }));
+      } catch (err) {}
+      document.addEventListener('click', function(e) {
+        const target = e.target && e.target.closest && e.target.closest(
+          '[onclick*="openProdDetailFromShoppingList"], .shop-item._shop_item a, a[href*="/shop_view"]'
+        );
+        if (target) recordTransition('product_detail', '/shop_view/');
+      }, true);
+      ydMark('magazineJourney', true, '매거진 방문 — 상품 이동 대기');
+      return;
+    }
+
+    let tries = 0;
+    const detectDestination = function() {
+      tries += 1;
+      const surface = boostSurface();
+      if (surface && recordTransition(surface, location.pathname)) {
+        ydMark('magazineJourney', true, '매거진 → ' + surface + ' 이동 기록');
+        return true;
+      }
+      return !readMarker() || tries >= 15;
+    };
+    if (detectDestination()) return;
+    const timer = window.setInterval(function() {
+      if (detectDestination()) window.clearInterval(timer);
+    }, 1000);
+  }
+
   function bindOnsitePopups() {
     if (IS_IFRAME) {
       /* 레이어(iframe) 상세: 팝업은 부모창이 그린다(z-index가 모달 위) — 여기선 조건 감지·릴레이만.
@@ -5852,11 +5957,9 @@
       return;
     }
     if (isWholesalePage()) { ydMark('onsitePopups', true, '도매몰 — 팝업 전체 제외'); return; }
-    /* 세션 시작 시각(부스터 6분 기준) · 구매 완료 마커 */
+    /* 구버전은 클릭만으로 영구 수령 표시를 남겼다. 신뢰할 수 없는 레거시 값을 폐기한다. */
     try {
-      if (!window.sessionStorage.getItem('yd_sess_t0')) window.sessionStorage.setItem('yd_sess_t0', String(Date.now()));
-      /* 카카오 앱 전환 복귀 시 세션 소실 대비 — 백업을 매 페이지 갱신(30분 유효) */
-      window.localStorage.setItem('yd_sess_t0_bak', JSON.stringify({ t0: Number(window.sessionStorage.getItem('yd_sess_t0')), at: Date.now() }));
+      window.localStorage.removeItem('yd_boost_claimed');
       if (/\/shop_payment_complete/.test(location.pathname)) window.sessionStorage.setItem('yd_purchased', '1');
     } catch (err) {}
 
@@ -5876,28 +5979,8 @@
 
     const armed = [];
 
-    /* 전환 연결: 팝업 CTA 클릭 후 30분 내 목표 행동 도달 시 yd_pop_convert 1회 발사 */
-    const popConvert = function(action) {
-      try {
-        const raw = window.localStorage.getItem('yd_pop_attrib');
-        if (!raw) return;
-        const a = JSON.parse(raw);
-        if (!a || !a.id || Date.now() - Number(a.at) > 30 * 60 * 1000) {
-          window.localStorage.removeItem('yd_pop_attrib');
-          return;
-        }
-        const doneKey = 'done_' + action;
-        if (a[doneKey]) return;
-        a[doneKey] = 1;
-        window.localStorage.setItem('yd_pop_attrib', JSON.stringify(a));
-        ydGaEvent('yd_pop_convert', { popup_id: a.id, convert_action: action, page_path: location.pathname });
-        if (action === 'purchase') window.localStorage.removeItem('yd_pop_attrib');
-      } catch (err) {}
-    };
     /* 지점 1: 구매 완료 */
     if (/\/shop_payment_complete/.test(location.pathname)) popConvert('purchase');
-    /* 지점 2: 쿠폰 발급 랜딩 도착 */
-    if (/[?&]coupon=/.test(location.search) && !isGuestUser()) popConvert('coupon_issued');
 
     /* 레이어(iframe) 상세에서 온 팝업 릴레이 수신 — 같은 오리진 + 화이트리스트만 */
     window.addEventListener('message', function(e) {
@@ -5933,19 +6016,7 @@
                 bodyHtml: '🎉 회원가입 완료!<br><span style="white-space:nowrap">쿠폰함에 <strong>18,000원 쿠폰팩</strong>이 들어왔어요</span>'
               });
             }, 400);
-            /* 가입 전 6분 이상 고민한 신규 회원 = 부스터 대상 — 토스트 뒤에 카드로 이어서 지급.
-               t0는 세션값 우선, 카카오 앱 전환으로 세션이 끊겼으면 30분 내 백업 사용 */
-            window.setTimeout(function() {
-              let claimed = null, t0 = 0;
-              try {
-                claimed = window.localStorage.getItem('yd_boost_claimed');
-                t0 = Number(window.sessionStorage.getItem('yd_sess_t0') || 0);
-                const bak = JSON.parse(window.localStorage.getItem('yd_sess_t0_bak') || 'null');
-                if (bak && Date.now() - bak.at < 30 * 60 * 1000 && (!t0 || bak.t0 < t0)) t0 = bak.t0;
-              } catch (err) {}
-              if (!t0) t0 = Date.now();
-              if (!claimed && Date.now() - t0 >= BOOST_FIRE_AFTER_MS) popShowCard(POPUP_DEFS.first_buy_boost());
-            }, 7700);
+            /* 부스터는 상품 목록·상세에서만 발화한다. 장바구니에서는 웰컴 토스트만 표시한다. */
           })
           .catch(function() {});
         armed.push('signup_welcome');
@@ -6015,48 +6086,48 @@
       armed.push('exit_cart(armed-if-cart)');
     }
 
-    /* #2 첫구매 응원 부스터 — 방문 2분 경과 + 미구매 + (비회원 || 신규가입 세션) */
+    /* #2 첫구매 응원 부스터 — 상품 목록·상세 진입 30초 + 미구매 + (비회원 || 신규가입 세션) */
     (function armBoost() {
-      if (pageIs('/shop_payment') || pageIs('/shop_cart') || pageIs('/login') || pageIs('/site_join')) return;
-      let claimed = null, purchased = null, newMember = null;
+      const surface = boostSurface();
+      if (!surface) return;
+      let verified = null, purchased = null, newMember = null;
       try {
-        claimed = window.localStorage.getItem('yd_boost_claimed');
+        verified = window.sessionStorage.getItem('yd_boost_coupon_verified');
         purchased = window.sessionStorage.getItem('yd_purchased');
         newMember = window.localStorage.getItem('yd_new_member_session');
       } catch (err) {}
       if (newMember && Date.now() - Number(newMember) > 30 * 60 * 1000) newMember = null; /* 30분 TTL */
-      if (claimed || purchased) return;
+      if (verified || purchased) return;
       if (!isGuestUser() && !newMember) return; /* 기존 회원(구매이력 미상)에겐 노출 안 함 */
-      const t0 = (function() {
-        try { return Number(window.sessionStorage.getItem('yd_sess_t0') || Date.now()); } catch (err) { return Date.now(); }
-      })();
+      const eligibleT0 = Date.now();
       const boostCheck = function() {
-        let bought = null, lastCard = 0;
+        let bought = null, couponVerified = null, lastCard = 0;
         try {
           bought = window.sessionStorage.getItem('yd_purchased');
+          couponVerified = window.sessionStorage.getItem('yd_boost_coupon_verified');
           lastCard = Number(window.sessionStorage.getItem('yd_last_card_at') || 0);
         } catch (err) {}
-        if (bought) { window.clearInterval(boostTimer); return; }
-        /* 다른 팝업이 떴다면 그 시점부터 다시 2분을 센다 (연속 팝업 방지 — 8/28 대표 지시) */
-        const baseT = Math.max(t0, lastCard);
+        if (bought || couponVerified || !boostSurface()) { window.clearInterval(boostTimer); return; }
+        /* 다른 팝업이 떴다면 그 시점부터 다시 30초를 센다. */
+        const baseT = Math.max(eligibleT0, lastCard);
         if (Date.now() - baseT >= BOOST_FIRE_AFTER_MS) {
           if (qs('.yd-pop-wrap')) return; /* 다른 카드 표시 중 — 닫힌 뒤 다음 틱에 재시도 */
-          const card = popShowCard(POPUP_DEFS.first_buy_boost());
+          const card = popShowCard(POPUP_DEFS.first_buy_boost(surface));
           if (card) window.clearInterval(boostTimer);
           else {
-            /* 캡·수령이력으로 거절된 경우만 종료(재시도 무의미) */
+            /* 캡·이번 세션 수령 확인으로 거절된 경우만 종료(재시도 무의미) */
             let denied = false;
             try {
-              denied = !!window.localStorage.getItem('yd_boost_claimed') ||
+              denied = !!window.sessionStorage.getItem('yd_boost_coupon_verified') ||
                 (Date.now() - Number(window.localStorage.getItem(POPUP_RULES.lastPrefix + 'first_buy_boost') || 0)) < POPUP_RULES.cooldownMs;
             } catch (err) {}
             if (denied) window.clearInterval(boostTimer);
           }
         }
       };
-      const boostTimer = window.setInterval(boostCheck, 5000);
-      window.setTimeout(boostCheck, 2500);
-      armed.push('first_buy_boost(2m)');
+      const boostTimer = window.setInterval(boostCheck, 1000);
+      window.setTimeout(boostCheck, 1000);
+      armed.push('first_buy_boost(30s:' + surface + ')');
     })();
 
     /* 미리보기: ?yd_pop=<팝업id> — 캡·대상조건 무시 강제 렌더(계측 제외, 소유자 검수용) */
@@ -6069,22 +6140,65 @@
     ydMark('onsitePopups', true, '무장: ' + (armed.join(', ') || '없음'));
   }
 
-  /* 부스터 경유 가입 복귀: 회원 확인 → 쿠폰 링크로 랜딩해 실제 발급 */
+  /* 부스터 경유 가입 복귀: 회원 확인 → 쿠폰 링크 → 쿠폰함 실재 확인 뒤에만 완료 처리 */
   function bindBoostCouponResume() {
     if (IS_IFRAME) return;
     let raw = null;
     try { raw = window.localStorage.getItem('yd_boost_pending'); } catch (err) {}
     if (!raw) return;
-    const age = Date.now() - Number(raw);
-    if (!(age >= 0 && age < 10 * 60 * 1000)) {
+    let pending = null;
+    try { pending = JSON.parse(raw); } catch (err) { pending = { at: Number(raw) }; }
+    const age = Date.now() - Number((pending || {}).at);
+    if (!(age >= 0 && age < BOOST_PENDING_TTL_MS)) {
       try { window.localStorage.removeItem('yd_boost_pending'); } catch (err) {}
       return;
     }
     if (isGuestUser()) { ydMark('boostCouponResume', true, '비회원 — 가입 복귀 대기'); return; }
     if (/[?&]coupon=/.test(location.search)) {
-      /* 쿠폰 랜딩 도착 = 발급 완료 */
-      try { window.localStorage.removeItem('yd_boost_pending'); } catch (err) {}
-      ydMark('boostCouponResume', true, '가입 복귀 — 쿠폰 발급 랜딩 완료');
+      let attempts = 0;
+      const verifyCoupon = function() {
+        attempts += 1;
+        fetch('/mypage/coupon', { credentials: 'same-origin', cache: 'no-store' })
+          .then(function(res) { return res.ok ? res.text() : null; })
+          .then(function(html) {
+            const normalized = String(html || '').replace(/\s+/g, ' ');
+            const verified = normalized.indexOf('첫구매 응원') !== -1 && /2,?000\s*원/.test(normalized);
+            if (verified) {
+              try {
+                window.sessionStorage.setItem('yd_boost_coupon_verified', String(Date.now()));
+                window.localStorage.removeItem('yd_boost_pending');
+                window.localStorage.removeItem('yd_boost_claimed');
+              } catch (err) {}
+              popConvert('coupon_issued');
+              ydGaEvent('yd_pop_coupon_verified', {
+                popup_id: 'first_buy_boost', page_path: location.pathname
+              });
+              ydMark('boostCouponResume', true, '쿠폰함 확인 성공 — 수령 완료');
+              return;
+            }
+            if (attempts < 3) {
+              window.setTimeout(verifyCoupon, 1500);
+              return;
+            }
+            try { window.localStorage.removeItem('yd_boost_pending'); } catch (err) {}
+            ydGaEvent('yd_pop_coupon_unverified', {
+              popup_id: 'first_buy_boost', page_path: location.pathname
+            });
+            ydMark('boostCouponResume', false, '쿠폰함 미확인 — 수령 완료로 저장하지 않음');
+          })
+          .catch(function() {
+            if (attempts < 3) {
+              window.setTimeout(verifyCoupon, 1500);
+              return;
+            }
+            try { window.localStorage.removeItem('yd_boost_pending'); } catch (err) {}
+            ydGaEvent('yd_pop_coupon_unverified', {
+              popup_id: 'first_buy_boost', page_path: location.pathname
+            });
+            ydMark('boostCouponResume', false, '쿠폰함 조회 실패 — 수령 완료로 저장하지 않음');
+          });
+      };
+      verifyCoupon();
       return;
     }
     ydMark('boostCouponResume', true, '가입 복귀 — 쿠폰 발급 랜딩 이동');
@@ -6264,6 +6378,7 @@
     bindTraceOverlay();
     bindSignupPayResume();
     bindFriendPackCouponHide();
+    bindMagazineJourney();
     bindOnsitePopups();
     bindBoostCouponResume();
     bindGaRelay();
@@ -6284,7 +6399,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.132] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.133] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
