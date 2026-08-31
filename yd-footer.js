@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_133__) {
+  if (window.__YD_FOOTER_V3_134__) {
     return;
   }
-  window.__YD_FOOTER_V3_133__ = true;
+  window.__YD_FOOTER_V3_134__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.133', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.134', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -138,10 +138,10 @@
         assignment = { variant: preview, preview: true };
         return assignment;
       }
-      /* 실험 종료(2026-08-26 소유자 확정): 가입 자동발행 쿠폰이 실지급되므로 A안 고정.
-         B안(카카오채널 18,000원)은 채널 쿠폰 지급 중단과 함께 은퇴. storedVariant/randomVariant는
-         계측 연속성 참고용으로 남긴다. */
-      assignment = { variant: 'A', preview: false };
+      /* 실험 종료(2026-08-31 소유자 확정): 관측 우세안 B를 운영안으로 고정하고,
+         기존 친구추가 18,000원 쿠폰팩의 고객 노출도 함께 복구했다.
+         storedVariant/randomVariant는 계측 연속성 참고용으로 남긴다. */
+      assignment = { variant: 'B', preview: false };
       return assignment;
     }
 
@@ -4965,34 +4965,6 @@
     tryClick();
   }
 
-  /* ═══ 친구추가-첫구매 쿠폰 노출 숨김 (2026-08-26 소유자 지시: 채널 쿠폰 지급 중단) ═══
-     발행 이력이 있는 다운로드 쿠폰은 관리자에서 수량/중지 편집이 잠기므로,
-     고객 화면의 다운로드 표면(쿠폰 모달·쿠폰함 목록)에서 해당 5종을 숨겨 신규 지급을 차단한다.
-     기발급 쿠폰 사용은 영향 없음(장바구니 적용 UI는 보유 쿠폰 기준). */
-  function bindFriendPackCouponHide() {
-    var HIDE_TEXT = '친구추가-첫구매';
-    function sweep() {
-      var hidden = 0;
-      /* 표면 1: 마이페이지 쿠폰함 카드 (.mypage-coupon-wrap, v3.93에서 공개 다운로드 노출 복구된 그 표면) */
-      qsa('.mypage-coupon-wrap').forEach(function(card) {
-        if ((card.textContent || '').indexOf(HIDE_TEXT) === -1) return;
-        if (card.style.display !== 'none') { card.style.display = 'none'; }
-        hidden++;
-      });
-      /* 표면 2: 쿠폰 다운로드 모달/기타 — 다운로드 버튼(_down_coupon_btn)이 있는 카드만 정밀 타겟 */
-      qsa('button._down_coupon_btn').forEach(function(btn) {
-        var card = btn.closest('.mypage-coupon-wrap, li, [class*="coupon"]') || btn.parentElement;
-        if (!card) return;
-        if ((card.textContent || '').indexOf(HIDE_TEXT) === -1) return;
-        if (card.style.display !== 'none') { card.style.display = 'none'; }
-        hidden++;
-      });
-      ydMark('friendPackCouponHide', true, hidden ? ('숨김 ' + hidden + '개') : '노출 없음');
-    }
-    sweep();
-    ensureObserver('friendPackCouponHide', sweep);
-  }
-
   /* ═══ 가입쿠폰 결제 재개 (2026-08-26) ═══
      [3초 회원가입쿠폰] → 카카오 가입/로그인 → 복귀(홈 등) 시, 회원 상태가 확인되면
      yd_pay_resume 마커(10분 유효)를 소비하고 장바구니 자동결제(yd_autopay)로 이어간다.
@@ -6377,7 +6349,6 @@
     bindGuestKakaoDirectLogin();
     bindTraceOverlay();
     bindSignupPayResume();
-    bindFriendPackCouponHide();
     bindMagazineJourney();
     bindOnsitePopups();
     bindBoostCouponResume();
@@ -6399,7 +6370,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.133] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.134] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
