@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_139__) {
+  if (window.__YD_FOOTER_V3_140__) {
     return;
   }
-  window.__YD_FOOTER_V3_139__ = true;
+  window.__YD_FOOTER_V3_140__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.139', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.140', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6369,9 +6369,12 @@
     }
   } catch (err) {}
 
-  /* ═══ 유산소 칼로리 계산기 (/cardio-calc 전용) ═══
-     「데이터로 관리하기」 소카테고리 페이지. 페이지의 코드 위젯(#yd-cardio-calc)에 렌더링한다.
-     - 로직: MET × 체중(kg) × 시간(h), 5kcal 반올림 (릴스 정본과 동일 — 60kg·60분 천국의 계단 = 540)
+  /* ═══ 데이터로 관리하기 카드 목록 + 유산소 칼로리 계산기 (/cardio-calc 전용) ═══
+     「데이터로 관리하기」 페이지. 페이지의 코드 위젯(#yd-cardio-calc)에 렌더링한다.
+     - 구조: 섹션 헤더 + 큐레이션 카드 목록(아코디언, 기본 닫힘). 카드 추가 = CARDS 배열에
+       { id, title, sub, render(container) } 한 항목 추가만으로 완결.
+     - 열고 닫기는 클래스 토글(display 유지)이라 카드 내부 상태(입력값)는 보존된다.
+     - 계산기 로직: MET × 체중(kg) × 시간(h), 5kcal 반올림 (릴스 정본과 동일 — 60kg·60분 천국의 계단 = 540)
      - 순수 소모: Mifflin-St Jeor 기초대사 차감
      - CTA: 임시로 전체상품(/main) 연결 (랜딩 상품 확정 시 교체) */
   function bindCardioCalc() {
@@ -6385,6 +6388,49 @@
     if (root.getAttribute('data-yd-booted') === '1') { return; }
     root.setAttribute('data-yd-booted', '1');
 
+    root.innerHTML =
+      '<div class="yd-cc-wrap">' +
+        '<div class="yd-cc-head">' +
+          '<div class="yd-cc-k">YUNDIET · DATA</div>' +
+          '<h2>데이터로 관리하기</h2>' +
+          '<p>감이 아니라 숫자로 — 몸을 데이터로 관리하는 도구를 하나씩 모아둡니다.</p>' +
+        '</div>' +
+        '<div class="yd-cc-cards"></div>' +
+      '</div>';
+
+    var CARDS = [
+      { id: 'cardio', title: '유산소 1시간, 기구별로 몇 kcal 태울까?', sub: '내 키·몸무게 기준으로 헬스장 유산소 기구 8종 비교', render: renderCardioBody }
+    ];
+
+    var cardsEl = root.querySelector('.yd-cc-cards');
+    CARDS.forEach(function(card) {
+      var sec = document.createElement('section');
+      sec.className = 'yd-cc-card';
+      sec.setAttribute('data-card', card.id);
+      var bodyId = 'yd-cc-body-' + card.id;
+      sec.innerHTML =
+        '<button type="button" class="yd-cc-card-head" aria-expanded="false" aria-controls="' + bodyId + '">' +
+          '<span class="yd-cc-card-tt"><b></b><span></span></span>' +
+          '<span class="yd-cc-card-chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '</button>' +
+        '<div class="yd-cc-card-body" id="' + bodyId + '" role="region"><div class="yd-cc-card-clip"></div></div>';
+      sec.querySelector('.yd-cc-card-tt b').textContent = card.title;
+      sec.querySelector('.yd-cc-card-tt span').textContent = card.sub;
+      sec.querySelector('.yd-cc-card-body').setAttribute('aria-label', card.title);
+      var head = sec.querySelector('.yd-cc-card-head');
+      head.addEventListener('click', function() {
+        var open = sec.className.indexOf('is-open') === -1;
+        sec.className = open ? 'yd-cc-card is-open' : 'yd-cc-card';
+        head.setAttribute('aria-expanded', String(open));
+      });
+      card.render(sec.querySelector('.yd-cc-card-clip'));
+      cardsEl.appendChild(sec);
+    });
+
+    ydMark('cardioCalc', true, '카드 목록 렌더 완료(' + CARDS.length + '장, 기본 닫힘)');
+  }
+
+  function renderCardioBody(root) {
     var MACHINES = [
       { id: 'run',     name: '러닝머신 달리기',        sub: '9.7km/h',       met: 9.8 },
       { id: 'stair',   name: '천국의 계단',            sub: '스텝밀',         met: 9.0 },
@@ -6405,14 +6451,7 @@
     }
 
     root.innerHTML =
-      '<div class="yd-cc-wrap">' +
-        '<div class="yd-cc-crumb">데이터로 관리하기 <i>›</i> <b>유산소 칼로리 계산기</b></div>' +
-        '<div class="yd-cc-calc">' +
-          '<div class="yd-cc-h">' +
-            '<div class="yd-cc-k">YUNDIET · 데이터로 관리하기</div>' +
-            '<h3>유산소 1시간, 기구별로 몇 kcal 태울까?</h3>' +
-            '<p>내 키·몸무게 기준으로 헬스장 유산소 기구 8종을 한 번에 비교해요.</p>' +
-          '</div>' +
+      '<div class="yd-cc-calc">' +
           '<div class="yd-cc-seg" role="group" aria-label="성별">' +
             '<button type="button" data-sex="M" aria-pressed="true">남성</button>' +
             '<button type="button" data-sex="F" aria-pressed="false">여성</button>' +
@@ -6442,7 +6481,6 @@
           '</div>' +
           '<a class="yd-cc-cta" href="/main">태운 만큼, 먹는 걸 지키는 게 절반입니다<small>윤식단 맞춤 식단 보러 가기</small></a>' +
           '<div class="yd-cc-foot">소모 칼로리 = MET × 체중(kg) × 시간(h), 운동강도 국제표준표(Compendium) 보통 강도 기준, 5kcal 반올림 · 순수 소모는 기초대사량(Mifflin-St Jeor) 차감 · 실제 소모량은 경사·속도·심박에 따라 20% 이상 차이 날 수 있어요.</div>' +
-        '</div>' +
       '</div>';
 
     function v(key) { return root.querySelector('[data-v="' + key + '"]'); }
@@ -6501,7 +6539,6 @@
       });
     });
     render();
-    ydMark('cardioCalc', true, '계산기 렌더 완료');
   }
 
   /* ═══ 모바일 하단 탭바 「쇼핑」→「데이터로 관리하기」 교체 ═══
@@ -6603,7 +6640,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.139] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.140] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
