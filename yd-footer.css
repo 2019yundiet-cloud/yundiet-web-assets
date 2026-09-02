@@ -2432,6 +2432,16 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 #yd-guest-orderbar .yd-gob-join { flex: 1.55; background: #FEE500; color: #191919; }
 #yd-guest-orderbar .yd-gob-guest { flex: 1; background: #fff; color: #555; border: 1px solid #D9D4C7; }
 
+/* ═══ 모바일 하단 탭바 「쇼핑」→「데이터 관리」 패치 ═══
+   하단 탭바는 이미지맵 위젯(아이콘·라벨이 이미지에 구워짐) + 투명 앵커 5개.
+   /shop_all 앵커 내부에 흰 패치를 심어 쇼핑 슬롯을 덮고 차트 아이콘+라벨을 그린다.
+   패치는 앵커 기준 absolute(좌우 블리드)라 반응형 위치를 자동 추종한다. */
+.yd-datatab-patch { position: absolute; top: 0; bottom: 0; left: -8px; right: -8px; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; padding-bottom: 15px; pointer-events: none; color: #8C8C8C; }
+.yd-datatab-patch svg { width: 28px; height: 28px; display: block; }
+.yd-datatab-patch span { font-size: 12px; line-height: 1; letter-spacing: -0.04em; white-space: nowrap; font-family: inherit; font-weight: 500; }
+.yd-datatab-patch.yd-datatab-on { color: #3D4224; }
+.yd-datatab-patch.yd-datatab-on span { font-weight: 700; }
+
 /* ═══ 유산소 칼로리 계산기 (/cardio-calc 전용) ═══ */
 #yd-cardio-calc { --yd-cc-ground: #FFFEFA; --yd-cc-ink: #191919; --yd-cc-red: #E60000; --yd-cc-red-soft: #FFF4EF; --yd-cc-olive: #3B4024; --yd-cc-olive-deep: #123F24; --yd-cc-sage: #EDF4E9; --yd-cc-sage-line: #D5E1D5; --yd-cc-line: #E0E4DE; --yd-cc-grey: #8A8378; }
 #yd-cardio-calc .yd-cc-wrap { max-width: 640px; margin: 0 auto; padding: 26px 16px 60px; font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, sans-serif; color: var(--yd-cc-ink); line-height: 1.65; font-size: 15px; text-align: left; }

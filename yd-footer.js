@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_138__) {
+  if (window.__YD_FOOTER_V3_139__) {
     return;
   }
-  window.__YD_FOOTER_V3_138__ = true;
+  window.__YD_FOOTER_V3_139__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.138', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.139', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4405,11 +4405,13 @@
          ys-story-mode 부여 전에 data-yd-keep-section 표식을 단다.
          ⚠ 페이지마다 섹션 id가 다르고(홈 s2024..., 이 페이지 s2025...),
          position:fixed는 아임웹 JS가 로드 후/스크롤 시 인라인으로 부여해 부팅 시점엔
-         relative일 수 있다(실측) → 내용 기반 판별: 탭 내비 링크(/main + /shop_all) 보유 섹션. */
+         relative일 수 있다(실측) → 내용 기반 판별: 탭 내비 링크(/main + /shop_all|/cardio-calc) 보유 섹션.
+         ⚠ /shop_all은 bindDataTabSwap이 /cardio-calc로 교체하므로 두 href 모두 인정(실행 순서 무관). */
       var keptTabHeight = 0;
       qsa('div[doz_type="section"]').forEach(function(sec) {
         var hrefs = qsa('a[href]', sec).map(function(a) { return a.getAttribute('href'); });
-        var isTabNav = hrefs.indexOf('/main') !== -1 && hrefs.indexOf('/shop_all') !== -1;
+        var isTabNav = hrefs.indexOf('/main') !== -1 &&
+          (hrefs.indexOf('/shop_all') !== -1 || hrefs.indexOf('/cardio-calc') !== -1);
         if (!isTabNav && getComputedStyle(sec).position !== 'fixed') { return; }
         if (/곡물볶음밥은 그런 부담|TASTING NOTE/.test(sec.textContent || '')) { return; }
         sec.setAttribute('data-yd-keep-section', '');
@@ -6502,6 +6504,49 @@
     ydMark('cardioCalc', true, '계산기 렌더 완료');
   }
 
+  /* ═══ 모바일 하단 탭바 「쇼핑」→「데이터로 관리하기」 교체 ═══
+     하단 탭바 = 아임웹 이미지맵 위젯(5탭 스트립 이미지 1장 + 투명 앵커 5개, 페이지마다 섹션 id 다름).
+     내용 기반 탐지(/main 앵커와 같은 _img_box의 /shop_all 앵커) 후:
+     - href를 /cardio-calc(유산소 칼로리 계산기)로 교체
+     - 이미지에 구워진 쇼핑 아이콘·라벨을 흰 패치(차트 아이콘+「데이터 관리」)로 덮음
+       (풀네임 「데이터로 관리하기」는 58px 슬롯에 안 들어가 축약 — GNB에는 풀네임 유지)
+     - /cardio-calc·/459(데이터로 관리하기 대카테고리)에서는 활성색(#3D4224)
+     섹션은 정적 아임웹 DOM(React 아님) — 1회 적용+지연 재시도 2회, data-yd-datatab 멱등 가드. */
+  function bindDataTabSwap() {
+    var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">' +
+      '<line x1="5.5" y1="21.5" x2="5.5" y2="14"></line>' +
+      '<line x1="12" y1="21.5" x2="12" y2="2.5"></line>' +
+      '<line x1="18.5" y1="21.5" x2="18.5" y2="8.5"></line></svg>';
+    function apply() {
+      var applied = 0;
+      qsa('.widget.image_map ._img_box').forEach(function(box) {
+        var target = box.querySelector('a[href="/shop_all"], a[data-yd-datatab]');
+        if (!target || !box.querySelector('a[href="/main"]')) return; /* 하단 탭바 확증 */
+        applied++;
+        if (target.getAttribute('data-yd-datatab')) return; /* 멱등 */
+        target.setAttribute('data-yd-datatab', '1');
+        target.setAttribute('href', '/cardio-calc');
+        target.setAttribute('aria-label', '데이터로 관리하기 — 유산소 칼로리 계산기');
+        var sr = target.querySelector('.sr-only');
+        if (sr) sr.textContent = '데이터로 관리하기'; else target.title = '데이터로 관리하기';
+        var on = /^\/(cardio-calc|459)\/?$/.test(location.pathname);
+        var patch = document.createElement('span');
+        patch.className = 'yd-datatab-patch' + (on ? ' yd-datatab-on' : '');
+        patch.innerHTML = ICON + '<span>데이터 관리</span>';
+        target.appendChild(patch);
+      });
+      return applied;
+    }
+    var n = apply();
+    if (n) { ydMark('dataTabSwap', true, '하단 탭 교체 ' + n + '건'); }
+    /* 섹션 지연 렌더 대비 재시도(멱등) — 최종 결과만 마킹 */
+    window.setTimeout(function() { apply(); }, 1500);
+    window.setTimeout(function() {
+      var total = apply();
+      if (total) { ydMark('dataTabSwap', true, '하단 탭 교체 ' + total + '건'); }
+    }, 4000);
+  }
+
   /* 옵션 플로우는 본문 파싱 직후 즉시 부팅 (yd-bs-root 가드로 중복 방지) */
   try { bindOptionFlow(); } catch (err) {}
 
@@ -6519,6 +6564,7 @@
       bindBrandStoryFeed();
       bindCardioCalc();
     }
+    bindDataTabSwap();
 
     bindOptionKeepOpen();
     bindCartAwareFreeShip();
@@ -6557,7 +6603,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.138] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.139] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
