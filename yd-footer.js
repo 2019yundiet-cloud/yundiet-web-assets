@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_146__) {
+  if (window.__YD_FOOTER_V3_147__) {
     return;
   }
-  window.__YD_FOOTER_V3_146__ = true;
+  window.__YD_FOOTER_V3_147__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.146', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.147', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6586,6 +6586,23 @@
     ];
     function pById(id) { return P.filter(function(x) { return x.id === id; })[0]; }
 
+    /* 메뉴별 고유 스토리 — 추천 이유 카드의 첫 문장. 템플릿 티가 나지 않게 메뉴마다 손으로 쓴
+       고유 문장을 두고, 뒤에 개인화(목표 숫자) 문장이 붙는다. 메뉴 추가 시 여기에 한 줄 추가. */
+    var STORY = {
+      'orig-l': '한 팩에 단백질 50g — 닭가슴살 200g을 손질 없이 먹는 양이에요. 단백질 채우기가 가장 어려운 날의 기준이 되는 메뉴라 1순위로 넣었어요.',
+      'orig-s': '오리지널에서 밥과 닭가슴살 양을 줄인 소식 버전이에요. 한 끼 목표가 타이트할수록 L보다 S가 계산이 편해요.',
+      'bulgogi': '단짠 불고기인데 당류 6g — 설탕 대신 저당 소스로 단맛을 낸 메뉴예요. "오늘은 식단 그만두고 싶다" 싶은 날을 버티게 하는 맛 담당이에요.',
+      'jeyuk': '직화로 구운 저당 제육볶음이에요. 매콤한 게 당기는 날 배달 제육 대신 이걸로 — 같은 메뉴 같아도 한 끼 수백 kcal이 갈려요.',
+      'duck': '훈제오리인데 당류 0.5g — 기름지고 맛있는 것 중에 이만큼 깨끗한 메뉴가 드물어요. 느끼한 게 당기는 날의 안전장치예요.',
+      'bal-cur': '귀리·곡물밥에 닭가슴살을 볶아낸 커리 한 그릇이에요. 도시락 구성이 지겨워질 때 식감을 바꿔주는 변화구로 넣었어요.',
+      'bal-tom': '토마토 베이스 곡물 볶음밥이에요. 도시락이 지겨워질 때 식감을 바꿔주는 변화구로 넣었어요.',
+      'chick100': '3.8mm 슬라이스라 뜯어서 바로 먹는 닭가슴살 100g이에요. 손질·해동이 귀찮으면 결국 거르게 되는데, 그 허들을 없앤 형태예요.',
+      'chick150': '3.8mm 슬라이스 닭가슴살 150g — 뜯어서 바로 먹는 형태라, 귀찮음 때문에 단백질을 거르는 날이 없어져요.',
+      'lsjeyuk': '반찬형 저당 제육이에요. 집밥에서 반찬 하나만 이걸로 바꿔도 그 끼니 단백질이 16g 늘어요.',
+      'lsbulg': '반찬형 저당 불고기예요. 밥은 그대로 두고 반찬만 바꾸는 게 가장 오래가는 식단 관리라서 넣었어요.',
+      'hambak': '빵·소스 없이 고기 위주로 만든 저당 함박 150g이에요. 든든한 게 필요한 날을 380kcal 안에서 해결해줘요.'
+    };
+
     var Q = [
       { k: 'sex', t: '성별을 알려주세요', type: 'chips', o: [['m', '남성'], ['f', '여성']], d: 'm' },
       { k: 'age', t: '나이가 어떻게 되세요?', type: 'num', f: [['age', '나이', '세', 15, 90, 30]] },
@@ -6785,16 +6802,26 @@
       function whyCopy(pr, vi) {
         var pct = Math.min(99, Math.round(pr.p / prot * 100));
         var s = [];
+        /* 첫 문장 = 메뉴 고유 스토리(STORY) — 카드마다 다른 글이어야 "진짜 사람이 골랐다"고 읽힌다 */
+        if (STORY[pr.id]) { s.push(STORY[pr.id]); }
         if (pr.cat === '단백질 간편식') {
-          s.push('밥 없이 단백질 ' + pr.p + 'g만 채우는 메뉴예요. 뭘 먹을지 애매한 ' + (hasBf ? '아침·간식' : '간식') + '에 이걸 끼우면, 부족해지기 쉬운 하루 단백질 목표 ' + prot + 'g의 ' + pct + '%가 조용히 채워져요.');
+          s.push('뭘 먹을지 애매한 ' + (hasBf ? '아침·간식' : '간식') + '에 이걸 끼우면, 부족해지기 쉬운 하루 단백질 목표 ' + prot + 'g의 ' + pct + '%가 조용히 채워져요.');
           if (glp1) { s.push('비만치료제 감량분의 25~40%는 근육으로 빠질 수 있어요 — 적게 먹는 지금일수록 단백질 밀도가 높은 메뉴가 근육을 지켜줘요.'); }
           else if (pr.sugar <= 0.5) { s.push('당류 ' + pr.sugar + 'g — 혈당을 흔들지 않아서, 먹고 나서 단 게 더 당기는 악순환이 없어요.'); }
         } else {
           var dk = Math.round(pm.k - pr.kcal);
+          /* 칼로리 문장도 변형 로테이션 — 같은 문장이 카드마다 반복되면 템플릿 티가 난다 */
           if (dk >= 0) {
-            s.push('한 끼 목표 ' + pm.k.toLocaleString() + 'kcal보다 ' + dk + 'kcal 가벼운 ' + pr.kcal + 'kcal — 이 끼니는 계산하지 않고 다 드셔도 목표 안이에요.');
+            s.push([
+              '내 한 끼 목표 ' + pm.k.toLocaleString() + 'kcal보다 ' + dk + 'kcal 가벼워서, 이 끼니는 계산하지 않고 다 드셔도 목표 안이에요.',
+              pr.kcal + 'kcal — 한 끼 목표에 ' + dk + 'kcal 여유를 남겨서, 과일 하나쯤 곁들여도 목표 안이에요.'
+            ][vi % 2]);
           } else {
-            s.push(pr.kcal + 'kcal로 한 끼 목표보다 ' + Math.abs(dk) + 'kcal 높지만, 단백질 ' + pr.p + 'g이 포만감을 오래 끌어서 간식·야식이 줄어요. 다음 끼니만 가볍게 가면 하루 총량은 지켜져요.');
+            s.push([
+              '한 끼 목표보다 ' + Math.abs(dk) + 'kcal 높지만 단백질 ' + pr.p + 'g이 포만감을 오래 끌어 간식·야식이 줄어요 — 다음 끼니만 가볍게 가면 하루 총량은 지켜져요.',
+              pr.kcal + 'kcal로 목표보다 ' + Math.abs(dk) + 'kcal 위지만, 하루에 이 끼니 하나만 든든히 가고 나머지를 가볍게 가는 배치가 오히려 오래가요.',
+              '목표보다 조금 무거운 ' + pr.kcal + 'kcal — 그래도 어중간하게 먹고 야식으로 이어지는 것보다, 한 끼를 제대로 먹는 쪽이 하루 합계로는 남는 장사예요.'
+            ][vi % 3]);
           }
           if (glp1) {
             s.push('약으로 식사량이 줄어든 지금, 한 팩에 단백질 ' + pr.p + 'g — 감량분이 근육으로 빠지지 않게 소량·고단백으로 설계된 선택이에요.');
@@ -6861,15 +6888,27 @@
           '</div></div><p>' + whyCopy(p2, wi) + '</p></div>';
       }).join('');
 
+      /* 감량/증량 예상 — 하루 적자(섭취 기준)를 선택 기간으로 환산(1kg≈7,700kcal, 1개월≈30.4일) */
+      var projTxt = '';
+      if (goal === 'cut' && deficit > 0) {
+        var lossKg = Math.round(deficit * 30.4 * period / 7700 * 10) / 10;
+        projTxt = '<div class="proj">이대로 <b>' + period + '개월</b> 진행하면 약 <b>' + lossKg + 'kg 감량</b>이 예상돼요' + (targetW && targetW < w ? ' — 목표 ' + targetW + 'kg 페이스' : '') + '</div>';
+      } else if (goal === 'bulk') {
+        var gainKg = Math.round(300 * 30.4 * period / 7700 * 10) / 10;
+        projTxt = '<div class="proj">이대로 <b>' + period + '개월</b> 진행하면 약 <b>' + gainKg + 'kg 증량</b> 페이스예요</div>';
+      }
+
       el('result').innerHTML =
         '<div class="yd-cu-top"><button type="button" class="yd-cu-back" data-cu="edit">‹ 답변 수정</button><div class="yd-cu-count">검사 완료 ✓</div></div>' +
         '<div class="yd-cu-head">' +
           '<div class="who">' + (sex === 'm' ? '남성' : '여성') + ' · ' + age + '세 · ' + h + 'cm · ' + w + 'kg · ' + goalTxt + (glp1 ? ' · 비만치료제 병행' : '') + '</div>' +
-          '<div class="k">' + kcal.toLocaleString() + '<small> kcal / 하루</small></div>' +
+          '<div class="lb">목표 달성을 위한 1일 권장 섭취량</div>' +
+          '<div class="k">' + kcal.toLocaleString() + '<small> kcal</small></div>' +
           '<div class="yd-cu-macros"><div><b>' + carb + 'g</b><span>탄수화물</span></div><div><b>' + prot + 'g</b><span>단백질</span></div><div><b>' + fat + 'g</b><span>지방</span></div></div>' +
-          '<div class="note">기초대사량 ' + Math.round(bmr).toLocaleString() + 'kcal · 하루 소비 ' + Math.round(tdee).toLocaleString() + 'kcal 기준' + paceTxt + (glp1 ? '<br>💊 근손실 방지 고단백 · 소량 설계' : '') + '</div>' +
+          projTxt +
+          '<div class="note">기초대사량 ' + Math.round(bmr).toLocaleString() + 'kcal · 하루 소비 ' + Math.round(tdee).toLocaleString() + 'kcal — 위 권장량과 감량 예상은 <b>섭취 칼로리 기준</b>이에요' + paceTxt + (glp1 ? '<br>💊 근손실 방지 고단백 · 소량 설계' : '') + '</div>' +
         '</div>' +
-        '<div class="yd-cu-pm"><h4>한 끼 목표 <span>하루 ' + mainMealN + '끼' + (hasSnack ? ' + 간식' : '') + ' 기준</span></h4>' +
+        '<div class="yd-cu-pm"><h4>목표 달성을 위한 한 끼 권장 섭취량 <span>하루 ' + mainMealN + '끼' + (hasSnack ? ' + 간식' : '') + ' 기준</span></h4>' +
           '<div class="yd-cu-pm-grid"><div><b>' + pm.k.toLocaleString() + '</b><span>kcal</span></div><div><b>' + pm.c + 'g</b><span>탄수화물</span></div><div><b>' + pm.p + 'g</b><span>단백질</span></div><div><b>' + pm.f + 'g</b><span>지방</span></div></div></div>' +
         '<div class="yd-cu-sec"><h4>왜 이 메뉴냐면요</h4><span>' + [goalTxt, intTxt, mtTxt].filter(Boolean).join(' · ') + ' 기준</span></div>' +
         '<div class="yd-cu-copy">판매순·리뷰순이 아니에요. 방금 답해주신 13가지로 계산한 <b>내 한 끼 목표 ' + pm.k.toLocaleString() + 'kcal · 하루 단백질 ' + prot + 'g</b>을 기준으로, 메뉴마다 넣은 이유를 적어뒀어요.</div>' +
@@ -7264,7 +7303,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.146] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.147] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
