@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_135__) {
+  if (window.__YD_FOOTER_V3_136__) {
     return;
   }
-  window.__YD_FOOTER_V3_135__ = true;
+  window.__YD_FOOTER_V3_136__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.135', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.136', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6001,22 +6001,21 @@
       if (welcomeRaw && welcomeAge >= 0 && welcomeAge < 10 * 60 * 1000) {
         try { window.localStorage.removeItem('yd_pop_signup_welcome'); } catch (err) {}
         /* 신규가입 확인: 쿠폰함에 [회원가입-첫구매](만료 3일)가 있으면 신규 — 기존 회원이
-           팝업 경유 '로그인'만 한 경우의 "회원가입 완료" 오표기를 막는다. 조회 실패 시엔 표시(fail-open). */
-        fetch('/mypage/coupon', { credentials: 'same-origin' })
-          .then(function(res) { return res.ok ? res.text() : null; })
-          .then(function(html) {
-            const isNew = (html === null) || html.indexOf('회원가입-첫구매') !== -1;
-            if (!isNew) { ydMark('signupWelcomeToast', true, '기존 회원 로그인 — 토스트 생략'); return; }
-            popConvert('signup');
-            window.setTimeout(function() {
-              popShowToast({
-                id: 'signup_welcome',
-                bodyHtml: '🎉 회원가입 완료!<br><span style="white-space:nowrap">쿠폰함에 <strong>18,000원 쿠폰팩</strong>이 들어왔어요</span>'
-              });
-            }, 400);
-            /* 부스터는 상품 목록·상세에서만 발화한다. 장바구니에서는 웰컴 토스트만 표시한다. */
-          })
-          .catch(function() {});
+           팝업 경유 '로그인'만 한 경우의 "회원가입 완료" 오표기를 막는다. 조회 불능(error) 시엔 표시(fail-open). */
+        ydReadCouponBox(function(text) {
+          return text.indexOf('회원가입-첫구매') !== -1;
+        }, function(matched, how) {
+          const isNew = matched || how === 'error';
+          if (!isNew) { ydMark('signupWelcomeToast', true, '기존 회원 로그인(' + how + ') — 토스트 생략'); return; }
+          popConvert('signup');
+          window.setTimeout(function() {
+            popShowToast({
+              id: 'signup_welcome',
+              bodyHtml: '🎉 회원가입 완료!<br><span style="white-space:nowrap">쿠폰함에 <strong>18,000원 쿠폰팩</strong>이 들어왔어요</span>'
+            });
+          }, 400);
+          /* 부스터는 상품 목록·상세에서만 발화한다. 장바구니에서는 웰컴 토스트만 표시한다. */
+        });
         armed.push('signup_welcome');
       }
     }
@@ -6138,6 +6137,53 @@
     ydMark('onsitePopups', true, '무장: ' + (armed.join(', ') || '없음'));
   }
 
+  /* 쿠폰함 텍스트 확인: 이 사이트의 쿠폰함은 /shop_mypage/?m2=coupon — /mypage/coupon은 존재하지 않는
+     경로라 홈으로 떨어져 어떤 문자열도 매칭되지 않았다(2026-09-02 실측, verified 0건의 원인).
+     1차 fetch(서버 렌더 대응) 후 미매칭이면 숨김 iframe으로 렌더 완료까지 폴링(클라이언트 렌더 대응).
+     done(matched, how): matched=match(text) 결과, how='fetch'|'iframe'|'error'. 정확히 1회 호출. */
+  function ydReadCouponBox(match, done) {
+    const COUPON_BOX_URL = '/shop_mypage/?m2=coupon';
+    let finished = false;
+    const finish = function(matched, how) {
+      if (finished) return;
+      finished = true;
+      done(matched, how);
+    };
+    const readViaIframe = function() {
+      if (finished) return;
+      try {
+        const frame = document.createElement('iframe');
+        frame.src = COUPON_BOX_URL;
+        frame.setAttribute('aria-hidden', 'true');
+        frame.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:2px;height:2px;border:0;visibility:hidden;';
+        const began = Date.now();
+        const timer = window.setInterval(function() {
+          let text = '';
+          try { text = String((frame.contentDocument && frame.contentDocument.body && frame.contentDocument.body.textContent) || ''); } catch (err) {}
+          const matched = match(text.replace(/\s+/g, ' '));
+          if (matched || Date.now() - began > 9000) {
+            window.clearInterval(timer);
+            try { frame.remove(); } catch (err) {}
+            finish(matched, 'iframe');
+          }
+        }, 400);
+        document.body.appendChild(frame);
+      } catch (err) { finish(false, 'error'); }
+    };
+    fetch(COUPON_BOX_URL, { credentials: 'same-origin', cache: 'no-store' })
+      .then(function(res) {
+        /* 홈(/)이나 로그인 스텁으로 떨어진 응답은 쿠폰함이 아니다 — iframe 경로로 넘긴다. */
+        if (!res.ok || String(res.url || '').indexOf('shop_mypage') === -1) return null;
+        return res.text();
+      })
+      .then(function(html) {
+        const text = String(html || '').replace(/\s+/g, ' ');
+        if (text && text.indexOf('mode=login') === -1 && match(text)) { finish(true, 'fetch'); return; }
+        readViaIframe();
+      })
+      .catch(readViaIframe);
+  }
+
   /* 부스터 경유 가입 복귀: 회원 확인 → 쿠폰 링크 → 쿠폰함 실재 확인 뒤에만 완료 처리 */
   function bindBoostCouponResume() {
     if (IS_IFRAME) return;
@@ -6153,50 +6199,28 @@
     }
     if (isGuestUser()) { ydMark('boostCouponResume', true, '비회원 — 가입 복귀 대기'); return; }
     if (/[?&]coupon=/.test(location.search)) {
-      let attempts = 0;
-      const verifyCoupon = function() {
-        attempts += 1;
-        fetch('/mypage/coupon', { credentials: 'same-origin', cache: 'no-store' })
-          .then(function(res) { return res.ok ? res.text() : null; })
-          .then(function(html) {
-            const normalized = String(html || '').replace(/\s+/g, ' ');
-            const verified = normalized.indexOf('첫구매 응원') !== -1 && /2,?000\s*원/.test(normalized);
-            if (verified) {
-              try {
-                window.sessionStorage.setItem('yd_boost_coupon_verified', String(Date.now()));
-                window.localStorage.removeItem('yd_boost_pending');
-                window.localStorage.removeItem('yd_boost_claimed');
-              } catch (err) {}
-              popConvert('coupon_issued');
-              ydGaEvent('yd_pop_coupon_verified', {
-                popup_id: 'first_buy_boost', page_path: location.pathname
-              });
-              ydMark('boostCouponResume', true, '쿠폰함 확인 성공 — 수령 완료');
-              return;
-            }
-            if (attempts < 3) {
-              window.setTimeout(verifyCoupon, 1500);
-              return;
-            }
-            try { window.localStorage.removeItem('yd_boost_pending'); } catch (err) {}
-            ydGaEvent('yd_pop_coupon_unverified', {
-              popup_id: 'first_buy_boost', page_path: location.pathname
-            });
-            ydMark('boostCouponResume', false, '쿠폰함 미확인 — 수령 완료로 저장하지 않음');
-          })
-          .catch(function() {
-            if (attempts < 3) {
-              window.setTimeout(verifyCoupon, 1500);
-              return;
-            }
-            try { window.localStorage.removeItem('yd_boost_pending'); } catch (err) {}
-            ydGaEvent('yd_pop_coupon_unverified', {
-              popup_id: 'first_buy_boost', page_path: location.pathname
-            });
-            ydMark('boostCouponResume', false, '쿠폰함 조회 실패 — 수령 완료로 저장하지 않음');
+      ydReadCouponBox(function(text) {
+        return text.indexOf('첫구매 응원') !== -1 && /2,?000\s*원/.test(text);
+      }, function(matched, how) {
+        if (matched) {
+          try {
+            window.sessionStorage.setItem('yd_boost_coupon_verified', String(Date.now()));
+            window.localStorage.removeItem('yd_boost_pending');
+            window.localStorage.removeItem('yd_boost_claimed');
+          } catch (err) {}
+          popConvert('coupon_issued');
+          ydGaEvent('yd_pop_coupon_verified', {
+            popup_id: 'first_buy_boost', page_path: location.pathname, verify_channel: how
           });
-      };
-      verifyCoupon();
+          ydMark('boostCouponResume', true, '쿠폰함 확인 성공(' + how + ') — 수령 완료');
+          return;
+        }
+        try { window.localStorage.removeItem('yd_boost_pending'); } catch (err) {}
+        ydGaEvent('yd_pop_coupon_unverified', {
+          popup_id: 'first_buy_boost', page_path: location.pathname, verify_channel: how
+        });
+        ydMark('boostCouponResume', false, '쿠폰함 미확인(' + how + ') — 수령 완료로 저장하지 않음');
+      });
       return;
     }
     ydMark('boostCouponResume', true, '가입 복귀 — 쿠폰 발급 랜딩 이동');
@@ -6397,7 +6421,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.135] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.136] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
