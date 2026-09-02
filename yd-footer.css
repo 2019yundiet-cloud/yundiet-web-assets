@@ -2449,7 +2449,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 #yd-cardio-calc .yd-cc-fields { display: flex; flex-direction: column; gap: 14px; }
 #yd-cardio-calc .yd-cc-field .yd-cc-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 5px; }
 #yd-cardio-calc .yd-cc-field label { font-size: 13px; color: var(--yd-cc-grey); font-weight: 600; margin: 0; }
-#yd-cardio-calc .yd-cc-readout { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+#yd-cardio-calc .yd-cc-readout { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.01em; white-space: nowrap; flex-shrink: 0; }
 #yd-cardio-calc .yd-cc-readout .yd-cc-u { font-size: 11.5px; color: var(--yd-cc-grey); margin-left: 2px; font-weight: 500; }
 #yd-cardio-calc input[type=range].yd-cc-range { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; margin: 0; padding: 0; background: transparent; cursor: pointer; border: 0; box-shadow: none; }
 #yd-cardio-calc input[type=range].yd-cc-range::-webkit-slider-runnable-track { height: 5px; border-radius: 99px; background: #EEE9E2; }
