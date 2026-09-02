@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_143__) {
+  if (window.__YD_FOOTER_V3_144__) {
     return;
   }
-  window.__YD_FOOTER_V3_143__ = true;
+  window.__YD_FOOTER_V3_144__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.143', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.144', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6401,7 +6401,7 @@
 
     if (tool) {
       root.innerHTML =
-        '<div class="yd-cc-wrap">' +
+        '<div class="yd-cc-wrap is-tool">' +
           '<a class="yd-cc-crumb" href="/cardio-calc">‹ 데이터로 관리하기</a>' +
           '<div class="yd-cc-head">' +
             '<div class="yd-cc-k">YUNDIET · DATA</div>' +
@@ -6410,8 +6410,8 @@
           '</div>' +
           '<div class="yd-cc-toolcard"></div>' +
           '<div class="yd-cc-flow">' +
+            '<a class="more" href="/cardio-calc">다른 도구</a>' +
             '<a class="home" href="/main">홈으로 돌아가기</a>' +
-            '<a class="more" href="/cardio-calc">다른 데이터 도구 보러 가기</a>' +
           '</div>' +
         '</div>';
       root.querySelector('.yd-cc-head h2').textContent = tool.title;
@@ -6602,6 +6602,11 @@
       { k: 'mealtype', t: '희망하는 식사 유형이 있나요?', type: 'chips', o: [['lowsalt', '저염식'], ['highprot', '고단백식'], ['spicy', '매콤한 맛'], ['any', '상관없어요']], d: 'any' }
     ];
     var ans = {}, qi = 0, ctx = null;
+    /* 초기 화면(인트로)도 결과가 아니므로 홈 바 숨김으로 시작 */
+    (function() {
+      var wrap = root.closest ? root.closest('.yd-cc-wrap') : null;
+      if (wrap && wrap.classList) { wrap.classList.add('hide-flow'); }
+    })();
 
     root.innerHTML =
       '<div class="yd-cu">' +
@@ -6618,7 +6623,7 @@
         '</div>' +
         '<div class="yd-cu-hidden" data-cu="loading" style="text-align:center;padding:10px 0 26px">' +
           '<div class="yd-cu-spin" aria-hidden="true"></div>' +
-          '<div class="yd-cu-h1" style="margin-top:16px;font-size:16px">분석하고 있어요</div>' +
+          '<div class="yd-cu-h1 sm" style="margin-top:16px">분석하고 있어요</div>' +
           '<div class="yd-cu-sub" data-cu="loadmsg">입력하신 신체 정보를 계산하고 있어요…</div>' +
         '</div>' +
         '<div class="yd-cu-hidden" data-cu="result"></div>' +
@@ -6629,6 +6634,9 @@
       ['intro', 'quiz', 'loading', 'result'].forEach(function(k) {
         el(k).className = (k === key) ? '' : 'yd-cu-hidden';
       });
+      /* 하단 고정 홈 바는 결과 화면에서만 — 문답(선택) 단계에서는 숨긴다 (2026-09-02 소유자 지시) */
+      var wrap = root.closest ? root.closest('.yd-cc-wrap') : null;
+      if (wrap && wrap.classList) { wrap.classList.toggle('hide-flow', key !== 'result'); }
     }
 
     function renderQ() {
@@ -6637,7 +6645,7 @@
       el('steps').innerHTML = Q.map(function(_, i) { return '<i class="' + (i <= qi ? 'on' : '') + '"></i>'; }).join('');
       el('back').style.visibility = qi === 0 ? 'hidden' : 'visible';
       el('next').textContent = qi === Q.length - 1 ? '내 맞춤 식단 받기' : '다음';
-      var html = '<div class="yd-cu-h1" style="font-size:16px">' + q.t + '</div>';
+      var html = '<div class="yd-cu-h1 sm">' + q.t + '</div>';
       if (q.h) { html += '<div class="yd-cu-sub" style="margin-bottom:10px">' + q.h + '</div>'; } else { html += '<div style="height:8px"></div>'; }
       if (q.type === 'chips') {
         var cur = ans[q.k] != null ? ans[q.k] : q.d;
@@ -6803,8 +6811,9 @@
           '<p><b>③ 제품 매칭</b> — 전 메뉴의 실제 영양성분표로 단백질 밀도·한 끼 적합도·당류·나트륨·선호·강도를 점수화합니다. 리뷰순이 아니라 내 목표와의 거리.</p>' +
           '<p style="color:var(--yd-cc-olive)">※ 일반적 영양 기준의 참고용 안내이며, 질환이 있는 경우 전문의와 상담하세요.</p>' +
         '</div></details>' +
-        '<button type="button" class="yd-cu-btn red" data-cu="cartopen">추천 구성 장바구니에 담기</button>' +
-        '<div data-cu="cartbox"></div>' +
+        '<div class="yd-cu-sec"><h4>추천 구성으로 바로 시작하기</h4><span>1·2주 플랜</span></div>' +
+        '<div class="yd-cu-sub" style="margin:2px 0 4px">위 추천 메뉴로 담아드리는 시작 플랜이에요 — 하루 1팩(한 끼)을 윤식단으로 바꿔보세요</div>' +
+        '<div data-cu="cartbox"><div class="yd-cu-cart"><div class="yd-cu-cart-msg">추천 구성을 불러오고 있어요…</div></div></div>' +
         '<a class="yd-cu-btn ghost" href="/soonsoodanback">단백질 간편식 보러 가기</a>' +
         '<button type="button" class="yd-cu-btn ghost" data-cu="redo" style="margin-top:8px">처음부터 다시 검사하기</button>';
 
@@ -6817,7 +6826,7 @@
       });
       el('edit').addEventListener('click', function() { qi = Q.length - 1; showPane('quiz'); renderQ(); });
       el('redo').addEventListener('click', function() { ans = {}; qi = 0; showPane('quiz'); renderQ(); });
-      bindCartAdd();
+      loadPlans();
       showPane('result');
 
       try {
@@ -6953,104 +6962,104 @@
         });
       });
     }
-    function bindCartAdd() {
-      var btn = el('cartopen'), box = el('cartbox');
-      if (!btn || !box) { return; }
-      var fallbackHtml = '<div class="yd-cu-cart"><div class="yd-cu-cart-msg err">상품 정보를 불러오지 못했어요. ' +
+    /* 시작 플랜 2종 — 가격 밴드 우선 배분: 추천 도시락(672 필수옵션)을 점수 순 로테이션으로
+       목표 금액에 닿을 때까지 1팩씩 쌓는다 → 1주 관리는 항상 3만원대, 2주 관리는 5만원대에 안착.
+       담기 성공은 장바구니 API 재조회로 확증한 뒤 /shop_cart로 바로 이동한다. */
+    function allocPlan(dishes, targetWon) {
+      var rows = dishes.map(function(c) { return { c: c, qty: 0 }; });
+      var total = 0, i = 0;
+      while (total < targetWon && i < 60) {
+        var row = rows[i % rows.length];
+        row.qty += 1; total += row.c.opt.price;
+        i++;
+      }
+      return { rows: rows.filter(function(r) { return r.qty > 0; }), total: total, packs: i };
+    }
+    function loadPlans() {
+      var box = el('cartbox');
+      if (!box) { return; }
+      var fallbackHtml = '<div class="yd-cu-cart"><div class="yd-cu-cart-msg err">추천 구성을 불러오지 못했어요. ' +
         '<a href="/shop_view/?idx=672" style="color:inherit;text-decoration:underline">상품 페이지에서 직접 담기 ›</a></div></div>';
-
-      btn.addEventListener('click', function() {
-        if (btn.disabled) { return; }
-        btn.disabled = true; btn.textContent = '추천 구성 확인 중…';
-        buildCandidates().then(function(cands) {
-          btn.disabled = false; btn.textContent = '추천 구성 장바구니에 담기';
-          renderConfirm(cands);
-        }).catch(function(err) {
-          btn.disabled = false; btn.textContent = '추천 구성 장바구니에 담기';
-          box.innerHTML = fallbackHtml;
-          ydTrace('큐레이션 담기 구성 조회 실패: ' + String(err && err.message || err).slice(0, 60));
+      buildCandidates().then(function(cands) {
+        var dishes = cands.filter(function(c) { return c.opt && c.prod === 672 && c.opt.req; });
+        if (!dishes.length) { box.innerHTML = fallbackHtml; return; }
+        var plans = [
+          { id: 'w1', name: '1주 관리', target: 30000, desc: '하루 1팩 · 약 1주 분량' },
+          { id: 'w2', name: '2주 관리', target: 50000, desc: '하루 1팩 · 약 2주 분량' }
+        ].map(function(p) {
+          var a = allocPlan(dishes, p.target);
+          p.rows = a.rows; p.total = a.total; p.packs = a.packs;
+          p.band = Math.floor(p.total / 10000) + '만원대';
+          return p;
         });
+        var picked = 'w1';
+        function draw() {
+          var plan = plans.filter(function(p) { return p.id === picked; })[0];
+          box.innerHTML =
+            '<div class="yd-cu-cart">' +
+            '<div class="yd-cu-plans">' +
+            plans.map(function(p) {
+              return '<button type="button" class="yd-cu-plan' + (p.id === picked ? ' sel' : '') + '" data-plan="' + p.id + '">' +
+                '<span class="bd">' + p.band + '</span><b>' + p.name + '</b>' +
+                '<span class="pr">' + p.total.toLocaleString() + '원</span>' +
+                '<small>' + p.desc + ' · ' + p.packs + '팩</small></button>';
+            }).join('') +
+            '</div>' +
+            '<div class="yd-cu-cart-msg" style="margin:10px 0 2px"><b>' + plan.name + '</b> = 내 목표에 맞춘 추천 메뉴 ' + plan.packs + '팩이에요. 하루 한 끼를 윤식단으로 바꾸는 플랜 — 메뉴·수량은 장바구니에서 자유롭게 조절할 수 있어요.</div>' +
+            plan.rows.map(function(r) {
+              return '<div class="yd-cu-cart-row"><span class="nm">' + r.c.opt.vn[0] + '<small>' + r.c.p.name + '</small></span>' +
+                '<span class="pr">' + r.qty + '팩 · ' + (r.c.opt.price * r.qty).toLocaleString() + '원</span></div>';
+            }).join('') +
+            '<div class="yd-cu-cart-total"><span>합계 ' + plan.packs + '팩</span><b>' + plan.total.toLocaleString() + '원</b></div>' +
+            '<button type="button" class="yd-cu-btn red" data-cu="cartgo" style="margin-top:10px">이 플랜 장바구니에 담기</button>' +
+            '<div class="yd-cu-cart-msg" data-cu="cartmsg"></div>' +
+            '</div>';
+          qsa('.yd-cu-plan', box).forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              picked = btn.getAttribute('data-plan');
+              draw();
+            });
+          });
+          box.querySelector('[data-cu="cartgo"]').addEventListener('click', function() { addPlan(plan, this); });
+        }
+        draw();
+      }).catch(function(err) {
+        box.innerHTML = fallbackHtml;
+        ydTrace('큐레이션 플랜 구성 조회 실패: ' + String(err && err.message || err).slice(0, 60));
       });
 
-      function renderConfirm(cands) {
-        var ok = cands.filter(function(c) { return !!c.opt; });
-        var off = cands.filter(function(c) { return !c.opt; });
-        if (!ok.length) { box.innerHTML = fallbackHtml; return; }
-        box.innerHTML =
-          '<div class="yd-cu-cart"><h5>담을 구성을 확인해 주세요</h5>' +
-          ok.map(function(c, i) {
-            return '<label class="yd-cu-cart-row"><input type="checkbox" checked data-i="' + i + '">' +
-              '<span class="nm">' + c.opt.vn[0] + '<small>' + c.p.name + (c.prod === 672 && !c.opt.req ? ' · 추가구성 팩' : '') + '</small></span>' +
-              '<span class="pr">' + c.opt.price.toLocaleString() + '원</span></label>';
-          }).join('') +
-          off.map(function(c) {
-            return '<div class="yd-cu-cart-row off"><span class="nm">' + c.p.name + '<small>지금은 온라인 단품 구성에 없어 함께 담기지 않아요</small></span></div>';
-          }).join('') +
-          '<div class="yd-cu-cart-total"><span>합계</span><b data-cu="carttotal"></b></div>' +
-          '<div class="yd-cu-cart-msg" data-cu="cartmsg">각 1개씩 담겨요 — 수량은 장바구니에서 조절할 수 있어요.</div>' +
-          '<button type="button" class="yd-cu-btn red" data-cu="cartgo" style="margin-top:10px">이대로 장바구니에 담기</button>' +
-          '</div>';
-        function selected() {
-          return qsa('input[type=checkbox]', box).filter(function(c2) { return c2.checked; })
-            .map(function(c2) { return ok[+c2.getAttribute('data-i')]; });
-        }
-        function updateTotal() {
-          var sum = selected().reduce(function(s, c2) { return s + c2.opt.price; }, 0);
-          box.querySelector('[data-cu="carttotal"]').textContent = sum.toLocaleString() + '원';
-        }
-        qsa('input[type=checkbox]', box).forEach(function(c2) { c2.addEventListener('change', updateTotal); });
-        updateTotal();
-        var goBtn = box.querySelector('[data-cu="cartgo"]');
-        goBtn.addEventListener('click', function() { doAdd(selected(), goBtn); });
-        if (box.scrollIntoView) { box.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-      }
-
-      function doAdd(sel, goBtn) {
+      function addPlan(plan, goBtn) {
+        if (goBtn.disabled) { return; }
         var msg = box.querySelector('[data-cu="cartmsg"]');
-        if (!sel.length) {
-          msg.className = 'yd-cu-cart-msg err';
-          msg.textContent = '담을 구성을 1개 이상 선택해 주세요.';
-          return;
-        }
-        var has672 = sel.some(function(c) { return c.prod === 672; });
-        var has672Req = sel.some(function(c) { return c.prod === 672 && c.opt.req; });
-        if (has672 && !has672Req) {
-          msg.className = 'yd-cu-cart-msg err';
-          msg.textContent = '추가구성 팩은 도시락과 함께만 담을 수 있어요 — 도시락 메뉴를 1개 이상 선택해 주세요.';
-          return;
-        }
         goBtn.disabled = true; goBtn.textContent = '담는 중…';
         msg.className = 'yd-cu-cart-msg'; msg.textContent = '';
-        var plans = {};
-        sel.forEach(function(c) {
-          var plan = plans[c.prod] = plans[c.prod] || { prodIdx: c.prod, tpl: c.tpl, missing: [] };
-          plan.missing.push({ dc: c.opt.dc, req: c.opt.req, cnt: 1, up: c.opt.price,
-                              oc: c.opt.oc, vc: c.opt.vc, on: c.opt.on, vn: c.opt.vn });
+        var item = { prodIdx: 672, tpl: plan.rows[0].c.tpl };
+        var missing = plan.rows.map(function(r) {
+          return { dc: r.c.opt.dc, req: r.c.opt.req, cnt: r.qty, up: r.c.opt.price,
+                   oc: r.c.opt.oc, vc: r.c.opt.vc, on: r.c.opt.on, vn: r.c.opt.vn };
         });
         var expect = {};
-        sel.forEach(function(c) {
-          var key = cartCarryOptionKey(c.prod, { option_detail_code: c.opt.dc });
-          expect[key] = (expect[key] || 0) + 1;
+        plan.rows.forEach(function(r) {
+          var key = cartCarryOptionKey(672, { option_detail_code: r.c.opt.dc });
+          expect[key] = (expect[key] || 0) + r.qty;
         });
         var before = null;
         cartSnapshot().then(function(payload) {
           before = cartCarryPayloadCounts(payload);
-          return Object.keys(plans).reduce(function(chain, k) {
-            return chain.then(function() { return cartCarryAddItem(plans[k], plans[k].missing, 0); });
-          }, Promise.resolve());
+          return cartCarryAddItem(item, missing, 0);
         }).then(function() {
           return verifyAdded(before, expect, 0);
         }).then(function() {
-          box.innerHTML =
-            '<div class="yd-cu-cart"><h5>장바구니에 담았어요 ✓</h5>' +
-            '<div class="yd-cu-cart-msg">' + sel.length + '개 구성이 장바구니에 담긴 것을 확인했어요. 수량은 장바구니에서 조절할 수 있어요.</div>' +
-            '<a class="yd-cu-btn red" href="/shop_cart" style="margin-top:10px">장바구니 확인하기</a></div>';
-          ydTrace('큐레이션 실담기 ' + sel.length + '건 — 장바구니 재조회로 확증');
+          goBtn.textContent = '담기 완료 — 장바구니로 이동합니다';
+          msg.className = 'yd-cu-cart-msg';
+          msg.textContent = plan.name + ' ' + plan.packs + '팩을 장바구니에 담았어요.';
+          ydTrace('큐레이션 플랜 실담기(' + plan.id + ', ' + plan.packs + '팩) — 재조회 확증 후 장바구니 이동');
+          window.setTimeout(function() { window.location.href = '/shop_cart'; }, 600);
         }).catch(function(err) {
-          goBtn.disabled = false; goBtn.textContent = '이대로 장바구니에 담기';
+          goBtn.disabled = false; goBtn.textContent = '이 플랜 장바구니에 담기';
           msg.className = 'yd-cu-cart-msg err';
           msg.innerHTML = '장바구니 반영을 확인하지 못했어요. <a href="/shop_view/?idx=672" style="color:inherit;text-decoration:underline">상품 페이지에서 직접 담기 ›</a>';
-          ydTrace('큐레이션 실담기 실패: ' + String(err && err.message || err).slice(0, 60));
+          ydTrace('큐레이션 플랜 실담기 실패: ' + String(err && err.message || err).slice(0, 60));
         });
       }
     }
@@ -7208,7 +7217,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.143] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.144] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
