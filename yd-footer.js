@@ -6399,6 +6399,7 @@
       '</div>';
 
     var CARDS = [
+      { id: 'curation', title: '1분 맞춤 식단 큐레이션', sub: '13문항으로 하루 목표 · 추천 메뉴 · 1·2주 식단표까지', render: renderCurationBody },
       { id: 'cardio', title: '유산소 1시간, 기구별로 몇 kcal 태울까?', sub: '내 키·몸무게 기준으로 헬스장 유산소 기구 8종 비교', render: renderCardioBody }
     ];
 
@@ -6539,6 +6540,294 @@
       });
     });
     render();
+  }
+
+  /* ═══ 맞춤 식단 큐레이션 카드 (/cardio-calc 데이터로 관리하기) ═══
+     13문항 문답 → 하루/한 끼 목표(탄단지) → 1~3일차 구색 추천 → 1·2주 식단표.
+     - 영양 데이터: 자사몰 상세페이지 표시사항 실측본(2026-07 검증, vs:code/yundiet-products-nutrition.json)
+     - 계산: Mifflin-St Jeor 기초대사 × 활동계수, 목표체중·기간에서 하루 적자 역산(1kg≈7,700kcal, 300~750 클램프)
+     - 추천: 단백질 밀도·한끼 적합도·당류·나트륨·선호단백질·식사유형·관리강도 점수화 (리뷰순 아님)
+     - 입력·결과는 localStorage(yd_curation_data, 최근 20건)에 적재 — 추후 회원 연동용
+     - CTA는 실판매 상품으로 연결: 단품 골라담기(672) · 순수단백 카테고리 */
+  function renderCurationBody(root) {
+    var P = [
+      { id: 'orig-l', cat: '도시락', meat: 'chicken', name: '닭가슴살 도시락 L', kcal: 507, p: 50.1, sugar: 0.8, sodium: 497, emoji: '🍱' },
+      { id: 'orig-s', cat: '도시락', meat: 'chicken', name: '닭가슴살 도시락 S', kcal: 408, p: 38, sugar: 0.7, sodium: 400, emoji: '🍱' },
+      { id: 'bulgogi', cat: '도시락', meat: 'pork', name: '단짠 불고기 도시락', kcal: 630, p: 31, sugar: 6, sodium: 650, emoji: '🥘' },
+      { id: 'jeyuk', cat: '도시락', meat: 'pork', name: '직화 제육볶음 도시락', kcal: 565, p: 30, sugar: 6, sodium: 700, spicy: 1, emoji: '🥘' },
+      { id: 'duck', cat: '도시락', meat: 'beefduck', name: '그릴드 훈제오리 도시락', kcal: 585, p: 29, sugar: 0.5, sodium: 578, emoji: '🦆' },
+      { id: 'chick100', cat: '단백질 간편식', meat: 'chicken', name: '슬라이스 닭가슴살 100g', kcal: 105, p: 24, sugar: 0, sodium: 300, emoji: '🍗' },
+      { id: 'chick150', cat: '단백질 간편식', meat: 'chicken', name: '슬라이스 닭가슴살 150g', kcal: 158, p: 36, sugar: 0, sodium: 450, emoji: '🍗' },
+      { id: 'lsjeyuk', cat: '단백질 간편식', meat: 'pork', name: '저당 제육 (반찬)', kcal: 214, p: 16.2, sugar: 2.9, sodium: 526, spicy: 1, emoji: '🥩' },
+      { id: 'lsbulg', cat: '단백질 간편식', meat: 'pork', name: '저당 불고기 (반찬)', kcal: 283, p: 16.3, sugar: 2.6, sodium: 484, emoji: '🥩' },
+      { id: 'hambak', cat: '단백질 간편식', meat: 'pork', name: '저당 함박 150g', kcal: 380, p: 23, sugar: 0, sodium: 560, emoji: '🍖' },
+      { id: 'bal-cur', cat: '곡물 볶음밥', meat: 'none', name: '밸런시 마살라 핫커리', kcal: 510, p: 26, sugar: 2, sodium: 940, spicy: 1, emoji: '🍛' },
+      { id: 'bal-tom', cat: '곡물 볶음밥', meat: 'none', name: '밸런시 리얼 토마토', kcal: 480, p: 18, sugar: 12, sodium: 1530, emoji: '🍅' }
+    ];
+    function pById(id) { return P.filter(function(x) { return x.id === id; })[0]; }
+
+    var Q = [
+      { k: 'sex', t: '성별을 알려주세요', type: 'chips', o: [['m', '남성'], ['f', '여성']], d: 'm' },
+      { k: 'age', t: '나이가 어떻게 되세요?', type: 'num', f: [['age', '나이', '세', 15, 90, 30]] },
+      { k: 'body', t: '키와 체중을 알려주세요', type: 'num', f: [['height', '키', 'cm', 130, 210, 170], ['weight', '체중', 'kg', 35, 160, 65]] },
+      { k: 'goal', t: '어떤 목표로 관리하세요?', type: 'chips', c3: 1, o: [['cut', '감량'], ['keep', '유지'], ['bulk', '증량']], d: 'cut' },
+      { k: 'targetw', t: '목표 체중이 있나요?', h: '없으면 그대로 다음을 눌러주세요', type: 'num', f: [['targetw', '목표 체중', 'kg', 0, 160, 0]] },
+      { k: 'period', t: '목표 기간은 어느 정도로 생각하세요?', h: '기간이 짧을수록 높은 강도로 설계돼요', type: 'range', min: 1, max: 12, d: 3 },
+      { k: 'intensity', t: '식단 관리, 얼마나 빡세게 하실래요?', type: 'chips', c3: 1, o: [['hard', '강', '확실하게'], ['mid', '중', '무리 없이'], ['soft', '약', '맛있게 오래']], d: 'mid' },
+      { k: 'glp1', t: '위고비·마운자로 등 비만치료제를 사용 중이신가요?', h: '감량분의 25~40%가 근육으로 빠질 수 있어, 소량·고단백 전용 설계로 바꿔드려요', type: 'chips', o: [['n', '아니요'], ['y', '사용 중이에요']], d: 'n' },
+      { k: 'job', t: '하루 대부분은 어떻게 보내세요?', type: 'chips', c3: 1, o: [['sit', '주로 앉아서', '사무·재택'], ['move', '서 있는 편', '서비스·현장'], ['hard', '몸 쓰는 일', '배송·현장직']], d: 'sit' },
+      { k: 'ex', t: '운동은 얼마나 자주 하세요?', h: '30분 이상 운동 기준', type: 'chips', o: [['0', '안 해요'], ['1', '주 1~2회'], ['3', '주 3~4회'], ['5', '주 5회 이상']], d: '1' },
+      { k: 'mealn', t: '하루 몇 끼 드세요?', type: 'chips', c3: 1, o: [['2', '2끼', '아침 안 먹음'], ['3', '3끼', '규칙적'], ['3s', '3끼+간식', '보충 포함']], d: '3s' },
+      { k: 'meat', t: '어떤 단백질을 좋아하세요?', type: 'chips', o: [['chicken', '닭고기'], ['pork', '돼지고기'], ['beefduck', '소·오리'], ['any', '다 좋아요']], d: 'any' },
+      { k: 'mealtype', t: '희망하는 식사 유형이 있나요?', type: 'chips', o: [['lowsalt', '저염식'], ['highprot', '고단백식'], ['spicy', '매콤한 맛'], ['any', '상관없어요']], d: 'any' }
+    ];
+    var ans = {}, qi = 0, ctx = null;
+
+    root.innerHTML =
+      '<div class="yd-cu">' +
+        '<div data-cu="intro">' +
+          '<div class="yd-cu-h1">질문 13개에 답하면,<br>나에게 진짜 맞는 식단이 나옵니다</div>' +
+          '<div class="yd-cu-sub">리뷰나 판매순이 아니라 <b>내 몸의 숫자</b>로 — 하루·한 끼 목표 칼로리와 탄단지를 계산하고, 윤식단 전 메뉴에서 나에게 맞는 제품과 1·2주 식단표까지 만들어 드려요. 약 1분.</div>' +
+          '<button type="button" class="yd-cu-btn" data-cu="start">내 식단 검사 시작하기</button>' +
+        '</div>' +
+        '<div class="yd-cu-hidden" data-cu="quiz">' +
+          '<div class="yd-cu-top"><button type="button" class="yd-cu-back" data-cu="back">‹ 이전</button><div class="yd-cu-count" data-cu="count"></div></div>' +
+          '<div class="yd-cu-steps" data-cu="steps"></div>' +
+          '<div data-cu="qbody"></div>' +
+          '<button type="button" class="yd-cu-btn" data-cu="next">다음</button>' +
+        '</div>' +
+        '<div class="yd-cu-hidden" data-cu="loading" style="text-align:center;padding:10px 0 26px">' +
+          '<div class="yd-cu-spin" aria-hidden="true"></div>' +
+          '<div class="yd-cu-h1" style="margin-top:16px;font-size:16px">분석하고 있어요</div>' +
+          '<div class="yd-cu-sub" data-cu="loadmsg">입력하신 신체 정보를 계산하고 있어요…</div>' +
+        '</div>' +
+        '<div class="yd-cu-hidden" data-cu="result"></div>' +
+      '</div>';
+
+    function el(key) { return root.querySelector('[data-cu="' + key + '"]'); }
+    function showPane(key) {
+      ['intro', 'quiz', 'loading', 'result'].forEach(function(k) {
+        el(k).className = (k === key) ? '' : 'yd-cu-hidden';
+      });
+    }
+
+    function renderQ() {
+      var q = Q[qi], remain = Q.length - qi - 1;
+      el('count').innerHTML = '질문 <b>' + (qi + 1) + '</b>/' + Q.length + ' · ' + (remain > 0 ? remain + '개 남았어요' : '마지막!');
+      el('steps').innerHTML = Q.map(function(_, i) { return '<i class="' + (i <= qi ? 'on' : '') + '"></i>'; }).join('');
+      el('back').style.visibility = qi === 0 ? 'hidden' : 'visible';
+      el('next').textContent = qi === Q.length - 1 ? '내 맞춤 식단 받기' : '다음';
+      var html = '<div class="yd-cu-h1" style="font-size:16px">' + q.t + '</div>';
+      if (q.h) { html += '<div class="yd-cu-sub" style="margin-bottom:10px">' + q.h + '</div>'; } else { html += '<div style="height:8px"></div>'; }
+      if (q.type === 'chips') {
+        var cur = ans[q.k] != null ? ans[q.k] : q.d;
+        ans[q.k] = cur;
+        html += '<div class="yd-cu-chips' + (q.c3 ? ' c3' : '') + '">' + q.o.map(function(o) {
+          return '<button type="button" class="yd-cu-chip' + (cur === o[0] ? ' sel' : '') + '" data-val="' + o[0] + '">' + o[1] + (o[2] ? '<small>' + o[2] + '</small>' : '') + '</button>';
+        }).join('') + '</div>';
+      } else if (q.type === 'range') {
+        var rv = ans[q.k] != null ? ans[q.k] : q.d;
+        ans[q.k] = rv;
+        html += '<div style="text-align:center;background:#fff;border:1px solid var(--yd-cc-line);border-radius:14px;padding:16px 14px">' +
+          '<div style="font-size:32px;font-weight:900;color:var(--yd-cc-olive-deep);font-variant-numeric:tabular-nums"><span data-cu="rv">' + rv + '</span><small style="font-size:13px;color:var(--yd-cc-grey);font-weight:600"> 개월</small></div>' +
+          '<input type="range" class="yd-cc-range" data-cu="range" min="' + q.min + '" max="' + q.max + '" step="1" value="' + rv + '" style="width:100%;margin-top:10px">' +
+          '</div>';
+      } else {
+        html += '<div class="yd-cu-nums">' + q.f.map(function(f) {
+          var cv = ans[f[0]] != null ? ans[f[0]] : f[5];
+          return '<div class="yd-cu-num"><label>' + f[1] + '</label><input type="number" inputmode="numeric" data-num="' + f[0] + '" value="' + (cv || '') + '" min="' + f[3] + '" max="' + f[4] + '"><b>' + f[2] + '</b></div>';
+        }).join('') + '</div>';
+      }
+      el('qbody').innerHTML = html;
+      qsa('.yd-cu-chip', el('qbody')).forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          ans[q.k] = btn.getAttribute('data-val');
+          qsa('.yd-cu-chip', el('qbody')).forEach(function(b2) { b2.className = 'yd-cu-chip' + (b2 === btn ? ' sel' : ''); });
+        });
+      });
+      var rg = el('qbody').querySelector('[data-cu="range"]');
+      if (rg) { rg.addEventListener('input', function() { ans[q.k] = +rg.value; el('qbody').querySelector('[data-cu="rv"]').textContent = rg.value; }); }
+    }
+    function saveNums() {
+      var q = Q[qi];
+      if (q.type !== 'num') { return; }
+      q.f.forEach(function(f) {
+        var input = el('qbody').querySelector('[data-num="' + f[0] + '"]');
+        var v = input ? +input.value : 0;
+        ans[f[0]] = (v && v >= f[3] && v <= f[4]) ? v : (f[5] || 0);
+      });
+    }
+
+    el('start').addEventListener('click', function() { qi = 0; showPane('quiz'); renderQ(); });
+    el('back').addEventListener('click', function() { saveNums(); if (qi > 0) { qi--; renderQ(); } });
+    el('next').addEventListener('click', function() {
+      saveNums();
+      if (qi < Q.length - 1) { qi++; renderQ(); return; }
+      showPane('loading');
+      var msgs = ['입력하신 신체 정보를 계산하고 있어요…', '전 메뉴의 영양 데이터와 대조하는 중…', '나만의 식단표를 구성하고 있어요…'];
+      el('loadmsg').textContent = msgs[0];
+      setTimeout(function() { el('loadmsg').textContent = msgs[1]; }, 1100);
+      setTimeout(function() { el('loadmsg').textContent = msgs[2]; }, 2200);
+      setTimeout(calcResult, 3000);
+    });
+
+    function calcResult() {
+      var sex = ans.sex, goal = ans.goal, glp1 = ans.glp1 === 'y';
+      var age = ans.age || 30, h = ans.height || 170, w = ans.weight || 65;
+      var targetW = ans.targetw || 0, period = ans.period || 3, intensity = ans.intensity || 'mid';
+      var mealn = ans.mealn || '3s', pref = ans.meat || 'any', mt = ans.mealtype || 'any';
+
+      var bmr = 10 * w + 6.25 * h - 5 * age + (sex === 'm' ? 5 : -161);
+      var jobF = { sit: 1.25, move: 1.45, hard: 1.6 }[ans.job || 'sit'];
+      var af = jobF + { '0': 0, '1': 0.07, '3': 0.15, '5': 0.25 }[ans.ex || '1'];
+      var tdee = bmr * af;
+      var deficit = { hard: 650, mid: 500, soft: 380 }[intensity];
+      var paceWarn = false;
+      if (goal === 'cut' && targetW && targetW < w) {
+        var need = (w - targetW) / (period * 4.33) * 7700 / 7;
+        deficit = Math.round(Math.min(Math.max(need, 300), 750));
+        if (need > 750) { paceWarn = true; }
+      }
+      var effInt = (goal === 'cut' && deficit >= 620) ? 'hard' : intensity;
+      var kcal = tdee + (goal === 'cut' ? -deficit : goal === 'bulk' ? 300 : 0);
+      var floor = sex === 'm' ? 1500 : 1200;
+      kcal = Math.max(kcal, glp1 ? 1100 : floor);
+      var pRate = glp1 ? 2.0 : (goal === 'cut' ? 1.8 : goal === 'bulk' ? 1.7 : 1.4);
+      var prot = w * pRate;
+      var fat = kcal * (glp1 ? 0.20 : 0.25) / 9;
+      var carb = (kcal - prot * 4 - fat * 9) / 4;
+      if (carb < 80) { carb = 80; prot = (kcal - carb * 4 - fat * 9) / 4; }
+      kcal = Math.round(kcal / 10) * 10; prot = Math.round(prot); carb = Math.round(carb); fat = Math.round(fat);
+
+      var perMealK = kcal / 3.3;
+      var scored = P.map(function(pr) {
+        var sc = 50;
+        sc += Math.min(pr.p / pr.kcal * 100 * 3.2, 32);
+        sc -= Math.min(Math.abs(pr.kcal - perMealK) / perMealK * 30, 25);
+        sc -= pr.sugar * 1.5;
+        if (goal === 'bulk' && pr.kcal > 550) { sc += 10; }
+        if (goal === 'cut' && pr.kcal < 450) { sc += 6; }
+        if (glp1 && pr.cat === '단백질 간편식') { sc += 12; }
+        if (glp1 && pr.kcal > 500) { sc -= 10; }
+        if (sex === 'f' && pr.id === 'orig-l') { sc -= 6; }
+        if (sex === 'm' && goal !== 'keep' && pr.id === 'orig-l') { sc += 6; }
+        if (pref !== 'any' && pr.meat === pref) { sc += 8; }
+        var tasty = ['jeyuk', 'bulgogi', 'hambak', 'duck', 'lsjeyuk', 'lsbulg'].indexOf(pr.id) !== -1;
+        if (effInt === 'hard') { if (pr.kcal < 450 || pr.p / pr.kcal > 0.09) { sc += 8; } if (tasty && pr.kcal > 550) { sc -= 8; } }
+        if (effInt === 'mid' && tasty) { sc += 4; }
+        if (effInt === 'soft' && tasty) { sc += 9; }
+        if (mt === 'lowsalt') { if (pr.sodium <= 450) { sc += 7; } if (pr.sodium > 900) { sc -= 10; } else if (pr.sodium > 650) { sc -= 5; } }
+        if (mt === 'highprot') { sc += Math.min(pr.p / pr.kcal * 100, 10); }
+        if (mt === 'spicy' && pr.spicy) { sc += 9; }
+        var out = {}; for (var key in pr) { out[key] = pr[key]; } out.score = sc;
+        return out;
+      }).sort(function(a, b) { return b.score - a.score; });
+
+      var mains;
+      if (glp1) { mains = [pById('orig-s'), pById('hambak'), pById('chick150'), pById('lsjeyuk')]; }
+      else {
+        mains = scored.filter(function(x) { return x.cat === '도시락' || (x.cat === '곡물 볶음밥' && goal !== 'bulk'); }).slice(0, 4);
+        if (mains.length < 3) { mains = scored.filter(function(x) { return x.cat === '도시락'; }).slice(0, 3); }
+      }
+      var hasBf = mealn !== '2', hasSnack = mealn === '3s' || glp1 || goal !== 'keep';
+      var chB = pById(glp1 || sex === 'f' ? 'chick100' : 'chick150');
+      var coreP = (hasBf ? chB.p : 0) + mains[0].p + mains[1 % mains.length].p;
+      var chickSnack = hasSnack && !glp1 && (prot - coreP) > 12;
+
+      var mainMealN = hasBf ? 3 : 2;
+      var divisor = mainMealN + (hasSnack ? 0.5 : 0);
+      var pm = { k: Math.round(kcal / divisor / 10) * 10, c: Math.round(carb / divisor), p: Math.round(prot / divisor), f: Math.round(fat / divisor) };
+
+      var goalTxt = { cut: '감량', keep: '유지', bulk: '증량' }[goal];
+      var mtTxt = { lowsalt: '저염식', highprot: '고단백식', spicy: '매콤한 맛' }[mt] || '';
+      var intTxt = { hard: '고강도', mid: '중강도', soft: '맛있게 오래' }[effInt];
+      var paceTxt = '';
+      if (targetW && goal === 'cut' && targetW < w) {
+        paceTxt = ' · 목표 ' + targetW + 'kg, ' + period + '개월 플랜 (주 ' + (deficit * 7 / 7700).toFixed(1) + 'kg 페이스)' + (paceWarn ? ' — 기간 대비 목표가 커서 최대 안전 강도로 설계했어요' : '');
+      }
+
+      ctx = { mains: mains, hasBf: hasBf, hasSnack: hasSnack, chB: chB, chickSnack: chickSnack, glp1: glp1 };
+
+      var dayRowsHtml = [0, 1, 2].map(function(d) {
+        var n = mains.length, lunch = mains[d % n], dinner = mains[(d + 2) % n];
+        if (dinner.id === lunch.id) { dinner = mains[(d + 1) % n]; }
+        var rows = [];
+        if (hasBf) { rows.push(['아침', chB]); }
+        rows.push(['점심', lunch]); rows.push(['저녁', dinner]);
+        if (chickSnack) { rows.push(['간식', pById('chick100')]); }
+        return '<div class="yd-cu-day"><div class="yd-cu-day-h"><b>' + (d + 1) + '일차 구성</b><span>' + (d === 0 ? '오늘 시작 구성' : '메뉴 로테이션') + '</span></div>' +
+          rows.map(function(r) {
+            return '<div class="yd-cu-row"><span class="e">' + r[1].emoji + '</span><div class="t"><div><span class="yd-cu-tag">' + r[1].cat + '</span><span class="nm">' + r[1].name + '</span></div><div class="nu">' + r[0] + ' · ' + r[1].kcal + 'kcal · 단백질 ' + r[1].p + 'g · 당류 ' + r[1].sugar + 'g</div></div></div>';
+          }).join('') + '</div>';
+      }).join('');
+
+      el('result').innerHTML =
+        '<div class="yd-cu-top"><button type="button" class="yd-cu-back" data-cu="edit">‹ 답변 수정</button><div class="yd-cu-count">검사 완료 ✓</div></div>' +
+        '<div class="yd-cu-head">' +
+          '<div class="who">' + (sex === 'm' ? '남성' : '여성') + ' · ' + age + '세 · ' + h + 'cm · ' + w + 'kg · ' + goalTxt + (glp1 ? ' · 비만치료제 병행' : '') + '</div>' +
+          '<div class="k">' + kcal.toLocaleString() + '<small> kcal / 하루</small></div>' +
+          '<div class="yd-cu-macros"><div><b>' + carb + 'g</b><span>탄수화물</span></div><div><b>' + prot + 'g</b><span>단백질</span></div><div><b>' + fat + 'g</b><span>지방</span></div></div>' +
+          '<div class="note">기초대사량 ' + Math.round(bmr).toLocaleString() + 'kcal · 하루 소비 ' + Math.round(tdee).toLocaleString() + 'kcal 기준' + paceTxt + (glp1 ? '<br>💊 근손실 방지 고단백 · 소량 설계' : '') + '</div>' +
+        '</div>' +
+        '<div class="yd-cu-pm"><h4>한 끼 목표 <span>하루 ' + mainMealN + '끼' + (hasSnack ? ' + 간식' : '') + ' 기준</span></h4>' +
+          '<div class="yd-cu-pm-grid"><div><b>' + pm.k.toLocaleString() + '</b><span>kcal</span></div><div><b>' + pm.c + 'g</b><span>탄수화물</span></div><div><b>' + pm.p + 'g</b><span>단백질</span></div><div><b>' + pm.f + 'g</b><span>지방</span></div></div></div>' +
+        '<div class="yd-cu-sec"><h4>식단관리 필승템을 추천해드려요</h4><span>메뉴 단위 추천</span></div>' +
+        '<div class="yd-cu-sub" style="margin:2px 0 4px">목적(<b style="color:var(--yd-cc-olive-deep)">' + [goalTxt, intTxt, mtTxt].filter(Boolean).join(' · ') + '</b>)에 맞춰 일차별로 구색을 잡았어요</div>' +
+        dayRowsHtml +
+        '<div class="yd-cu-sec"><h4>추천 식단표</h4><span>메뉴 로테이션</span></div>' +
+        '<div class="yd-cu-tabs"><button type="button" class="yd-cu-tab on" data-days="7">1주일 식단표</button><button type="button" class="yd-cu-tab" data-days="14">2주일 식단표</button></div>' +
+        '<div class="yd-cu-wk-wrap"><div data-cu="week"></div></div>' +
+        '<details class="yd-cu-logic"><summary>이 추천, 어떻게 계산했나요?</summary><div class="b">' +
+          '<p><b>① 목표 칼로리</b> — 기초대사량(Mifflin-St Jeor)×활동계수로 하루 소비량을 구하고, 목표 체중·기간에서 필요한 하루 적자량을 역산합니다(1kg≈7,700kcal, 안전 범위 내).</p>' +
+          '<p><b>② 탄단지</b> — 단백질은 체중 1kg당 ' + pRate + 'g, 지방은 총열량의 ' + (glp1 ? 20 : 25) + '%, 나머지가 탄수화물.</p>' +
+          '<p><b>③ 제품 매칭</b> — 전 메뉴의 실제 영양성분표로 단백질 밀도·한 끼 적합도·당류·나트륨·선호·강도를 점수화합니다. 리뷰순이 아니라 내 목표와의 거리.</p>' +
+          '<p style="color:var(--yd-cc-olive)">※ 일반적 영양 기준의 참고용 안내이며, 질환이 있는 경우 전문의와 상담하세요.</p>' +
+        '</div></details>' +
+        '<a class="yd-cu-btn red" href="/shop_view/?idx=672">추천받은 도시락 담으러 가기</a>' +
+        '<a class="yd-cu-btn ghost" href="/soonsoodanback">단백질 간편식 보러 가기</a>' +
+        '<button type="button" class="yd-cu-btn ghost" data-cu="redo" style="margin-top:8px">처음부터 다시 검사하기</button>';
+
+      renderWeekTable(7);
+      qsa('.yd-cu-tab', el('result')).forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          qsa('.yd-cu-tab', el('result')).forEach(function(t2) { t2.className = 'yd-cu-tab' + (t2 === tab ? ' on' : ''); });
+          renderWeekTable(+tab.getAttribute('data-days'));
+        });
+      });
+      el('edit').addEventListener('click', function() { qi = Q.length - 1; showPane('quiz'); renderQ(); });
+      el('redo').addEventListener('click', function() { ans = {}; qi = 0; showPane('quiz'); renderQ(); });
+      showPane('result');
+
+      try {
+        var log = JSON.parse(localStorage.getItem('yd_curation_data') || '[]');
+        log.push({ t: Date.now(), ans: ans, kcal: kcal, prot: prot });
+        localStorage.setItem('yd_curation_data', JSON.stringify(log.slice(-20)));
+      } catch (e) {}
+      ydMark('curation', true, '큐레이션 결과 렌더(' + kcal + 'kcal)');
+    }
+
+    var BF_SIDE = ['삶은 계란 2개', '그릭요거트 1개', '사과 1개', '바나나 1개', '방울토마토 한 컵', '무가당 두유 1팩', '블루베리 한 컵'];
+    var LUNCH_SIDE = ['샐러드 한 접시', '오이·당근 스틱', '양배추찜', '미역국(저염)', '브로콜리 찜', '파프리카 슬라이스', '상추쌈 채소'];
+    var DINNER_SIDE = ['버섯볶음', '시금치나물', '가지구이', '콩나물국(저염)', '토마토 샐러드', '애호박전(기름 적게)', '김구이·오이무침'];
+    var SNACK_ROT = ['그릭요거트 1개', '아몬드 10알', '바나나 1개', '프로틴 쉐이크', '방울토마토 한 컵', '키위 1개', '치즈 1장·견과'];
+    function renderWeekTable(days) {
+      if (!ctx) { return; }
+      var n = ctx.mains.length;
+      var bfLabel = ctx.hasBf ? ctx.chB.name.replace('슬라이스 ', '') + (ctx.glp1 ? '' : ' + 잡곡밥') : null;
+      var rows = '';
+      for (var d = 0; d < days; d++) {
+        var lunch = ctx.mains[d % n], dinner = ctx.mains[(d + 2) % n];
+        if (dinner.id === lunch.id) { dinner = ctx.mains[(d + 1) % n]; }
+        var snackTxt = ctx.glp1 ? '소량 분식' : (ctx.chickSnack && d % 2 === 0 ? '닭가슴살 + ' + SNACK_ROT[d % 7] : SNACK_ROT[(d + 3) % 7]);
+        rows += '<tr><td class="d">DAY ' + (d + 1) + '</td>' +
+          (ctx.hasBf ? '<td>' + bfLabel + '<small>+ ' + BF_SIDE[d % 7] + '</small></td>' : '') +
+          '<td><b>' + lunch.name + '</b><small>+ ' + LUNCH_SIDE[d % 7] + '</small></td>' +
+          '<td><b>' + dinner.name + '</b>' + ((dinner.id === 'lsjeyuk' || dinner.id === 'lsbulg') ? ' + 잡곡밥' : '') + '<small>+ ' + DINNER_SIDE[d % 7] + '</small></td>' +
+          (ctx.hasSnack ? '<td>' + snackTxt + '</td>' : '') + '</tr>';
+      }
+      el('week').innerHTML = '<table class="yd-cu-wk"><tr><th></th>' + (ctx.hasBf ? '<th>아침</th>' : '') + '<th>점심</th><th>저녁</th>' + (ctx.hasSnack ? '<th>간식</th>' : '') + '</tr>' + rows + '</table>' +
+        '<div class="yd-cu-wk-note">💡 메인은 추천 상위 ' + n + '개 메뉴 로테이션(이틀 연속 중복 없음), 채소·과일 곁들임은 매일 바뀌어요.</div>';
+    }
   }
 
   /* ═══ 모바일 하단 탭바 「쇼핑」→「데이터로 관리하기」 교체 ═══
