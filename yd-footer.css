@@ -2454,8 +2454,9 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 }
 
 /* ═══ 유산소 칼로리 계산기 (/cardio-calc 전용) ═══ */
-/* 팔레트 = 사이트 구매 UI(V11 옵션시트) 브랜드 컬러 정렬 — red는 광고용 E60000이 아니라 웜 액센트 9D4035 */
-#yd-cardio-calc { --yd-cc-ground: #FFFDF9; --yd-cc-ink: #151B16; --yd-cc-red: #9D4035; --yd-cc-red-soft: #F8EFEA; --yd-cc-olive: #3B4024; --yd-cc-olive-deep: #123F24; --yd-cc-sage: #E8EEE5; --yd-cc-sage-line: #D3DCCF; --yd-cc-line: #DDE0D8; --yd-cc-grey: #5F665F; }
+/* 팔레트 = 브랜드 실측 정렬(2026-09-02) — 초록은 GNB 헤더 실측 다크 올리브 #2A341E 계열(숲녹색 123F24 아님),
+   웜 액센트는 사이트 UI용 #9D4035(광고용 E60000 아님), 라인·배경도 올리브 톤 */
+#yd-cardio-calc { --yd-cc-ground: #FFFDF9; --yd-cc-ink: #151B16; --yd-cc-red: #9D4035; --yd-cc-red-soft: #F8EFEA; --yd-cc-olive: #3B4024; --yd-cc-olive-deep: #2A341E; --yd-cc-sage: #EEF0E5; --yd-cc-sage-line: #D9DDC9; --yd-cc-line: #DDE0D8; --yd-cc-grey: #5F665F; }
 #yd-cardio-calc .yd-cc-wrap { max-width: 640px; margin: 0 auto; padding: 26px 16px 60px; font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, sans-serif; color: var(--yd-cc-ink); line-height: 1.65; font-size: 15px; text-align: left; }
 #yd-cardio-calc .yd-cc-head { padding: 2px 2px 18px; }
 #yd-cardio-calc .yd-cc-head .yd-cc-k { font-size: 11px; font-weight: 800; letter-spacing: .14em; color: var(--yd-cc-red); }
