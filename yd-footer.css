@@ -2556,21 +2556,27 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 #yd-cardio-calc .yd-cu-spin { width: 44px; height: 44px; margin: 26px auto 0; border-radius: 50%; border: 4px solid var(--yd-cc-sage); border-top-color: var(--yd-cc-olive-deep); animation: yd-cu-spin 1s linear infinite; }
 @keyframes yd-cu-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { #yd-cardio-calc .yd-cu-spin { animation: none; } }
-#yd-cardio-calc .yd-cu-head { background: var(--yd-cc-olive-deep); border-radius: 14px; padding: 16px; color: #F1EFE2; margin-top: 12px; }
-#yd-cardio-calc .yd-cu-head .k { font-size: 34px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.1; }
+#yd-cardio-calc .yd-cu-head { background: var(--yd-cc-olive-deep); border-radius: 16px; padding: 24px 22px 26px; color: #F1EFE2; margin-top: 12px; }
+#yd-cardio-calc .yd-cu-head .k { margin-top: 4px; font-size: 40px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.1; }
 #yd-cardio-calc .yd-cu-head .k small { font-size: 13.5px; font-weight: 500; opacity: .8; }
 #yd-cardio-calc .yd-cu-head .who { font-size: 13px; opacity: .85; }
-#yd-cardio-calc .yd-cu-head .lb { font-size: 12.5px; font-weight: 800; opacity: .9; margin-top: 8px; letter-spacing: -.01em; }
+#yd-cardio-calc .yd-cu-head .lb { font-size: 13.5px; font-weight: 800; opacity: .9; margin-top: 14px; letter-spacing: -.01em; }
 #yd-cardio-calc .yd-cu-head .proj { margin-top: 10px; background: rgba(255, 255, 255, .14); border-radius: 10px; padding: 9px 12px; font-size: 13.5px; font-weight: 600; line-height: 1.5; }
 #yd-cardio-calc .yd-cu-head .note { font-size: 12.5px; opacity: .85; margin-top: 6px; line-height: 1.55; }
 #yd-cardio-calc .yd-cu-macros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 #yd-cardio-calc .yd-cu-macros div { background: rgba(255,255,255,.12); border-radius: 10px; padding: 8px 4px; text-align: center; }
 #yd-cardio-calc .yd-cu-macros b { display: block; font-size: 19px; font-variant-numeric: tabular-nums; }
 #yd-cardio-calc .yd-cu-macros span { font-size: 12px; opacity: .85; }
-#yd-cardio-calc .yd-cu-pm { background: #fff; border: 1px solid var(--yd-cc-line); border-radius: 14px; padding: 13px 14px; margin-top: 10px; }
+#yd-cardio-calc .yd-cu-pm { background: #fff; border: 1px solid var(--yd-cc-line); border-radius: 16px; padding: 18px; margin-top: 12px; }
 #yd-cardio-calc .yd-cu-pm h4 { margin: 0; font-size: 13px; font-weight: 800; color: var(--yd-cc-olive-deep); display: flex; justify-content: space-between; }
 #yd-cardio-calc .yd-cu-pm h4 span { font-size: 10.5px; color: var(--yd-cc-grey); font-weight: 500; }
 #yd-cardio-calc .yd-cu-pm-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 9px; }
+#yd-cardio-calc .yd-cu-pm-grid.c3 { grid-template-columns: repeat(3, 1fr); }
+#yd-cardio-calc .yd-cu-proj { margin-top: 12px; background: var(--yd-cc-sage); border: 1px solid var(--yd-cc-sage-line); border-radius: 16px; padding: 20px 22px; font-size: 16px; font-weight: 600; color: var(--yd-cc-olive-deep); line-height: 1.6; }
+#yd-cardio-calc .yd-cu-proj b { font-weight: 900; font-size: 18px; }
+#yd-cardio-calc .yd-cu-proj em { display: block; font-style: normal; font-size: 13px; font-weight: 700; margin-top: 4px; color: var(--yd-cc-olive); }
+#yd-cardio-calc .yd-cu-proj small { display: block; margin-top: 8px; font-size: 11.5px; font-weight: 500; color: var(--yd-cc-grey); }
+#yd-cardio-calc .yd-cu-basenote { margin-top: 12px; padding: 0 4px; font-size: 12px; color: var(--yd-cc-grey); line-height: 1.65; }
 #yd-cardio-calc .yd-cu-pm-grid div { background: var(--yd-cc-sage); border-radius: 9px; text-align: center; padding: 8px 2px; }
 #yd-cardio-calc .yd-cu-pm-grid b { display: block; font-size: 17px; color: var(--yd-cc-olive-deep); font-variant-numeric: tabular-nums; }
 #yd-cardio-calc .yd-cu-pm-grid span { font-size: 11px; color: var(--yd-cc-olive); font-weight: 600; }
@@ -2664,7 +2670,11 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-head .k small { font-size: 15px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-head .who { font-size: 14px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-head .lb { font-size: 14px; }
-  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-head .proj { font-size: 15px; padding: 12px 16px; }
+  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-proj { font-size: 18px; padding: 26px 30px; }
+  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-proj b { font-size: 21px; }
+  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-proj small { font-size: 13px; }
+  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-basenote { font-size: 13.5px; }
+  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-head .k { font-size: 50px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-head .note { font-size: 13px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-macros b { font-size: 22px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-macros span { font-size: 12.5px; }

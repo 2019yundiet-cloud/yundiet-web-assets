@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_149__) {
+  if (window.__YD_FOOTER_V3_150__) {
     return;
   }
-  window.__YD_FOOTER_V3_149__ = true;
+  window.__YD_FOOTER_V3_150__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.149', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.150', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6888,14 +6888,15 @@
           '</div></div><p>' + whyCopy(p2, wi) + '</p></div>';
       }).join('');
 
-      /* 감량/증량 예상 — 하루 적자(섭취 기준)를 선택 기간으로 환산(1kg≈7,700kcal, 1개월≈30.4일) */
+      /* 감량/증량 예상 — 하루 적자(섭취 기준)를 선택 기간으로 환산(1kg≈7,700kcal, 1개월≈30.4일).
+         다크 히어로에 몰아넣지 않고 독립 카드로 분리(빼곡함 지적, 2026-09-02) */
       var projTxt = '';
       if (goal === 'cut' && deficit > 0) {
         var lossKg = Math.round(deficit * 30.4 * period / 7700 * 10) / 10;
-        projTxt = '<div class="proj">이대로 <b>' + period + '개월</b> 진행하면 약 <b>' + lossKg + 'kg 감량</b>이 예상돼요' + (targetW && targetW < w ? ' — 목표 ' + targetW + 'kg 페이스' : '') + '</div>';
+        projTxt = '<div class="yd-cu-proj">📉 이대로 <b>' + period + '개월</b> 진행하면<br>약 <b>' + lossKg + 'kg 감량</b>이 예상돼요' + (targetW && targetW < w ? '<em>목표 ' + targetW + 'kg 페이스</em>' : '') + '<small>섭취 칼로리 기준 · 1kg ≈ 7,700kcal 환산</small></div>';
       } else if (goal === 'bulk') {
         var gainKg = Math.round(300 * 30.4 * period / 7700 * 10) / 10;
-        projTxt = '<div class="proj">이대로 <b>' + period + '개월</b> 진행하면 약 <b>' + gainKg + 'kg 증량</b> 페이스예요</div>';
+        projTxt = '<div class="yd-cu-proj">📈 이대로 <b>' + period + '개월</b> 진행하면<br>약 <b>' + gainKg + 'kg 증량</b> 페이스예요<small>섭취 칼로리 기준 · 1kg ≈ 7,700kcal 환산</small></div>';
       }
 
       el('result').innerHTML =
@@ -6904,12 +6905,13 @@
           '<div class="who">' + (sex === 'm' ? '남성' : '여성') + ' · ' + age + '세 · ' + h + 'cm · ' + w + 'kg · ' + goalTxt + (glp1 ? ' · 비만치료제 병행' : '') + '</div>' +
           '<div class="lb">목표 달성을 위한 1일 권장 섭취량</div>' +
           '<div class="k">' + kcal.toLocaleString() + '<small> kcal</small></div>' +
-          '<div class="yd-cu-macros"><div><b>' + carb + 'g</b><span>탄수화물</span></div><div><b>' + prot + 'g</b><span>단백질</span></div><div><b>' + fat + 'g</b><span>지방</span></div></div>' +
-          projTxt +
-          '<div class="note">기초대사량 ' + Math.round(bmr).toLocaleString() + 'kcal · 하루 소비 ' + Math.round(tdee).toLocaleString() + 'kcal — 위 권장량과 감량 예상은 <b>섭취 칼로리 기준</b>이에요' + paceTxt + (glp1 ? '<br>💊 근손실 방지 고단백 · 소량 설계' : '') + '</div>' +
         '</div>' +
+        projTxt +
+        '<div class="yd-cu-pm"><h4>1일 권장 탄·단·지</h4>' +
+          '<div class="yd-cu-pm-grid c3"><div><b>' + carb + 'g</b><span>탄수화물</span></div><div><b>' + prot + 'g</b><span>단백질</span></div><div><b>' + fat + 'g</b><span>지방</span></div></div></div>' +
         '<div class="yd-cu-pm"><h4>목표 달성을 위한 한 끼 권장 섭취량 <span>하루 ' + mainMealN + '끼' + (hasSnack ? ' + 간식' : '') + ' 기준</span></h4>' +
           '<div class="yd-cu-pm-grid"><div><b>' + pm.k.toLocaleString() + '</b><span>kcal</span></div><div><b>' + pm.c + 'g</b><span>탄수화물</span></div><div><b>' + pm.p + 'g</b><span>단백질</span></div><div><b>' + pm.f + 'g</b><span>지방</span></div></div></div>' +
+        '<div class="yd-cu-basenote">기초대사량 ' + Math.round(bmr).toLocaleString() + 'kcal · 하루 소비 ' + Math.round(tdee).toLocaleString() + 'kcal — 권장량과 감량 예상은 섭취 칼로리 기준이에요' + paceTxt + (glp1 ? '<br>💊 근손실 방지 고단백 · 소량 설계' : '') + '</div>' +
         '<div class="yd-cu-sec"><h4>왜 이 메뉴냐면요</h4><span>' + [goalTxt, intTxt, mtTxt].filter(Boolean).join(' · ') + ' 기준</span></div>' +
         '<div class="yd-cu-copy">판매순·리뷰순이 아니에요. 방금 답해주신 13가지로 계산한 <b>내 한 끼 목표 ' + pm.k.toLocaleString() + 'kcal · 하루 단백질 ' + prot + 'g</b>을 기준으로, 메뉴마다 넣은 이유를 적어뒀어요.</div>' +
         whyHtml +
@@ -7303,7 +7305,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.149] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.150] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
