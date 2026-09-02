@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_145__) {
+  if (window.__YD_FOOTER_V3_146__) {
     return;
   }
-  window.__YD_FOOTER_V3_145__ = true;
+  window.__YD_FOOTER_V3_146__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.145', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.146', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6780,6 +6780,49 @@
                  비만치료제 병행은 소량 설계 유지 — 450kcal 이하 도시락만 */
               dishPool: scored.filter(function(x) { return x.cat === '도시락' && (!glp1 || x.kcal <= 450); }) };
 
+      /* 메뉴별 추천 이유 설명 — 세일즈가 아니라 "이 고객의 목표를 어떻게 돕는지"를
+         내 숫자(한 끼 목표·하루 단백질·목표 유형·답변)와 연결해 2~3문장으로 설명한다. */
+      function whyCopy(pr, vi) {
+        var pct = Math.min(99, Math.round(pr.p / prot * 100));
+        var s = [];
+        if (pr.cat === '단백질 간편식') {
+          s.push('밥 없이 단백질 ' + pr.p + 'g만 채우는 메뉴예요. 뭘 먹을지 애매한 ' + (hasBf ? '아침·간식' : '간식') + '에 이걸 끼우면, 부족해지기 쉬운 하루 단백질 목표 ' + prot + 'g의 ' + pct + '%가 조용히 채워져요.');
+          if (glp1) { s.push('비만치료제 감량분의 25~40%는 근육으로 빠질 수 있어요 — 적게 먹는 지금일수록 단백질 밀도가 높은 메뉴가 근육을 지켜줘요.'); }
+          else if (pr.sugar <= 0.5) { s.push('당류 ' + pr.sugar + 'g — 혈당을 흔들지 않아서, 먹고 나서 단 게 더 당기는 악순환이 없어요.'); }
+        } else {
+          var dk = Math.round(pm.k - pr.kcal);
+          if (dk >= 0) {
+            s.push('한 끼 목표 ' + pm.k.toLocaleString() + 'kcal보다 ' + dk + 'kcal 가벼운 ' + pr.kcal + 'kcal — 이 끼니는 계산하지 않고 다 드셔도 목표 안이에요.');
+          } else {
+            s.push(pr.kcal + 'kcal로 한 끼 목표보다 ' + Math.abs(dk) + 'kcal 높지만, 단백질 ' + pr.p + 'g이 포만감을 오래 끌어서 간식·야식이 줄어요. 다음 끼니만 가볍게 가면 하루 총량은 지켜져요.');
+          }
+          if (glp1) {
+            s.push('약으로 식사량이 줄어든 지금, 한 팩에 단백질 ' + pr.p + 'g — 감량분이 근육으로 빠지지 않게 소량·고단백으로 설계된 선택이에요.');
+          } else if (goal === 'cut') {
+            /* 같은 근거 문장이 카드마다 반복되지 않게 메뉴 순번으로 로테이션 */
+            s.push([
+              '단백질은 ' + pr.p + 'g, 하루 목표의 ' + pct + '% — 감량 때 지방보다 근육이 먼저 빠지는 걸 막아주는 양이에요.',
+              '단백질 ' + pr.p + 'g을 챙기면 같은 감량이어도 근육이 남아요 — 요요를 막는 건 결국 근육량이에요.',
+              '한 끼 단백질 ' + pr.p + 'g — 배고픔을 가장 오래 막아주는 영양소라, 저녁 폭식을 줄이는 실전 장치예요.',
+              '단백질 ' + pr.p + 'g(하루 목표의 ' + pct + '%) — 단백질이 많은 끼니는 소화에 열량을 더 써서 같은 칼로리여도 유리해요.'
+            ][vi % 4]);
+          } else if (goal === 'bulk') {
+            s.push([
+              '단백질 ' + pr.p + 'g — 하루 목표의 ' + pct + '%. 늘린 칼로리가 지방이 아니라 근육으로 가게 하는 재료예요.',
+              '한 끼 단백질 ' + pr.p + 'g — 증량기에는 매 끼니 단백질을 고르게 나눠 먹는 게 합성에 가장 유리해요.'
+            ][vi % 2]);
+          } else {
+            s.push([
+              '단백질 ' + pr.p + 'g(하루 목표의 ' + pct + '%) — 유지 기간에도 근육량과 기초대사량을 지켜줘요.',
+              '한 끼 단백질 ' + pr.p + 'g — 체중이 그대로여도 근육을 지키면 몸의 라인과 컨디션이 달라져요.'
+            ][vi % 2]);
+          }
+          if (mt === 'lowsalt' && pr.sodium <= 600) { s.push('나트륨 ' + pr.sodium + 'mg — 저염식으로 답해주셔서, 짠 메뉴는 순위에서 뺐어요.'); }
+          else if (mt === 'spicy' && pr.spicy) { s.push('매콤한 맛 — 매운 게 당기는 날, 배달앱으로 새지 않게 식단 안에서 해결하라고 넣었어요.'); }
+          else if (effInt === 'soft' && ['jeyuk', 'bulgogi', 'duck', 'hambak'].indexOf(pr.id) !== -1) { s.push('"맛있게 오래"를 고르셨죠 — 식단은 맛있어야 계속돼요. 맛 때문에 무너지지 말라고 넣은 메뉴예요.'); }
+        }
+        return s.slice(0, 3).join(' ');
+      }
       /* 추천 이유 키워드 칩 — 숫자 박힌 카피로 "왜 이 메뉴인지"를 직관적으로 */
       function reasonTags(pr) {
         var t = [];
@@ -6807,6 +6850,17 @@
           }).join('') + '</div>';
       }).join('');
 
+      var whyUniq = {}, whyMenus = [];
+      mains.concat(hasBf ? [chB] : []).concat(chickSnack ? [pById('chick100')] : []).forEach(function(p2) {
+        if (p2 && !whyUniq[p2.id]) { whyUniq[p2.id] = 1; whyMenus.push(p2); }
+      });
+      var whyHtml = whyMenus.map(function(p2, wi) {
+        return '<div class="yd-cu-why"><div class="w-h"><span class="e">' + p2.emoji + '</span><div class="w-t">' +
+          '<div class="nm2">' + p2.name + '</div>' +
+          '<div class="tg"><i class="c">' + p2.cat + '</i>' + reasonTags(p2).map(function(x) { return '<i>' + x + '</i>'; }).join('') + '</div>' +
+          '</div></div><p>' + whyCopy(p2, wi) + '</p></div>';
+      }).join('');
+
       el('result').innerHTML =
         '<div class="yd-cu-top"><button type="button" class="yd-cu-back" data-cu="edit">‹ 답변 수정</button><div class="yd-cu-count">검사 완료 ✓</div></div>' +
         '<div class="yd-cu-head">' +
@@ -6818,7 +6872,10 @@
         '<div class="yd-cu-pm"><h4>한 끼 목표 <span>하루 ' + mainMealN + '끼' + (hasSnack ? ' + 간식' : '') + ' 기준</span></h4>' +
           '<div class="yd-cu-pm-grid"><div><b>' + pm.k.toLocaleString() + '</b><span>kcal</span></div><div><b>' + pm.c + 'g</b><span>탄수화물</span></div><div><b>' + pm.p + 'g</b><span>단백질</span></div><div><b>' + pm.f + 'g</b><span>지방</span></div></div></div>' +
         '<div class="yd-cu-sec"><h4>왜 이 메뉴냐면요</h4><span>' + [goalTxt, intTxt, mtTxt].filter(Boolean).join(' · ') + ' 기준</span></div>' +
-        '<div class="yd-cu-copy">리뷰 많은 순이 아니에요 — <b>내 한 끼 목표 ' + pm.k.toLocaleString() + 'kcal · 단백질 ' + pm.p + 'g</b>에 가장 가까운 메뉴만 골랐어요</div>' +
+        '<div class="yd-cu-copy">판매순·리뷰순이 아니에요. 방금 답해주신 13가지로 계산한 <b>내 한 끼 목표 ' + pm.k.toLocaleString() + 'kcal · 하루 단백질 ' + prot + 'g</b>을 기준으로, 메뉴마다 넣은 이유를 적어뒀어요.</div>' +
+        whyHtml +
+        '<div class="yd-cu-sec"><h4>이렇게 드셔보세요</h4><span>이틀 연속 같은 메뉴 없음</span></div>' +
+        '<div class="yd-cu-copy">점심·저녁은 위 메뉴를 번갈아 — 질리지 않아야 식단이 계속되니까요.</div>' +
         dayRowsHtml +
         '<details class="yd-cu-logic"><summary>이 추천, 어떻게 계산했나요?</summary><div class="b">' +
           '<p><b>① 목표 칼로리</b> — 기초대사량(Mifflin-St Jeor)×활동계수로 하루 소비량을 구하고, 목표 체중·기간에서 필요한 하루 적자량을 역산합니다(1kg≈7,700kcal, 안전 범위 내).</p>' +
@@ -7207,7 +7264,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.145] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.146] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
