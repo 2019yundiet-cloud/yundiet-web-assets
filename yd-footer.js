@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_142__) {
+  if (window.__YD_FOOTER_V3_143__) {
     return;
   }
-  window.__YD_FOOTER_V3_142__ = true;
+  window.__YD_FOOTER_V3_143__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.142', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.143', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6369,11 +6369,13 @@
     }
   } catch (err) {}
 
-  /* ═══ 데이터로 관리하기 카드 목록 + 유산소 칼로리 계산기 (/cardio-calc 전용) ═══
+  /* ═══ 데이터로 관리하기 허브 + 도구 전용 페이지 (/cardio-calc 전용) ═══
      「데이터로 관리하기」 페이지. 페이지의 코드 위젯(#yd-cardio-calc)에 렌더링한다.
-     - 구조: 섹션 헤더 + 큐레이션 카드 목록(아코디언, 기본 닫힘). 카드 추가 = CARDS 배열에
-       { id, title, sub, render(container) } 한 항목 추가만으로 완결.
-     - 열고 닫기는 클래스 토글(display 유지)이라 카드 내부 상태(입력값)는 보존된다.
+     - 허브(/cardio-calc): 섹션 헤더 + 도구 링크 카드 목록. 카드 클릭 = 도구 전용 페이지로 이동.
+       (아코디언 폐지 — 펼침 영역이 작아 이용 불편, 2026-09-02 소유자 지시)
+     - 도구 페이지(/cardio-calc?tool=<id>): 도구 하나를 전체 폭으로 렌더 + 하단에
+       [홈으로 돌아가기]·[다른 데이터 도구 보러 가기] 플로우 버튼.
+     - 도구 추가 = CARDS 배열에 { id, title, sub, render(container) } 한 항목 추가만으로 완결.
      - 계산기 로직: MET × 체중(kg) × 시간(h), 5kcal 반올림 (릴스 정본과 동일 — 60kg·60분 천국의 계단 = 540)
      - 순수 소모: Mifflin-St Jeor 기초대사 차감
      - CTA: 임시로 전체상품(/main) 연결 (랜딩 상품 확정 시 교체) */
@@ -6388,6 +6390,37 @@
     if (root.getAttribute('data-yd-booted') === '1') { return; }
     root.setAttribute('data-yd-booted', '1');
 
+    var CARDS = [
+      { id: 'curation', title: '1분 맞춤 식단 큐레이션', sub: '13문항으로 하루 목표 · 추천 메뉴 · 1·2주 식단표까지', render: renderCurationBody },
+      { id: 'cardio', title: '유산소 1시간, 기구별로 몇 kcal 태울까?', sub: '내 키·몸무게 기준으로 헬스장 유산소 기구 8종 비교', render: renderCardioBody }
+    ];
+
+    var toolId = '';
+    try { toolId = new URLSearchParams(location.search).get('tool') || ''; } catch (err) {}
+    var tool = CARDS.filter(function(c) { return c.id === toolId; })[0];
+
+    if (tool) {
+      root.innerHTML =
+        '<div class="yd-cc-wrap">' +
+          '<a class="yd-cc-crumb" href="/cardio-calc">‹ 데이터로 관리하기</a>' +
+          '<div class="yd-cc-head">' +
+            '<div class="yd-cc-k">YUNDIET · DATA</div>' +
+            '<h2></h2>' +
+            '<p></p>' +
+          '</div>' +
+          '<div class="yd-cc-toolcard"></div>' +
+          '<div class="yd-cc-flow">' +
+            '<a class="home" href="/main">홈으로 돌아가기</a>' +
+            '<a class="more" href="/cardio-calc">다른 데이터 도구 보러 가기</a>' +
+          '</div>' +
+        '</div>';
+      root.querySelector('.yd-cc-head h2').textContent = tool.title;
+      root.querySelector('.yd-cc-head p').textContent = tool.sub;
+      tool.render(root.querySelector('.yd-cc-toolcard'));
+      ydMark('cardioCalc', true, '도구 전용 페이지 렌더(' + tool.id + ')');
+      return;
+    }
+
     root.innerHTML =
       '<div class="yd-cc-wrap">' +
         '<div class="yd-cc-head">' +
@@ -6398,37 +6431,23 @@
         '<div class="yd-cc-cards"></div>' +
       '</div>';
 
-    var CARDS = [
-      { id: 'curation', title: '1분 맞춤 식단 큐레이션', sub: '13문항으로 하루 목표 · 추천 메뉴 · 1·2주 식단표까지', render: renderCurationBody },
-      { id: 'cardio', title: '유산소 1시간, 기구별로 몇 kcal 태울까?', sub: '내 키·몸무게 기준으로 헬스장 유산소 기구 8종 비교', render: renderCardioBody }
-    ];
-
     var cardsEl = root.querySelector('.yd-cc-cards');
     CARDS.forEach(function(card) {
-      var sec = document.createElement('section');
-      sec.className = 'yd-cc-card';
-      sec.setAttribute('data-card', card.id);
-      var bodyId = 'yd-cc-body-' + card.id;
-      sec.innerHTML =
-        '<button type="button" class="yd-cc-card-head" aria-expanded="false" aria-controls="' + bodyId + '">' +
+      var a = document.createElement('a');
+      a.className = 'yd-cc-card';
+      a.setAttribute('data-card', card.id);
+      a.href = '/cardio-calc?tool=' + card.id;
+      a.innerHTML =
+        '<span class="yd-cc-card-head">' +
           '<span class="yd-cc-card-tt"><b></b><span></span></span>' +
-          '<span class="yd-cc-card-chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '</button>' +
-        '<div class="yd-cc-card-body" id="' + bodyId + '" role="region"><div class="yd-cc-card-clip"></div></div>';
-      sec.querySelector('.yd-cc-card-tt b').textContent = card.title;
-      sec.querySelector('.yd-cc-card-tt span').textContent = card.sub;
-      sec.querySelector('.yd-cc-card-body').setAttribute('aria-label', card.title);
-      var head = sec.querySelector('.yd-cc-card-head');
-      head.addEventListener('click', function() {
-        var open = sec.className.indexOf('is-open') === -1;
-        sec.className = open ? 'yd-cc-card is-open' : 'yd-cc-card';
-        head.setAttribute('aria-expanded', String(open));
-      });
-      card.render(sec.querySelector('.yd-cc-card-clip'));
-      cardsEl.appendChild(sec);
+          '<span class="yd-cc-card-chev go" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '</span>';
+      a.querySelector('.yd-cc-card-tt b').textContent = card.title;
+      a.querySelector('.yd-cc-card-tt span').textContent = card.sub;
+      cardsEl.appendChild(a);
     });
 
-    ydMark('cardioCalc', true, '카드 목록 렌더 완료(' + CARDS.length + '장, 기본 닫힘)');
+    ydMark('cardioCalc', true, '허브 카드 렌더(' + CARDS.length + '장 → 도구 전용 페이지 링크)');
   }
 
   function renderCardioBody(root) {
@@ -6548,7 +6567,8 @@
      - 계산: Mifflin-St Jeor 기초대사 × 활동계수, 목표체중·기간에서 하루 적자 역산(1kg≈7,700kcal, 300~750 클램프)
      - 추천: 단백질 밀도·한끼 적합도·당류·나트륨·선호단백질·식사유형·관리강도 점수화 (리뷰순 아님)
      - 입력·결과는 localStorage(yd_curation_data, 최근 20건)에 적재 — 추후 회원 연동용
-     - CTA는 실판매 상품으로 연결: 단품 골라담기(672) · 순수단백 카테고리 */
+     - CTA: 추천 구성을 실판매 옵션(672 단품 골라담기·1198 곡물볶음밥)에 매핑해 장바구니에 실제로 담는다
+       (담기 확증은 장바구니 API 재조회 — 하단 실담기 블록 주석 참고) · 보조 CTA는 순수단백 카테고리 */
   function renderCurationBody(root) {
     var P = [
       { id: 'orig-l', cat: '도시락', meat: 'chicken', name: '닭가슴살 도시락 L', kcal: 507, p: 50.1, sugar: 0.8, sodium: 497, emoji: '🍱' },
@@ -6783,7 +6803,8 @@
           '<p><b>③ 제품 매칭</b> — 전 메뉴의 실제 영양성분표로 단백질 밀도·한 끼 적합도·당류·나트륨·선호·강도를 점수화합니다. 리뷰순이 아니라 내 목표와의 거리.</p>' +
           '<p style="color:var(--yd-cc-olive)">※ 일반적 영양 기준의 참고용 안내이며, 질환이 있는 경우 전문의와 상담하세요.</p>' +
         '</div></details>' +
-        '<a class="yd-cu-btn red" href="/shop_view/?idx=672">추천받은 도시락 담으러 가기</a>' +
+        '<button type="button" class="yd-cu-btn red" data-cu="cartopen">추천 구성 장바구니에 담기</button>' +
+        '<div data-cu="cartbox"></div>' +
         '<a class="yd-cu-btn ghost" href="/soonsoodanback">단백질 간편식 보러 가기</a>' +
         '<button type="button" class="yd-cu-btn ghost" data-cu="redo" style="margin-top:8px">처음부터 다시 검사하기</button>';
 
@@ -6796,6 +6817,7 @@
       });
       el('edit').addEventListener('click', function() { qi = Q.length - 1; showPane('quiz'); renderQ(); });
       el('redo').addEventListener('click', function() { ans = {}; qi = 0; showPane('quiz'); renderQ(); });
+      bindCartAdd();
       showPane('result');
 
       try {
@@ -6827,6 +6849,210 @@
       }
       el('week').innerHTML = '<table class="yd-cu-wk"><tr><th></th>' + (ctx.hasBf ? '<th>아침</th>' : '') + '<th>점심</th><th>저녁</th>' + (ctx.hasSnack ? '<th>간식</th>' : '') + '</tr>' + rows + '</table>' +
         '<div class="yd-cu-wk-note">💡 메인은 추천 상위 ' + n + '개 메뉴 로테이션(이틀 연속 중복 없음), 채소·과일 곁들임은 매일 바뀌어요.</div>';
+    }
+
+    /* ═══ 추천 구성 장바구니 실담기 ═══
+       추천 메뉴를 실판매 상품 옵션에 매핑해 add_cart 계약(cartCarryAddItem)으로 실제로 담는다.
+       - 매핑 키는 옵션 "이름" 정규식 — 옵션 코드는 관리자 수정 시 바뀌므로 클릭 시점에
+         OMS_get_product로 실옵션을 대조해 코드·가격·판매상태를 확정한다.
+       - 도시락·간편식 팩은 672(단품 골라담기)의 필수/추가구성 옵션, 커리는 1198.
+       - 672는 필수옵션(도시락) 없이 추가구성만은 담기지 않는다 — 담기 전 검증.
+       - 담기 확증은 네이티브 팝업이 아니라 장바구니 API 재조회의 옵션별 수량 증가로만 판정. */
+    var CART_MAP = {
+      'orig-l': { prod: 672, m: /^\[L\]\s*오리지널\s*단백밥/ },
+      'orig-s': { prod: 672, m: /^\[S\]\s*오리지널\s*단백밥/ },
+      'bulgogi': { prod: 672, m: /단짠\s*불고기/ },
+      'jeyuk': { prod: 672, m: /직화\s*제육볶음/ },
+      'duck': { prod: 672, m: /훈제오리/ },
+      'chick100': { prod: 672, m: /닭가슴살\s*100g/ },
+      'chick150': { prod: 672, m: /닭가슴살\s*150g/ },
+      'lsjeyuk': { prod: 672, m: /저당\s*직화제육/ },
+      'lsbulg': { prod: 672, m: /저당\s*석쇠불고기/ },
+      'hambak': { prod: 672, m: /저당함박\s*150g/ },
+      'bal-cur': { prod: 1198, m: /마살라\s*핫\s*커리/ },
+      'bal-tom': null
+    };
+
+    function recommendedItems() {
+      var list = ctx.mains.slice();
+      if (ctx.hasBf) { list.push(ctx.chB); }
+      if (ctx.chickSnack) { list.push(pById('chick100')); }
+      var seen = {}, out = [];
+      list.forEach(function(p) { if (p && !seen[p.id]) { seen[p.id] = 1; out.push(p); } });
+      return out;
+    }
+    function fetchProd(idx) {
+      return fetch('/ajax/oms/OMS_get_product.cm?prod_idx=' + encodeURIComponent(idx), {
+        credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' }
+      }).then(function(r) {
+        if (!r.ok) { throw new Error('prod_http_' + r.status); }
+        return r.json();
+      }).then(function(j) {
+        if (!j || !j.data) { throw new Error('prod_schema'); }
+        return j.data;
+      });
+    }
+    function arrz(x) { return Array.isArray(x) ? x : (x == null ? [] : [x]); }
+    function matchOption(product, rx) {
+      var groups = Array.isArray(product.options) ? product.options : [];
+      for (var g = 0; g < groups.length; g++) {
+        var grp = groups[g], vals = grp.value_list || {};
+        for (var code in vals) {
+          if (!rx.test(String(vals[code]))) { continue; }
+          var req = grp.is_require === true || grp.is_require === 'Y' || grp.is_require === 1;
+          var detail = (Array.isArray(product.options_detail) ? product.options_detail : []).filter(function(d) {
+            var oc = arrz(d.option_code_list), vc = arrz(d.value_code_list);
+            return oc.length === 1 && String(oc[0]) === String(grp.code) && String(vc[0]) === String(code);
+          })[0];
+          if (!detail || String(detail.status || '').toUpperCase() !== 'SALE') { return null; }
+          /* OMS 응답의 옵션상세 코드 필드는 code — 장바구니 API의 option_detail_code와 같은 값(실측) */
+          return { req: req, dc: detail.option_detail_code || detail.code, price: Number(detail.price) || 0,
+                   oc: [String(grp.code)], vc: [String(code)], on: [String(grp.name)], vn: [String(vals[code])] };
+        }
+      }
+      return null;
+    }
+    function buildCandidates() {
+      var items = recommendedItems();
+      var prodSet = {};
+      items.forEach(function(p) { var mp = CART_MAP[p.id]; if (mp) { prodSet[mp.prod] = 1; } });
+      var idxs = Object.keys(prodSet);
+      return Promise.all(idxs.map(fetchProd)).then(function(datas) {
+        var byIdx = {};
+        idxs.forEach(function(idx, i) { byIdx[idx] = datas[i]; });
+        return items.map(function(p) {
+          var mp = CART_MAP[p.id];
+          var product = mp && byIdx[mp.prod];
+          var orderable = product && product.deleted !== true && String(product.prod_status || '').toLowerCase() === 'sale';
+          return {
+            p: p,
+            prod: mp && mp.prod,
+            tpl: (product && product.shipping_template_code) || '',
+            opt: (mp && orderable) ? matchOption(product, mp.m) : null
+          };
+        });
+      });
+    }
+    function cartSnapshot() {
+      return fetch(CONFIG.CART_API, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' } })
+        .then(function(r) {
+          if (!r.ok) { throw new Error('cart_http_' + r.status); }
+          return r.json();
+        });
+    }
+    function verifyAdded(before, expect, round) {
+      return cartSnapshot().then(function(payload) {
+        var now = cartCarryPayloadCounts(payload);
+        var missing = Object.keys(expect).filter(function(key) {
+          return (cartCarryCount(now[key]) || 0) < (cartCarryCount(before[key]) || 0) + expect[key];
+        });
+        if (!missing.length) { return true; }
+        if (round >= 8) { throw new Error('cart_verify_missing_' + missing.length); }
+        return new Promise(function(res) { window.setTimeout(res, 400); }).then(function() {
+          return verifyAdded(before, expect, round + 1);
+        });
+      });
+    }
+    function bindCartAdd() {
+      var btn = el('cartopen'), box = el('cartbox');
+      if (!btn || !box) { return; }
+      var fallbackHtml = '<div class="yd-cu-cart"><div class="yd-cu-cart-msg err">상품 정보를 불러오지 못했어요. ' +
+        '<a href="/shop_view/?idx=672" style="color:inherit;text-decoration:underline">상품 페이지에서 직접 담기 ›</a></div></div>';
+
+      btn.addEventListener('click', function() {
+        if (btn.disabled) { return; }
+        btn.disabled = true; btn.textContent = '추천 구성 확인 중…';
+        buildCandidates().then(function(cands) {
+          btn.disabled = false; btn.textContent = '추천 구성 장바구니에 담기';
+          renderConfirm(cands);
+        }).catch(function(err) {
+          btn.disabled = false; btn.textContent = '추천 구성 장바구니에 담기';
+          box.innerHTML = fallbackHtml;
+          ydTrace('큐레이션 담기 구성 조회 실패: ' + String(err && err.message || err).slice(0, 60));
+        });
+      });
+
+      function renderConfirm(cands) {
+        var ok = cands.filter(function(c) { return !!c.opt; });
+        var off = cands.filter(function(c) { return !c.opt; });
+        if (!ok.length) { box.innerHTML = fallbackHtml; return; }
+        box.innerHTML =
+          '<div class="yd-cu-cart"><h5>담을 구성을 확인해 주세요</h5>' +
+          ok.map(function(c, i) {
+            return '<label class="yd-cu-cart-row"><input type="checkbox" checked data-i="' + i + '">' +
+              '<span class="nm">' + c.opt.vn[0] + '<small>' + c.p.name + (c.prod === 672 && !c.opt.req ? ' · 추가구성 팩' : '') + '</small></span>' +
+              '<span class="pr">' + c.opt.price.toLocaleString() + '원</span></label>';
+          }).join('') +
+          off.map(function(c) {
+            return '<div class="yd-cu-cart-row off"><span class="nm">' + c.p.name + '<small>지금은 온라인 단품 구성에 없어 함께 담기지 않아요</small></span></div>';
+          }).join('') +
+          '<div class="yd-cu-cart-total"><span>합계</span><b data-cu="carttotal"></b></div>' +
+          '<div class="yd-cu-cart-msg" data-cu="cartmsg">각 1개씩 담겨요 — 수량은 장바구니에서 조절할 수 있어요.</div>' +
+          '<button type="button" class="yd-cu-btn red" data-cu="cartgo" style="margin-top:10px">이대로 장바구니에 담기</button>' +
+          '</div>';
+        function selected() {
+          return qsa('input[type=checkbox]', box).filter(function(c2) { return c2.checked; })
+            .map(function(c2) { return ok[+c2.getAttribute('data-i')]; });
+        }
+        function updateTotal() {
+          var sum = selected().reduce(function(s, c2) { return s + c2.opt.price; }, 0);
+          box.querySelector('[data-cu="carttotal"]').textContent = sum.toLocaleString() + '원';
+        }
+        qsa('input[type=checkbox]', box).forEach(function(c2) { c2.addEventListener('change', updateTotal); });
+        updateTotal();
+        var goBtn = box.querySelector('[data-cu="cartgo"]');
+        goBtn.addEventListener('click', function() { doAdd(selected(), goBtn); });
+        if (box.scrollIntoView) { box.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+      }
+
+      function doAdd(sel, goBtn) {
+        var msg = box.querySelector('[data-cu="cartmsg"]');
+        if (!sel.length) {
+          msg.className = 'yd-cu-cart-msg err';
+          msg.textContent = '담을 구성을 1개 이상 선택해 주세요.';
+          return;
+        }
+        var has672 = sel.some(function(c) { return c.prod === 672; });
+        var has672Req = sel.some(function(c) { return c.prod === 672 && c.opt.req; });
+        if (has672 && !has672Req) {
+          msg.className = 'yd-cu-cart-msg err';
+          msg.textContent = '추가구성 팩은 도시락과 함께만 담을 수 있어요 — 도시락 메뉴를 1개 이상 선택해 주세요.';
+          return;
+        }
+        goBtn.disabled = true; goBtn.textContent = '담는 중…';
+        msg.className = 'yd-cu-cart-msg'; msg.textContent = '';
+        var plans = {};
+        sel.forEach(function(c) {
+          var plan = plans[c.prod] = plans[c.prod] || { prodIdx: c.prod, tpl: c.tpl, missing: [] };
+          plan.missing.push({ dc: c.opt.dc, req: c.opt.req, cnt: 1, up: c.opt.price,
+                              oc: c.opt.oc, vc: c.opt.vc, on: c.opt.on, vn: c.opt.vn });
+        });
+        var expect = {};
+        sel.forEach(function(c) {
+          var key = cartCarryOptionKey(c.prod, { option_detail_code: c.opt.dc });
+          expect[key] = (expect[key] || 0) + 1;
+        });
+        var before = null;
+        cartSnapshot().then(function(payload) {
+          before = cartCarryPayloadCounts(payload);
+          return Object.keys(plans).reduce(function(chain, k) {
+            return chain.then(function() { return cartCarryAddItem(plans[k], plans[k].missing, 0); });
+          }, Promise.resolve());
+        }).then(function() {
+          return verifyAdded(before, expect, 0);
+        }).then(function() {
+          box.innerHTML =
+            '<div class="yd-cu-cart"><h5>장바구니에 담았어요 ✓</h5>' +
+            '<div class="yd-cu-cart-msg">' + sel.length + '개 구성이 장바구니에 담긴 것을 확인했어요. 수량은 장바구니에서 조절할 수 있어요.</div>' +
+            '<a class="yd-cu-btn red" href="/shop_cart" style="margin-top:10px">장바구니 확인하기</a></div>';
+          ydTrace('큐레이션 실담기 ' + sel.length + '건 — 장바구니 재조회로 확증');
+        }).catch(function(err) {
+          goBtn.disabled = false; goBtn.textContent = '이대로 장바구니에 담기';
+          msg.className = 'yd-cu-cart-msg err';
+          msg.innerHTML = '장바구니 반영을 확인하지 못했어요. <a href="/shop_view/?idx=672" style="color:inherit;text-decoration:underline">상품 페이지에서 직접 담기 ›</a>';
+          ydTrace('큐레이션 실담기 실패: ' + String(err && err.message || err).slice(0, 60));
+        });
+      }
     }
   }
 
@@ -6873,6 +7099,50 @@
     }, 4000);
   }
 
+  /* ═══ GNB 「데이터로 관리하기」 드롭다운 → 허브 직행 ═══
+     GNB의 데이터로 관리하기 탭은 아임웹 대카테고리(/459, has_child)라 클릭하면 작은
+     드롭다운 서브메뉴가 열리는 구조 — 클릭 즉시 /cardio-calc(데이터 허브)로 이동하게 바꾼다.
+     - /459 앵커 전부 href 교체(데스크톱 GNB·모바일 헤더·서브메뉴 공통, 멱등 가드)
+     - 캡처 단계 클릭 가로채기로 dropdown-toggle의 preventDefault(토글만 하고 이동 안 함) 무력화
+     - /459 카테고리 페이지로 직접 진입한 경우도 허브로 즉시 이동
+     - 데스크톱 hover 드롭다운(CSS)은 그대로 두되, 서브메뉴 항목도 각자 링크로 동작 */
+  var gnbDataDirectBooted = false;
+  function bindGnbDataDirect() {
+    if (gnbDataDirectBooted) { return; }
+    gnbDataDirectBooted = true;
+    if (/^\/459\/?$/.test(location.pathname)) {
+      ydMark('gnbDataDirect', true, '/459 진입 → /cardio-calc 이동');
+      window.location.replace('/cardio-calc');
+      return;
+    }
+    function apply() {
+      var n = 0;
+      qsa('a[href="/459"]').forEach(function(a) {
+        if (a.getAttribute('data-yd-gnb-direct')) { return; }
+        a.setAttribute('data-yd-gnb-direct', '1');
+        a.setAttribute('href', '/cardio-calc');
+        n++;
+      });
+      return n;
+    }
+    document.addEventListener('click', function(e) {
+      var t = e.target;
+      var a = t && t.closest ? t.closest('a[data-yd-gnb-direct]') : null;
+      if (!a) { return; }
+      e.preventDefault();
+      e.stopPropagation();
+      window.location.href = '/cardio-calc';
+    }, true);
+    var n = apply();
+    ydMark('gnbDataDirect', true, 'GNB 데이터 탭 직행 교체 ' + n + '건');
+    /* 지연 렌더(모바일 메뉴 등) 대비 재시도 — 멱등 */
+    window.setTimeout(apply, 1500);
+    window.setTimeout(function() {
+      var total = apply();
+      if (total) { ydMark('gnbDataDirect', true, 'GNB 데이터 탭 직행 교체 +' + total + '건(지연분)'); }
+    }, 4000);
+  }
+
   /* 옵션 플로우는 본문 파싱 직후 즉시 부팅 (yd-bs-root 가드로 중복 방지) */
   try { bindOptionFlow(); } catch (err) {}
 
@@ -6880,6 +7150,9 @@
      조기 탭 시 /shop_all 이동을 줄인다. 탭바 섹션은 본문 정적 DOM이라 이 시점에 이미 존재.
      data-yd-datatab 멱등 가드로 onReady 재호출과 충돌 없음. */
   try { bindDataTabSwap(); } catch (err) {}
+
+  /* GNB 데이터 탭 직행도 즉시 부팅 — 헤더는 정적 DOM이라 이 시점에 존재. 부팅 1회 가드. */
+  try { bindGnbDataDirect(); } catch (err) {}
 
 
   onReady(function() {
@@ -6896,6 +7169,7 @@
       bindCardioCalc();
     }
     bindDataTabSwap();
+    bindGnbDataDirect();
 
     bindOptionKeepOpen();
     bindCartAwareFreeShip();
@@ -6934,7 +7208,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.142] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.143] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
