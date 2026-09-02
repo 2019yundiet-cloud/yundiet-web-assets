@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_136__) {
+  if (window.__YD_FOOTER_V3_137__) {
     return;
   }
-  window.__YD_FOOTER_V3_136__ = true;
+  window.__YD_FOOTER_V3_137__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.136', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.137', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6367,6 +6367,141 @@
     }
   } catch (err) {}
 
+  /* ═══ 유산소 칼로리 계산기 (/cardio-calc 전용) ═══
+     「데이터로 관리하기」 소카테고리 페이지. 페이지의 코드 위젯(#yd-cardio-calc)에 렌더링한다.
+     - 로직: MET × 체중(kg) × 시간(h), 5kcal 반올림 (릴스 정본과 동일 — 60kg·60분 천국의 계단 = 540)
+     - 순수 소모: Mifflin-St Jeor 기초대사 차감
+     - CTA: 임시로 전체상품(/main) 연결 (랜딩 상품 확정 시 교체) */
+  function bindCardioCalc() {
+    var root = document.getElementById('yd-cardio-calc');
+    if (!root) {
+      if (/^\/cardio-calc\/?$/.test(location.pathname)) {
+        ydMark('cardioCalc', false, '플레이스홀더(#yd-cardio-calc) 미발견');
+      }
+      return;
+    }
+    if (root.getAttribute('data-yd-booted') === '1') { return; }
+    root.setAttribute('data-yd-booted', '1');
+
+    var MACHINES = [
+      { id: 'run',     name: '러닝머신 달리기',        sub: '9.7km/h',       met: 9.8 },
+      { id: 'stair',   name: '천국의 계단',            sub: '스텝밀',         met: 9.0 },
+      { id: 'jog',     name: '러닝머신 조깅',          sub: '8km/h',         met: 8.3 },
+      { id: 'incline', name: '마이마운틴 (경사 걷기)', sub: '경사 6~15%',    met: 8.0 },
+      { id: 'bike',    name: '실내 자전거',            sub: '보통 강도',      met: 7.0 },
+      { id: 'row',     name: '로잉머신',               sub: '보통 강도',      met: 7.0 },
+      { id: 'elli',    name: '일립티컬',               sub: '보통 강도',      met: 5.0 },
+      { id: 'walk',    name: '러닝머신 걷기',          sub: '5.6km/h',       met: 4.3 }
+    ];
+    var state = { sex: 'M', age: 30, ht: 170, wt: 60, mn: 60, pick: 'stair' };
+    var maxMet = MACHINES.reduce(function(m, x) { return Math.max(m, x.met); }, 0);
+    function round5(v) { return Math.round(v / 5) * 5; }
+    function kcal(met) { return met * state.wt * (state.mn / 60); }
+    function bmr() {
+      var base = 10 * state.wt + 6.25 * state.ht - 5 * state.age;
+      return base + (state.sex === 'M' ? 5 : -161);
+    }
+
+    root.innerHTML =
+      '<div class="yd-cc-wrap">' +
+        '<div class="yd-cc-crumb">데이터로 관리하기 <i>›</i> <b>유산소 칼로리 계산기</b></div>' +
+        '<div class="yd-cc-calc">' +
+          '<div class="yd-cc-h">' +
+            '<div class="yd-cc-k">YUNDIET · 데이터로 관리하기</div>' +
+            '<h3>유산소 1시간, 기구별로 몇 kcal 태울까?</h3>' +
+            '<p>내 키·몸무게 기준으로 헬스장 유산소 기구 8종을 한 번에 비교해요.</p>' +
+          '</div>' +
+          '<div class="yd-cc-seg" role="group" aria-label="성별">' +
+            '<button type="button" data-sex="M" aria-pressed="true">남성</button>' +
+            '<button type="button" data-sex="F" aria-pressed="false">여성</button>' +
+          '</div>' +
+          '<div class="yd-cc-fields">' +
+            [['age', '나이', '세', 15, 80, 1, 30], ['ht', '키', 'cm', 140, 200, 1, 170], ['wt', '몸무게', 'kg', 35, 150, 1, 60], ['mn', '운동 시간', '분', 5, 120, 5, 60]].map(function(f) {
+              return '<div class="yd-cc-field">' +
+                '<div class="yd-cc-row"><label for="yd-cc-' + f[0] + '">' + f[1] + '</label>' +
+                '<div class="yd-cc-readout"><span data-v="' + f[0] + '">' + f[6] + '</span><span class="yd-cc-u">' + f[2] + '</span></div></div>' +
+                '<input type="range" class="yd-cc-range" id="yd-cc-' + f[0] + '" data-k="' + f[0] + '" min="' + f[3] + '" max="' + f[4] + '" step="' + f[5] + '" value="' + f[6] + '">' +
+                '</div>';
+            }).join('') +
+          '</div>' +
+          '<div class="yd-cc-rank">' +
+            '<div class="yd-cc-rank-h"><span>기구별 소모 칼로리</span><span data-v="hint">60kg · 60분 기준</span></div>' +
+            '<div class="yd-cc-list"></div>' +
+          '</div>' +
+          '<div class="yd-cc-console" aria-live="polite">' +
+            '<div class="yd-cc-who">선택: <b data-v="pickName">천국의 계단</b> · <span data-v="pickTime">60분</span></div>' +
+            '<div class="yd-cc-big"><span class="yd-cc-n" data-v="bigN">540</span><span class="yd-cc-unit">KCAL</span></div>' +
+            '<div class="yd-cc-facts">' +
+              '<div class="yd-cc-fact"><div class="yd-cc-fk">가만히 있어도 쓰는 양 빼면</div><div class="yd-cc-fv"><span data-v="netN">470</span><i>kcal</i></div></div>' +
+              '<div class="yd-cc-fact"><div class="yd-cc-fk">밥 한 공기(310kcal) 환산</div><div class="yd-cc-fv"><span data-v="riceN">1.7</span><i>공기</i></div></div>' +
+              '<div class="yd-cc-fact"><div class="yd-cc-fk">체지방 환산</div><div class="yd-cc-fv"><span data-v="fatN">70</span><i>g</i></div></div>' +
+              '<div class="yd-cc-fact"><div class="yd-cc-fk">분당 소모</div><div class="yd-cc-fv"><span data-v="perMin">9.0</span><i>kcal</i></div></div>' +
+            '</div>' +
+          '</div>' +
+          '<a class="yd-cc-cta" href="/main">태운 만큼, 먹는 걸 지키는 게 절반입니다<small>윤식단 맞춤 식단 보러 가기</small></a>' +
+          '<div class="yd-cc-foot">소모 칼로리 = MET × 체중(kg) × 시간(h), 운동강도 국제표준표(Compendium) 보통 강도 기준, 5kcal 반올림 · 순수 소모는 기초대사량(Mifflin-St Jeor) 차감 · 실제 소모량은 경사·속도·심박에 따라 20% 이상 차이 날 수 있어요.</div>' +
+        '</div>' +
+      '</div>';
+
+    function v(key) { return root.querySelector('[data-v="' + key + '"]'); }
+    var list = root.querySelector('.yd-cc-list');
+    MACHINES.forEach(function(m) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'yd-cc-machine';
+      b.setAttribute('data-id', m.id);
+      b.setAttribute('aria-pressed', String(m.id === state.pick));
+      b.innerHTML = '<span class="yd-cc-bar"></span>' +
+        '<span class="yd-cc-name"><b></b><span></span></span>' +
+        '<span class="yd-cc-val"><em style="font-style:normal"></em><i>kcal</i></span>';
+      b.querySelector('.yd-cc-name b').textContent = m.name;
+      b.querySelector('.yd-cc-name span').textContent = m.sub + ' · MET ' + m.met.toFixed(1);
+      b.addEventListener('click', function() { state.pick = m.id; render(); });
+      list.appendChild(b);
+    });
+
+    function render() {
+      v('age').textContent = state.age;
+      v('ht').textContent = state.ht;
+      v('wt').textContent = state.wt;
+      v('mn').textContent = state.mn;
+      v('hint').textContent = state.wt + 'kg · ' + state.mn + '분 기준';
+      qsa('.yd-cc-machine', root).forEach(function(el) {
+        var m = MACHINES.filter(function(x) { return x.id === el.getAttribute('data-id'); })[0];
+        el.setAttribute('aria-pressed', String(m.id === state.pick));
+        el.querySelector('.yd-cc-bar').style.width = (m.met / maxMet * 100) + '%';
+        el.querySelector('.yd-cc-val em').textContent = round5(kcal(m.met)).toLocaleString();
+      });
+      var m = MACHINES.filter(function(x) { return x.id === state.pick; })[0];
+      var total = kcal(m.met);
+      var net = Math.max(0, total - bmr() / 1440 * state.mn);
+      v('pickName').textContent = m.name;
+      v('pickTime').textContent = state.mn + '분';
+      v('bigN').textContent = round5(total).toLocaleString();
+      v('netN').textContent = round5(net).toLocaleString();
+      v('riceN').textContent = (total / 310).toFixed(1);
+      v('fatN').textContent = Math.round(total / 7.7).toLocaleString();
+      v('perMin').textContent = (total / state.mn).toFixed(1);
+    }
+    qsa('input.yd-cc-range', root).forEach(function(input) {
+      input.addEventListener('input', function(e) {
+        state[e.target.getAttribute('data-k')] = +e.target.value;
+        render();
+      });
+    });
+    qsa('.yd-cc-seg button', root).forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        state.sex = btn.getAttribute('data-sex');
+        qsa('.yd-cc-seg button', root).forEach(function(b2) {
+          b2.setAttribute('aria-pressed', String(b2 === btn));
+        });
+        render();
+      });
+    });
+    render();
+    ydMark('cardioCalc', true, '계산기 렌더 완료');
+  }
+
   /* 옵션 플로우는 본문 파싱 직후 즉시 부팅 (yd-bs-root 가드로 중복 방지) */
   try { bindOptionFlow(); } catch (err) {}
 
@@ -6382,6 +6517,7 @@
       bindCustomProductModal();
       bindCartKakaoBanner();
       bindBrandStoryFeed();
+      bindCardioCalc();
     }
 
     bindOptionKeepOpen();
@@ -6421,7 +6557,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.136] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.137] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
