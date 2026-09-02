@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_141__) {
+  if (window.__YD_FOOTER_V3_142__) {
     return;
   }
-  window.__YD_FOOTER_V3_141__ = true;
+  window.__YD_FOOTER_V3_142__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.141', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.142', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6876,6 +6876,11 @@
   /* 옵션 플로우는 본문 파싱 직후 즉시 부팅 (yd-bs-root 가드로 중복 방지) */
   try { bindOptionFlow(); } catch (err) {}
 
+  /* 하단 탭바 쇼핑→데이터 관리 교체도 즉시 부팅 — onReady 대기 중 쇼핑 탭 노출(FOUC)·
+     조기 탭 시 /shop_all 이동을 줄인다. 탭바 섹션은 본문 정적 DOM이라 이 시점에 이미 존재.
+     data-yd-datatab 멱등 가드로 onReady 재호출과 충돌 없음. */
+  try { bindDataTabSwap(); } catch (err) {}
+
 
   onReady(function() {
     bindHeaderLogoResolution();
@@ -6929,7 +6934,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.141] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.142] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

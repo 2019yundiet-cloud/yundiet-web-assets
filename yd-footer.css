@@ -2441,6 +2441,17 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 .yd-datatab-patch span { font-size: 12px; line-height: 1; letter-spacing: -0.04em; white-space: nowrap; font-family: inherit; font-weight: 500; }
 .yd-datatab-patch.yd-datatab-on { color: #3D4224; }
 .yd-datatab-patch.yd-datatab-on span { font-weight: 700; }
+/* CSS 선패치(FOUC 차단): JS 부팅 전에도 CSS 도착 즉시 쇼핑 슬롯을 덮는다.
+   - 스코프: /main 앵커를 가진 이미지맵(_img_box) = 하단 탭바 확증(:has 미지원 구형은 기존 JS 패치로 폴백)
+   - JS가 적용되면 href가 /cardio-calc로 바뀌고 data-yd-datatab이 붙어 이 룰은 자동 해제(이중 렌더 없음)
+   - 아이콘·배치·색은 .yd-datatab-patch와 동일(차트 SVG는 데이터 URI, 텍스트 하단 15px·아이콘 28px·간격 3px) */
+.widget.image_map ._img_box:has(a[href="/main"]) a[href="/shop_all"]:not([data-yd-datatab])::after {
+  content: "데이터 관리"; position: absolute; top: 0; bottom: 0; left: -8px; right: -8px;
+  background: #fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238C8C8C' stroke-width='1.6' stroke-linecap='round'%3E%3Cline x1='5.5' y1='21.5' x2='5.5' y2='14'/%3E%3Cline x1='12' y1='21.5' x2='12' y2='2.5'/%3E%3Cline x1='18.5' y1='21.5' x2='18.5' y2='8.5'/%3E%3C/svg%3E") no-repeat center calc(100% - 30px) / 28px 28px;
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 15px;
+  font-size: 12px; line-height: 1; letter-spacing: -0.04em; font-weight: 500; color: #8C8C8C;
+  white-space: nowrap; pointer-events: none;
+}
 
 /* ═══ 유산소 칼로리 계산기 (/cardio-calc 전용) ═══ */
 #yd-cardio-calc { --yd-cc-ground: #FFFEFA; --yd-cc-ink: #191919; --yd-cc-red: #E60000; --yd-cc-red-soft: #FFF4EF; --yd-cc-olive: #3B4024; --yd-cc-olive-deep: #123F24; --yd-cc-sage: #EDF4E9; --yd-cc-sage-line: #D5E1D5; --yd-cc-line: #E0E4DE; --yd-cc-grey: #8A8378; }
