@@ -2454,7 +2454,8 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 }
 
 /* ═══ 유산소 칼로리 계산기 (/cardio-calc 전용) ═══ */
-#yd-cardio-calc { --yd-cc-ground: #FFFEFA; --yd-cc-ink: #191919; --yd-cc-red: #E60000; --yd-cc-red-soft: #FFF4EF; --yd-cc-olive: #3B4024; --yd-cc-olive-deep: #123F24; --yd-cc-sage: #EDF4E9; --yd-cc-sage-line: #D5E1D5; --yd-cc-line: #E0E4DE; --yd-cc-grey: #8A8378; }
+/* 팔레트 = 사이트 구매 UI(V11 옵션시트) 브랜드 컬러 정렬 — red는 광고용 E60000이 아니라 웜 액센트 9D4035 */
+#yd-cardio-calc { --yd-cc-ground: #FFFDF9; --yd-cc-ink: #151B16; --yd-cc-red: #9D4035; --yd-cc-red-soft: #F8EFEA; --yd-cc-olive: #3B4024; --yd-cc-olive-deep: #123F24; --yd-cc-sage: #E8EEE5; --yd-cc-sage-line: #D3DCCF; --yd-cc-line: #DDE0D8; --yd-cc-grey: #5F665F; }
 #yd-cardio-calc .yd-cc-wrap { max-width: 640px; margin: 0 auto; padding: 26px 16px 60px; font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, sans-serif; color: var(--yd-cc-ink); line-height: 1.65; font-size: 15px; text-align: left; }
 #yd-cardio-calc .yd-cc-head { padding: 2px 2px 18px; }
 #yd-cardio-calc .yd-cc-head .yd-cc-k { font-size: 11px; font-weight: 800; letter-spacing: .14em; color: var(--yd-cc-red); }
@@ -2480,7 +2481,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 #yd-cardio-calc .yd-cc-calc { border-top: 1px solid var(--yd-cc-line); padding: 18px 16px 22px; display: flex; flex-direction: column; gap: 18px; }
 #yd-cardio-calc .yd-cc-seg { display: flex; gap: 8px; }
 #yd-cardio-calc .yd-cc-seg button { flex: 1; appearance: none; cursor: pointer; background: var(--yd-cc-ground); border: 1px solid var(--yd-cc-line); border-radius: 9px; color: var(--yd-cc-grey); font-family: inherit; font-size: 13.5px; font-weight: 600; padding: 9px 0; transition: all .15s; }
-#yd-cardio-calc .yd-cc-seg button[aria-pressed="true"] { background: var(--yd-cc-ink); border-color: var(--yd-cc-ink); color: #fff; font-weight: 700; }
+#yd-cardio-calc .yd-cc-seg button[aria-pressed="true"] { background: var(--yd-cc-olive); border-color: var(--yd-cc-olive); color: #fff; font-weight: 700; }
 #yd-cardio-calc .yd-cc-fields { display: flex; flex-direction: column; gap: 14px; }
 #yd-cardio-calc .yd-cc-field .yd-cc-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 5px; }
 #yd-cardio-calc .yd-cc-field label { font-size: 13px; color: var(--yd-cc-grey); font-weight: 600; margin: 0; }
@@ -2626,7 +2627,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
    /cardio-calc에는 하단 탭바 섹션이 없어 충돌 없음. z는 아임웹 모달(17000)보다 아래. */
 #yd-cardio-calc .yd-cc-flow { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9000; display: flex; flex-direction: row; justify-content: center; gap: 10px; margin: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(255, 254, 250, .95); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid var(--yd-cc-line); box-shadow: 0 -8px 26px rgba(25, 25, 25, .07); }
 #yd-cardio-calc .yd-cc-flow a { display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 13px; font-size: 15.5px; font-weight: 800; text-decoration: none !important; }
-#yd-cardio-calc .yd-cc-flow a.home { flex: 1 1 auto; max-width: 520px; background: var(--yd-cc-ink); color: #fff !important; }
+#yd-cardio-calc .yd-cc-flow a.home { flex: 1 1 auto; max-width: 520px; background: var(--yd-cc-olive-deep); color: #fff !important; }
 #yd-cardio-calc .yd-cc-flow a.more { flex: 0 0 auto; padding: 0 18px; border: 1px solid var(--yd-cc-line); background: #fff; color: var(--yd-cc-olive) !important; white-space: nowrap; }
 #yd-cardio-calc .yd-cc-wrap.is-tool { padding-bottom: 110px; }
 /* ═══ 데스크톱 확장 레이아웃 — 640px 좁은 칼럼·작은 타이포가 화면을 못 채우던 문제 수리 ═══ */
