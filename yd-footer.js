@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_150__) {
+  if (window.__YD_FOOTER_V3_151__) {
     return;
   }
-  window.__YD_FOOTER_V3_150__ = true;
+  window.__YD_FOOTER_V3_151__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.150', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.151', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6392,6 +6392,9 @@
 
     var CARDS = [
       { id: 'curation', title: '1분 맞춤 식단 큐레이션', sub: '13문항으로 하루 목표 · 추천 메뉴 · 1·2주 시작 플랜까지', render: renderCurationBody },
+      { id: 'dday', title: 'D-day 체중 시뮬레이터', sub: '결혼식·휴가까지, 하루 한 끼 바꾸면 몇 kg 가능한지', render: renderDdayBody },
+      { id: 'recovery', title: '어제 좀 과했나요? 복구 플래너', sub: '초과 칼로리를 며칠에 나눠 되돌리는 회복 설계', render: renderRecoveryBody },
+      { id: 'yoyo', title: '요요 시뮬레이터', sub: '예전 식습관으로 돌아가면 몇 주 만에 원상복구될까', render: renderYoyoBody },
       { id: 'cardio', title: '유산소 1시간, 기구별로 몇 kcal 태울까?', sub: '내 키·몸무게 기준으로 헬스장 유산소 기구 8종 비교', render: renderCardioBody }
     ];
 
@@ -6448,6 +6451,319 @@
     });
 
     ydMark('cardioCalc', true, '허브 카드 렌더(' + CARDS.length + '장 → 도구 전용 페이지 링크)');
+  }
+
+  function ydSimGraph(opts) {
+    function esc(v) {
+      return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    var html = '<svg class="yd-gr-svg" viewBox="0 0 340 190" role="img" aria-label="체중 변화 시뮬레이션 그래프">';
+    [35, 95, 155].forEach(function(y) {
+      html += '<line class="yd-gr-grid" x1="42" y1="' + y + '" x2="328" y2="' + y + '"></line>';
+    });
+    (opts.series || []).forEach(function(s) {
+      var points = (s.pts || []).map(function(p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+      html += '<polyline class="' + esc(s.cls) + '" points="' + points + '"></polyline>';
+    });
+    (opts.xLabels || []).forEach(function(x) {
+      html += '<text class="yd-gr-axis" x="' + x.x.toFixed(1) + '" y="180" text-anchor="middle">' + esc(x.text) + '</text>';
+    });
+    (opts.yLabels || []).forEach(function(y) {
+      html += '<text class="yd-gr-axis" x="36" y="' + (y.y + 4).toFixed(1) + '" text-anchor="end">' + esc(y.text) + '</text>';
+    });
+    if (opts.marker) {
+      var label = String(opts.marker.label);
+      var pillW = Math.min(138, Math.max(72, label.length * 6.2 + 18));
+      var pillX = Math.max(42, Math.min(328 - pillW, opts.marker.x - pillW / 2));
+      var pillY = Math.max(3, opts.marker.y - 29);
+      html += '<circle class="yd-gr-dot" cx="' + opts.marker.x.toFixed(1) + '" cy="' + opts.marker.y.toFixed(1) + '" r="5"></circle>' +
+        '<rect class="yd-gr-pill" x="' + pillX.toFixed(1) + '" y="' + pillY.toFixed(1) + '" width="' + pillW.toFixed(1) + '" height="20" rx="10"></rect>' +
+        '<text class="yd-gr-pill-text" x="' + (pillX + pillW / 2).toFixed(1) + '" y="' + (pillY + 13.5).toFixed(1) + '" text-anchor="middle">' + esc(label) + '</text>';
+    }
+    return html + '</svg>';
+  }
+
+  function renderDdayBody(root) {
+    var state = { sex: 'M', age: 30, ht: 170, wt: 70, activity: 'sit', meals: 7 };
+    var today = new Date();
+    today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    function addDays(date, days) { var d = new Date(date.getTime()); d.setDate(d.getDate() + days); return d; }
+    function pad2(v) { return v < 10 ? '0' + v : String(v); }
+    function dateValue(date) {
+      return date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate());
+    }
+    function dayDiff(date) {
+      return Math.round((Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) / 86400000);
+    }
+    function one(v) { return (Math.round(v * 10) / 10).toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+    state.dday = addDays(today, 56);
+    var fields = [
+      ['age', '나이', '세', 15, 80, 1, 30],
+      ['ht', '키', 'cm', 140, 200, 1, 170],
+      ['wt', '몸무게', 'kg', 35, 150, 1, 70]
+    ];
+
+    root.innerHTML =
+      '<div class="yd-cc-calc">' +
+        '<div class="yd-cc-seg" role="group" aria-label="성별">' +
+          '<button type="button" data-dd-sex="M" aria-pressed="true">남성</button>' +
+          '<button type="button" data-dd-sex="F" aria-pressed="false">여성</button>' +
+        '</div>' +
+        '<div class="yd-cc-fields">' + fields.map(function(f) {
+          return '<div class="yd-cc-field"><div class="yd-cc-row"><label for="yd-dd-' + f[0] + '">' + f[1] + '</label>' +
+            '<div class="yd-cc-readout"><span data-dd-v="' + f[0] + '">' + f[6].toLocaleString() + '</span><span class="yd-cc-u">' + f[2] + '</span></div></div>' +
+            '<input type="range" class="yd-cc-range" id="yd-dd-' + f[0] + '" data-dd-k="' + f[0] + '" min="' + f[3] + '" max="' + f[4] + '" step="' + f[5] + '" value="' + f[6] + '"></div>';
+        }).join('') + '</div>' +
+        '<div class="yd-cc-field"><div class="yd-cc-row"><label>활동량</label></div>' +
+          '<div class="yd-cc-seg" role="group" aria-label="활동량">' +
+            '<button type="button" data-dd-activity="sit" aria-pressed="true">주로 앉아서</button>' +
+            '<button type="button" data-dd-activity="stand" aria-pressed="false">서 있는 편</button>' +
+            '<button type="button" data-dd-activity="hard" aria-pressed="false">몸 쓰는 일</button>' +
+          '</div></div>' +
+        '<div class="yd-dd-datebox"><div class="yd-dd-badge" data-dd-v="badge">D-56</div>' +
+          '<input type="date" class="yd-dd-date" aria-label="D-day 날짜" min="' + dateValue(addDays(today, 14)) + '" max="' + dateValue(addDays(today, 168)) + '" value="' + dateValue(state.dday) + '"></div>' +
+        '<div class="yd-cc-field yd-dd-main"><div class="yd-cc-row"><label for="yd-dd-meals">일주일에 몇 끼를 윤식단으로 바꿀까요?</label>' +
+          '<div class="yd-cc-readout"><span data-dd-v="meals">주 ' + state.meals.toLocaleString() + '끼</span></div></div>' +
+          '<input type="range" class="yd-cc-range" id="yd-dd-meals" data-dd-k="meals" min="0" max="14" step="1" value="7"></div>' +
+        '<div class="yd-gr-wrap" data-dd-v="graph"></div>' +
+        '<div class="yd-dd-result" data-dd-v="result" aria-live="polite"></div>' +
+        '<div><a class="yd-cu-btn red" href="/cardio-calc?tool=curation">그 한 끼, 내 몸에 맞게 고르기 — 1분 큐레이션</a>' +
+          '<a class="yd-cu-btn ghost" href="/main">전체 메뉴 보기</a></div>' +
+        '<div class="yd-cu-basenote">일반적 영양 기준의 참고용 시뮬레이션이며 실제 변화는 개인차가 있어요 · 섭취 칼로리 기준</div>' +
+      '</div>';
+
+    function v(key) { return root.querySelector('[data-dd-v="' + key + '"]'); }
+    function render() {
+      var days = Math.max(14, dayDiff(state.dday));
+      var bmr = 10 * state.wt + 6.25 * state.ht - 5 * state.age + (state.sex === 'M' ? 5 : -161);
+      var tdee = bmr * { sit: 1.25, stand: 1.45, hard: 1.6 }[state.activity];
+      var rawDaily = state.meals * 350 / 7;
+      var capDaily = state.wt * 0.01 * 7700 / 7;
+      var capped = rawDaily > capDaily;
+      var daily = Math.min(rawDaily, capDaily);
+      var loss = daily * days / 7700;
+      var high = state.wt + 0.3;
+      var low = state.wt - loss - 0.3;
+      if (high - low < 1) { low = high - 1; }
+      function sy(weight) { return 35 + (high - weight) / (high - low) * 120; }
+      var basePts = [[42, sy(state.wt)], [328, sy(state.wt)]];
+      var mainPts = [];
+      var d;
+      for (d = 0; d <= days; d += 7) {
+        mainPts.push([42 + 286 * d / days, sy(state.wt - daily * d / 7700)]);
+      }
+      if (d - 7 !== days) { mainPts.push([328, sy(state.wt - loss)]); }
+      var totalWeeks = days / 7;
+      var xLabels = [{ x: 42, text: '오늘' }];
+      if (totalWeeks >= 4) {
+        xLabels.push({ x: 42 + 286 / 3, text: Math.round(totalWeeks / 3).toLocaleString() + '주' });
+        xLabels.push({ x: 42 + 286 * 2 / 3, text: Math.round(totalWeeks * 2 / 3).toLocaleString() + '주' });
+      } else {
+        xLabels.push({ x: 42 + 286 / 2, text: Math.max(1, Math.round(totalWeeks / 2)).toLocaleString() + '주' });
+      }
+      xLabels.push({ x: 328, text: 'D-day' });
+      v('graph').innerHTML = ydSimGraph({
+        series: [{ pts: basePts, cls: 'yd-gr-base' }, { pts: mainPts, cls: 'yd-gr-main' }],
+        xLabels: xLabels,
+        yLabels: [{ y: 35, text: one(high) + 'kg' }, { y: 95, text: one((high + low) / 2) + 'kg' }, { y: 155, text: one(low) + 'kg' }],
+        marker: loss < 0.05 ? null : { x: 328, y: sy(state.wt - loss), label: 'D-day −' + one(loss) + 'kg' }
+      });
+      v('age').textContent = state.age.toLocaleString();
+      v('ht').textContent = state.ht.toLocaleString();
+      v('wt').textContent = state.wt.toLocaleString();
+      v('meals').textContent = '주 ' + state.meals.toLocaleString() + '끼';
+      v('badge').textContent = 'D-' + days.toLocaleString() + ' · ' + (state.dday.getMonth() + 1).toLocaleString() + '월 ' + state.dday.getDate().toLocaleString() + '일';
+      v('result').setAttribute('data-tdee', String(Math.round(tdee)));
+      if (state.meals === 0) {
+        v('result').innerHTML = '한 끼도 바꾸지 않으면 D-day 체중은 그대로예요<small>섭취 칼로리 기준 · 한 끼 교체당 −350kcal(외식·배달 한 끼 평균 대비) · 주당 감량은 체중의 1% 이내로 제한</small>';
+      } else {
+        v('result').innerHTML = 'D-' + days.toLocaleString() + ', 주 ' + state.meals.toLocaleString() + '끼면 <b>약 ' + one(loss) + 'kg 감량</b>이 가능해요' +
+          '<small>섭취 칼로리 기준 · 한 끼 교체당 −350kcal(외식·배달 한 끼 평균 대비) · 주당 감량은 체중의 1% 이내로 제한' +
+          (capped ? ' · 안전 상한(주 −' + one(state.wt * 0.01) + 'kg) 적용' : '') + '</small>';
+      }
+    }
+    qsa('input.yd-cc-range[data-dd-k]', root).forEach(function(input) {
+      input.addEventListener('input', function(e) { state[e.target.getAttribute('data-dd-k')] = +e.target.value; render(); });
+    });
+    qsa('[data-dd-sex]', root).forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        state.sex = btn.getAttribute('data-dd-sex');
+        qsa('[data-dd-sex]', root).forEach(function(b) { b.setAttribute('aria-pressed', String(b === btn)); });
+        render();
+      });
+    });
+    qsa('[data-dd-activity]', root).forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        state.activity = btn.getAttribute('data-dd-activity');
+        qsa('[data-dd-activity]', root).forEach(function(b) { b.setAttribute('aria-pressed', String(b === btn)); });
+        render();
+      });
+    });
+    root.querySelector('.yd-dd-date').addEventListener('input', function(e) {
+      var bits = e.target.value.split('-');
+      if (bits.length === 3) {
+        var parsed = new Date(+bits[0], +bits[1] - 1, +bits[2]);
+        var minDate = addDays(today, 14);
+        var maxDate = addDays(today, 168);
+        if (parsed < minDate) { parsed = minDate; }
+        if (parsed > maxDate) { parsed = maxDate; }
+        state.dday = parsed;
+        e.target.value = dateValue(parsed);
+        render();
+      }
+    });
+    render();
+  }
+
+  function renderRecoveryBody(root) {
+    var FOODS = [
+      ['치킨 한 마리', 1800], ['삼겹살+소주', 1600], ['마라탕+꿔바로우', 1400], ['떡볶이 세트', 1300],
+      ['피자 반 판', 1200], ['맥주 4캔+안주', 1200], ['야식 라면+밥', 800], ['케이크·디저트', 600]
+    ];
+    var LIGHT = [
+      ['닭가슴살 도시락 S', 408, 38], ['슬라이스 닭가슴살 150g', 158, 36],
+      ['그릴드 훈제오리 도시락', 585, 29], ['닭가슴살 도시락 L', 507, 50.1]
+    ];
+    var TIPS = ['물 2L', '30분 걷기', '나트륨 줄이기', '취침 3시간 전 마감', '단백질 먼저'];
+    var selected = {};
+    root.innerHTML =
+      '<div class="yd-cc-calc">' +
+        '<div class="yd-cu-copy">하루 과식으로 찌는 진짜 지방은 생각보다 적어요. 대부분은 글리코겐과 수분 — 며칠만 계획적으로 돌아오면 없던 일이 됩니다.</div>' +
+        '<div><div class="yd-cu-sec"><h4>어제 뭘 드셨나요?</h4><span>여러 개 선택</span></div>' +
+          '<div class="yd-rc-grid">' + FOODS.map(function(f, i) {
+            return '<button type="button" class="yd-cu-chip" data-rc-idx="' + i + '" aria-pressed="false">' + f[0] + '<small>' + f[1].toLocaleString() + 'kcal</small></button>';
+          }).join('') + '</div></div>' +
+        '<div class="yd-rc-sum" data-rc="sum">어제 추가로 약 0kcal</div>' +
+        '<button type="button" class="yd-cu-btn red" data-rc="make">복구 플랜 만들기</button>' +
+        '<div class="yd-rc-output" data-rc="output" aria-live="polite"></div>' +
+        '<div class="yd-cu-basenote">일반적 영양 기준의 참고용 시뮬레이션이며 실제 변화는 개인차가 있어요 · 섭취 칼로리 기준</div>' +
+      '</div>';
+    function total() {
+      return FOODS.reduce(function(sum, f, i) { return sum + (selected[i] ? f[1] : 0); }, 0);
+    }
+    qsa('[data-rc-idx]', root).forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var i = +btn.getAttribute('data-rc-idx');
+        selected[i] = !selected[i];
+        btn.classList.toggle('sel', selected[i]);
+        btn.setAttribute('aria-pressed', String(!!selected[i]));
+        root.querySelector('[data-rc="sum"]').textContent = '어제 추가로 약 ' + total().toLocaleString() + 'kcal';
+        root.querySelector('[data-rc="output"]').innerHTML = '';
+      });
+    });
+    root.querySelector('[data-rc="make"]').addEventListener('click', function() {
+      var sum = total();
+      var output = root.querySelector('[data-rc="output"]');
+      if (!sum) {
+        output.innerHTML = '<div class="yd-cu-cart-msg err">어제 드신 걸 1개 이상 선택해 주세요</div>';
+        return;
+      }
+      var excess = Math.max(0, sum - 600);
+      if (excess === 0) {
+        output.innerHTML = '<div class="yd-rc-result">이 정도면 평소 저녁 한 끼 범위예요 — 복구 플랜 없이, 오늘 평소 식사로 돌아가기만 하면 됩니다.</div>' +
+          '<a class="yd-cu-btn red" href="/cardio-calc?tool=curation">복구 식단 메뉴 담으러 가기 — 1분 큐레이션</a>';
+        return;
+      }
+      var days = Math.min(5, Math.max(2, Math.ceil(excess / 600)));
+      var daily = Math.round(excess / days / 10) * 10;
+      var fat = (Math.round(excess / 7700 * 100) / 100).toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var dayHtml = '';
+      for (var d = 0; d < days; d += 1) {
+        var meal = LIGHT[d % LIGHT.length];
+        dayHtml += '<div class="yd-cu-day"><div class="yd-cu-day-h"><b>Day ' + (d + 1).toLocaleString() + '</b><span>하루 목표에서 −' + daily.toLocaleString() + 'kcal</span></div>' +
+          '<div class="yd-rc-menu">저녁 · ' + meal[0] + ' ' + meal[1].toLocaleString() + 'kcal · 단백질 ' + meal[2].toLocaleString() + 'g</div>' +
+          '<div class="yd-rc-tip">오늘의 행동 · ' + TIPS[d % TIPS.length] + '</div></div>';
+      }
+      output.innerHTML = '<div class="yd-rc-result">초과 +' + excess.toLocaleString() + 'kcal — 지방으로는 아직 <b>' + fat + 'kg</b>뿐이에요. ' + days.toLocaleString() + '일이면 되돌립니다.' +
+          '<small>초과분 = 선택 합계 − 평소 저녁 한 끼(600kcal) · 1kg ≈ 7,700kcal</small></div>' +
+        '<div class="yd-cu-sec"><h4>일차별 복구 플랜</h4><span>' + days.toLocaleString() + '일</span></div>' + dayHtml +
+        '<a class="yd-cu-btn red" href="/cardio-calc?tool=curation">복구 식단 메뉴 담으러 가기 — 1분 큐레이션</a>';
+    });
+  }
+
+  function renderYoyoBody(root) {
+    var state = { sex: 'M', age: 30, ht: 170, wt: 65, loss: 5 };
+    var fields = [
+      ['age', '나이', '세', 15, 80, 1, 30], ['ht', '키', 'cm', 140, 200, 1, 170],
+      ['wt', '지금 체중', 'kg', 35, 150, 1, 65], ['loss', '몇 kg을 감량했나요(또는 할 예정인가요)', 'kg', 1, 20, 1, 5]
+    ];
+    function one(v) { return (Math.round(v * 10) / 10).toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+    root.innerHTML =
+      '<div class="yd-cc-calc">' +
+        '<div class="yd-cc-seg" role="group" aria-label="성별">' +
+          '<button type="button" data-yy-sex="M" aria-pressed="true">남성</button>' +
+          '<button type="button" data-yy-sex="F" aria-pressed="false">여성</button>' +
+        '</div>' +
+        '<div class="yd-cc-fields">' + fields.map(function(f) {
+          return '<div class="yd-cc-field"><div class="yd-cc-row"><label for="yd-yy-' + f[0] + '">' + f[1] + '</label>' +
+            '<div class="yd-cc-readout"><span data-yy-v="' + f[0] + '">' + f[6].toLocaleString() + '</span><span class="yd-cc-u">' + f[2] + '</span></div></div>' +
+            '<input type="range" class="yd-cc-range" id="yd-yy-' + f[0] + '" data-yy-k="' + f[0] + '" min="' + f[3] + '" max="' + f[4] + '" step="' + f[5] + '" value="' + f[6] + '"></div>';
+        }).join('') + '</div>' +
+        '<div class="yd-gr-wrap" data-yy-v="graph"></div>' +
+        '<div class="yd-yy-result" data-yy-v="result" aria-live="polite"></div>' +
+        '<div class="yd-cu-copy">감량 직후엔 몸이 에너지를 아끼는 적응 상태(대사 약 −10%)라, 같은 식사도 전보다 쉽게 잉여가 됩니다. 12주에 걸쳐 서서히 풀려요.</div>' +
+        '<div class="yd-yy-prescription" data-yy-v="prescription"></div>' +
+        '<a class="yd-cu-btn red" href="/cardio-calc?tool=curation">유지 식단 큐레이션 받기</a>' +
+        '<div class="yd-cu-basenote">일반적 영양 기준의 참고용 시뮬레이션이며 실제 변화는 개인차가 있어요 · 섭취 칼로리 기준</div>' +
+      '</div>';
+    function v(key) { return root.querySelector('[data-yy-v="' + key + '"]'); }
+    function render() {
+      function tdee(weight) { return (10 * weight + 6.25 * state.ht - 5 * state.age + (state.sex === 'M' ? 5 : -161)) * 1.25; }
+      var oldWeight = state.wt + state.loss;
+      var intake = tdee(oldWeight) + 150;
+      var weight = state.wt;
+      var pts = [[42, weight]];
+      var halfWeek = null;
+      var fullWeek = null;
+      var week;
+      for (week = 0; week < 26; week += 1) {
+        var adapt = 0.90 + 0.10 * Math.min(1, week / 12);
+        var surplus = Math.max(0, intake - tdee(weight) * adapt);
+        weight = weight + surplus * 7 / 7700;
+        pts.push([42 + 286 * (week + 1) / 26, weight]);
+        if (halfWeek === null && weight >= state.wt + state.loss / 2) { halfWeek = week + 1; }
+        if (fullWeek === null && weight >= oldWeight - 0.2) { fullWeek = week + 1; }
+      }
+      var high = Math.max(oldWeight + 0.5, weight + 0.2);
+      var low = state.wt - 0.5;
+      function sy(w) { return 35 + (high - w) / (high - low) * 120; }
+      var scaled = pts.map(function(p) { return [p[0], sy(p[1])]; });
+      var basePts = [[42, sy(state.wt)], [328, sy(state.wt)]];
+      var marker = null;
+      if (fullWeek !== null) {
+        marker = { x: 42 + 286 * fullWeek / 26, y: sy(pts[fullWeek][1]), label: '+' + state.loss.toLocaleString() + 'kg 원복 · ' + fullWeek.toLocaleString() + '주' };
+      }
+      v('graph').innerHTML = ydSimGraph({
+        series: [{ pts: basePts, cls: 'yd-gr-base' }, { pts: scaled, cls: 'yd-gr-main' }],
+        xLabels: [{ x: 42, text: '0주' }, { x: 42 + 286 * 8 / 26, text: '8주' }, { x: 42 + 286 * 17 / 26, text: '17주' }, { x: 328, text: '26주' }],
+        yLabels: [{ y: 35, text: one(high) + 'kg' }, { y: 95, text: one((high + low) / 2) + 'kg' }, { y: 155, text: one(low) + 'kg' }],
+        marker: marker
+      });
+      var halfText = halfWeek === null ? '26주+' : halfWeek.toLocaleString() + '주';
+      var fullText = fullWeek === null ? '26주+' : fullWeek.toLocaleString() + '주';
+      if (halfWeek === null) {
+        v('result').innerHTML = '예전대로 먹어도 <b>절반이 돌아오는 데 26주 이상</b> 걸리고, <b>원상복구도 26주 이상</b> 걸려요';
+      } else if (fullWeek === null) {
+        v('result').innerHTML = '예전대로 먹으면 <b>약 ' + halfText + ' 만에 절반</b>이 돌아오고, <b>원상복구는 26주 이상</b> 걸려요';
+      } else {
+        v('result').innerHTML = '예전대로 먹으면 <b>약 ' + halfText + ' 만에 절반</b>이 돌아오고, <b>' + fullText + '면 원상복구</b>돼요';
+      }
+      var maintain = Math.round(tdee(state.wt) * 0.9 / 10) * 10;
+      var gap = intake - maintain;
+      v('prescription').innerHTML = '지금 체중의 유지 칼로리 = <b>' + maintain.toLocaleString() + 'kcal</b>. 감량 전 습관과의 차이는 하루 ' + Math.round(gap).toLocaleString() + 'kcal — 하루 한 끼만 윤식단으로 바꾸면(−350kcal) 이 갭이 메워집니다.';
+      fields.forEach(function(f) { v(f[0]).textContent = state[f[0]].toLocaleString(); });
+    }
+    qsa('input.yd-cc-range[data-yy-k]', root).forEach(function(input) {
+      input.addEventListener('input', function(e) { state[e.target.getAttribute('data-yy-k')] = +e.target.value; render(); });
+    });
+    qsa('[data-yy-sex]', root).forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        state.sex = btn.getAttribute('data-yy-sex');
+        qsa('[data-yy-sex]', root).forEach(function(b) { b.setAttribute('aria-pressed', String(b === btn)); });
+        render();
+      });
+    });
+    render();
   }
 
   function renderCardioBody(root) {
@@ -7305,7 +7621,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.150] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.151] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
