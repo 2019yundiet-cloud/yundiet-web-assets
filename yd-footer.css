@@ -2458,7 +2458,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 #yd-cardio-calc .yd-cc-wrap { max-width: 640px; margin: 0 auto; padding: 26px 16px 60px; font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, sans-serif; color: var(--yd-cc-ink); line-height: 1.65; font-size: 15px; text-align: left; }
 #yd-cardio-calc .yd-cc-head { padding: 2px 2px 18px; }
 #yd-cardio-calc .yd-cc-head .yd-cc-k { font-size: 11px; font-weight: 800; letter-spacing: .14em; color: var(--yd-cc-red); }
-#yd-cardio-calc .yd-cc-head h2 { margin: 3px 0 0; font-size: 23px; font-weight: 900; letter-spacing: -.02em; line-height: 1.3; color: var(--yd-cc-ink); }
+#yd-cardio-calc .yd-cc-head h2 { margin: 3px 0 0; font-size: 25px; font-weight: 900; letter-spacing: -.02em; line-height: 1.3; color: var(--yd-cc-ink); }
 #yd-cardio-calc .yd-cc-head p { margin: 6px 0 0; font-size: 13px; color: var(--yd-cc-grey); }
 #yd-cardio-calc .yd-cc-cards { display: flex; flex-direction: column; gap: 12px; }
 #yd-cardio-calc .yd-cc-card { background: #fff; border: 1px solid var(--yd-cc-line); border-radius: 16px; box-shadow: 0 2px 14px rgba(25, 25, 25, .05); overflow: hidden; transition: border-color .2s; }
@@ -2528,26 +2528,26 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 /* ═══ 맞춤 식단 큐레이션 카드 (/cardio-calc 데이터로 관리하기) ═══ */
 #yd-cardio-calc .yd-cu { border-top: 1px solid var(--yd-cc-line); padding: 18px 16px 22px; }
 #yd-cardio-calc .yd-cu * { box-sizing: border-box; }
-#yd-cardio-calc .yd-cu-h1 { font-size: 18px; font-weight: 900; line-height: 1.4; margin: 4px 0 6px; letter-spacing: -.02em; }
-#yd-cardio-calc .yd-cu-h1.sm { font-size: 16px; }
-#yd-cardio-calc .yd-cu-sub { font-size: 12.5px; color: var(--yd-cc-grey); }
+#yd-cardio-calc .yd-cu-h1 { font-size: 21px; font-weight: 900; line-height: 1.4; margin: 4px 0 6px; letter-spacing: -.02em; }
+#yd-cardio-calc .yd-cu-h1.sm { font-size: 17.5px; }
+#yd-cardio-calc .yd-cu-sub { font-size: 14px; color: var(--yd-cc-grey); }
 #yd-cardio-calc .yd-cu-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-#yd-cardio-calc .yd-cu-back { appearance: none; border: 0; background: none; font-family: inherit; font-size: 12.5px; color: var(--yd-cc-grey); cursor: pointer; padding: 4px 6px 4px 0; }
-#yd-cardio-calc .yd-cu-count { font-size: 11.5px; color: var(--yd-cc-olive); font-weight: 700; font-variant-numeric: tabular-nums; }
+#yd-cardio-calc .yd-cu-back { appearance: none; border: 0; background: none; font-family: inherit; font-size: 14px; color: var(--yd-cc-grey); cursor: pointer; padding: 4px 6px 4px 0; }
+#yd-cardio-calc .yd-cu-count { font-size: 12.5px; color: var(--yd-cc-olive); font-weight: 700; font-variant-numeric: tabular-nums; }
 #yd-cardio-calc .yd-cu-steps { display: flex; gap: 3px; margin: 4px 0 14px; }
 #yd-cardio-calc .yd-cu-steps i { flex: 1; height: 3px; border-radius: 3px; background: var(--yd-cc-line); }
 #yd-cardio-calc .yd-cu-steps i.on { background: var(--yd-cc-olive-deep); }
 #yd-cardio-calc .yd-cu-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 #yd-cardio-calc .yd-cu-chips.c3 { grid-template-columns: repeat(3, 1fr); }
-#yd-cardio-calc .yd-cu-chip { appearance: none; cursor: pointer; font-family: inherit; border: 1.5px solid var(--yd-cc-line); background: #fff; border-radius: 12px; padding: 12px 6px; text-align: center; font-size: 13.5px; color: var(--yd-cc-ink); font-weight: 600; }
-#yd-cardio-calc .yd-cu-chip small { display: block; font-size: 10.5px; color: var(--yd-cc-grey); font-weight: 400; margin-top: 2px; }
+#yd-cardio-calc .yd-cu-chip { appearance: none; cursor: pointer; font-family: inherit; border: 1.5px solid var(--yd-cc-line); background: #fff; border-radius: 12px; padding: 14px 6px; text-align: center; font-size: 15px; color: var(--yd-cc-ink); font-weight: 600; }
+#yd-cardio-calc .yd-cu-chip small { display: block; font-size: 12px; color: var(--yd-cc-grey); font-weight: 400; margin-top: 2px; }
 #yd-cardio-calc .yd-cu-chip.sel { border-color: var(--yd-cc-olive-deep); background: var(--yd-cc-sage); color: var(--yd-cc-olive-deep); font-weight: 800; }
 #yd-cardio-calc .yd-cu-nums { display: flex; gap: 8px; }
 #yd-cardio-calc .yd-cu-num { flex: 1; position: relative; }
-#yd-cardio-calc .yd-cu-num label { display: block; font-size: 11px; color: var(--yd-cc-grey); font-weight: 600; margin: 0 0 4px; }
+#yd-cardio-calc .yd-cu-num label { display: block; font-size: 12.5px; color: var(--yd-cc-grey); font-weight: 600; margin: 0 0 4px; }
 #yd-cardio-calc .yd-cu-num input { width: 100%; border: 1.5px solid var(--yd-cc-line); border-radius: 12px; background: #fff; font-family: inherit; font-size: 18px; font-weight: 700; padding: 12px 34px 12px 12px; color: var(--yd-cc-ink); font-variant-numeric: tabular-nums; }
 #yd-cardio-calc .yd-cu-num b { position: absolute; right: 11px; bottom: 14px; font-size: 11.5px; color: var(--yd-cc-grey); font-weight: 500; }
-#yd-cardio-calc .yd-cu-btn { display: block; width: 100%; border: 0; border-radius: 12px; cursor: pointer; background: var(--yd-cc-olive-deep); color: #fff; font-family: inherit; font-size: 14.5px; font-weight: 800; padding: 14px; margin-top: 14px; text-align: center; text-decoration: none; }
+#yd-cardio-calc .yd-cu-btn { display: block; width: 100%; border: 0; border-radius: 12px; cursor: pointer; background: var(--yd-cc-olive-deep); color: #fff; font-family: inherit; font-size: 16px; font-weight: 800; padding: 14px; margin-top: 14px; text-align: center; text-decoration: none; }
 #yd-cardio-calc a.yd-cu-btn:hover, #yd-cardio-calc a.yd-cu-btn:focus { color: #fff; text-decoration: none; }
 #yd-cardio-calc .yd-cu-btn.ghost { background: var(--yd-cc-sage); color: var(--yd-cc-olive-deep); font-weight: 700; }
 #yd-cardio-calc .yd-cu-btn.red { background: var(--yd-cc-red); }
@@ -2555,34 +2555,40 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 @keyframes yd-cu-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { #yd-cardio-calc .yd-cu-spin { animation: none; } }
 #yd-cardio-calc .yd-cu-head { background: var(--yd-cc-olive-deep); border-radius: 14px; padding: 16px; color: #F1EFE2; margin-top: 12px; }
-#yd-cardio-calc .yd-cu-head .k { font-size: 30px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.1; }
-#yd-cardio-calc .yd-cu-head .k small { font-size: 12px; font-weight: 500; opacity: .8; }
-#yd-cardio-calc .yd-cu-head .who { font-size: 11.5px; opacity: .85; }
-#yd-cardio-calc .yd-cu-head .note { font-size: 11px; opacity: .85; margin-top: 6px; line-height: 1.55; }
+#yd-cardio-calc .yd-cu-head .k { font-size: 34px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.1; }
+#yd-cardio-calc .yd-cu-head .k small { font-size: 13.5px; font-weight: 500; opacity: .8; }
+#yd-cardio-calc .yd-cu-head .who { font-size: 13px; opacity: .85; }
+#yd-cardio-calc .yd-cu-head .note { font-size: 12.5px; opacity: .85; margin-top: 6px; line-height: 1.55; }
 #yd-cardio-calc .yd-cu-macros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 #yd-cardio-calc .yd-cu-macros div { background: rgba(255,255,255,.12); border-radius: 10px; padding: 8px 4px; text-align: center; }
-#yd-cardio-calc .yd-cu-macros b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
-#yd-cardio-calc .yd-cu-macros span { font-size: 10.5px; opacity: .85; }
+#yd-cardio-calc .yd-cu-macros b { display: block; font-size: 19px; font-variant-numeric: tabular-nums; }
+#yd-cardio-calc .yd-cu-macros span { font-size: 12px; opacity: .85; }
 #yd-cardio-calc .yd-cu-pm { background: #fff; border: 1px solid var(--yd-cc-line); border-radius: 14px; padding: 13px 14px; margin-top: 10px; }
 #yd-cardio-calc .yd-cu-pm h4 { margin: 0; font-size: 13px; font-weight: 800; color: var(--yd-cc-olive-deep); display: flex; justify-content: space-between; }
 #yd-cardio-calc .yd-cu-pm h4 span { font-size: 10.5px; color: var(--yd-cc-grey); font-weight: 500; }
 #yd-cardio-calc .yd-cu-pm-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 9px; }
 #yd-cardio-calc .yd-cu-pm-grid div { background: var(--yd-cc-sage); border-radius: 9px; text-align: center; padding: 8px 2px; }
-#yd-cardio-calc .yd-cu-pm-grid b { display: block; font-size: 14.5px; color: var(--yd-cc-olive-deep); font-variant-numeric: tabular-nums; }
-#yd-cardio-calc .yd-cu-pm-grid span { font-size: 9.5px; color: var(--yd-cc-olive); font-weight: 600; }
+#yd-cardio-calc .yd-cu-pm-grid b { display: block; font-size: 17px; color: var(--yd-cc-olive-deep); font-variant-numeric: tabular-nums; }
+#yd-cardio-calc .yd-cu-pm-grid span { font-size: 11px; color: var(--yd-cc-olive); font-weight: 600; }
 #yd-cardio-calc .yd-cu-sec { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 0 2px; }
-#yd-cardio-calc .yd-cu-sec h4 { margin: 0; font-size: 14.5px; font-weight: 900; }
-#yd-cardio-calc .yd-cu-sec span { font-size: 10.5px; color: var(--yd-cc-grey); }
+#yd-cardio-calc .yd-cu-sec h4 { margin: 0; font-size: 17px; font-weight: 900; }
+#yd-cardio-calc .yd-cu-sec span { font-size: 12px; color: var(--yd-cc-grey); }
 #yd-cardio-calc .yd-cu-day { background: #fff; border: 1px solid var(--yd-cc-line); border-radius: 14px; padding: 12px 14px; margin-top: 8px; }
 #yd-cardio-calc .yd-cu-day-h { display: flex; justify-content: space-between; align-items: baseline; }
-#yd-cardio-calc .yd-cu-day-h b { font-size: 13.5px; color: var(--yd-cc-olive-deep); }
+#yd-cardio-calc .yd-cu-day-h b { font-size: 15.5px; color: var(--yd-cc-olive-deep); }
 #yd-cardio-calc .yd-cu-day-h span { font-size: 10px; color: var(--yd-cc-grey); }
 #yd-cardio-calc .yd-cu-row { display: flex; gap: 9px; align-items: center; border-top: 1px solid var(--yd-cc-line); padding: 8px 0 2px; margin-top: 8px; }
 #yd-cardio-calc .yd-cu-row .e { font-size: 19px; flex: none; }
 #yd-cardio-calc .yd-cu-row .t { flex: 1; min-width: 0; }
 #yd-cardio-calc .yd-cu-tag { display: inline-block; font-size: 9.5px; font-weight: 700; border-radius: 5px; padding: 1px 6px; background: var(--yd-cc-sage); color: var(--yd-cc-olive-deep); margin-right: 4px; vertical-align: 1px; }
 #yd-cardio-calc .yd-cu-row .nm { font-size: 12.5px; font-weight: 700; }
-#yd-cardio-calc .yd-cu-row .nu { font-size: 10.5px; color: var(--yd-cc-grey); font-variant-numeric: tabular-nums; }
+#yd-cardio-calc .yd-cu-row .nu { font-size: 12.5px; color: var(--yd-cc-grey); font-variant-numeric: tabular-nums; }
+#yd-cardio-calc .yd-cu-row .nm2 { font-size: 15.5px; font-weight: 800; letter-spacing: -.02em; }
+#yd-cardio-calc .yd-cu-row .tg { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 3px; }
+#yd-cardio-calc .yd-cu-row .tg i { font-style: normal; font-size: 11.5px; font-weight: 800; border-radius: 6px; padding: 2.5px 8px; background: var(--yd-cc-red-soft); color: var(--yd-cc-red); }
+#yd-cardio-calc .yd-cu-row .tg i.c { background: var(--yd-cc-sage); color: var(--yd-cc-olive-deep); }
+#yd-cardio-calc .yd-cu-copy { font-size: 14.5px; color: var(--yd-cc-ink); line-height: 1.6; margin: 2px 0 6px; }
+#yd-cardio-calc .yd-cu-copy b { color: var(--yd-cc-olive-deep); }
 #yd-cardio-calc .yd-cu-tabs { display: flex; gap: 6px; margin-top: 10px; }
 #yd-cardio-calc .yd-cu-tab { flex: 1; appearance: none; cursor: pointer; font-family: inherit; border: 1.5px solid var(--yd-cc-line); background: #fff; border-radius: 10px; padding: 8px; font-size: 12px; font-weight: 700; color: var(--yd-cc-grey); }
 #yd-cardio-calc .yd-cu-tab.on { border-color: var(--yd-cc-olive-deep); background: var(--yd-cc-sage); color: var(--yd-cc-olive-deep); }
@@ -2595,8 +2601,8 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 #yd-cardio-calc .yd-cu-wk td small { display: block; font-size: 9.5px; color: var(--yd-cc-olive); }
 #yd-cardio-calc .yd-cu-wk-note { font-size: 10.5px; color: var(--yd-cc-grey); padding: 8px 12px; border-top: 1px dashed var(--yd-cc-line); }
 #yd-cardio-calc .yd-cu-logic { margin-top: 12px; border: 1px dashed var(--yd-cc-sage-line); border-radius: 12px; background: var(--yd-cc-ground); }
-#yd-cardio-calc .yd-cu-logic summary { cursor: pointer; padding: 11px 14px; font-size: 12px; font-weight: 800; color: var(--yd-cc-olive-deep); }
-#yd-cardio-calc .yd-cu-logic .b { padding: 0 14px 12px; font-size: 11.5px; color: var(--yd-cc-grey); line-height: 1.65; }
+#yd-cardio-calc .yd-cu-logic summary { cursor: pointer; padding: 11px 14px; font-size: 13.5px; font-weight: 800; color: var(--yd-cc-olive-deep); }
+#yd-cardio-calc .yd-cu-logic .b { padding: 0 14px 12px; font-size: 13px; color: var(--yd-cc-grey); line-height: 1.65; }
 #yd-cardio-calc .yd-cu-logic .b p { margin: 6px 0 0; }
 #yd-cardio-calc .yd-cu-hidden { display: none; }
 /* ═══ 데이터 허브 링크 카드 + 도구 전용 페이지(?tool=) ═══ */
@@ -2605,7 +2611,9 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 #yd-cardio-calc a.yd-cc-card:hover .yd-cc-card-head { background: var(--yd-cc-ground); }
 #yd-cardio-calc .yd-cc-card-chev.go { transform: rotate(-90deg); }
 #yd-cardio-calc .yd-cc-crumb { display: inline-flex; align-items: center; margin-bottom: 10px; font-size: 13px; font-weight: 700; color: var(--yd-cc-olive); text-decoration: none !important; }
-#yd-cardio-calc .yd-cc-toolcard { background: #fff; border: 1px solid var(--yd-cc-line); border-radius: 16px; box-shadow: 0 2px 14px rgba(25, 25, 25, .05); overflow: hidden; }
+#yd-cardio-calc .yd-cc-toolcard { background: transparent; }
+#yd-cardio-calc .yd-cc-toolcard .yd-cu { padding: 6px 0 12px; }
+#yd-cardio-calc .yd-cc-toolcard .yd-cc-calc { padding: 6px 0 18px; }
 #yd-cardio-calc .yd-cc-toolcard .yd-cc-calc, #yd-cardio-calc .yd-cc-toolcard .yd-cu { border-top: 0; }
 /* 하단 고정 홈 바 — 문답 진행으로 콘텐츠 높이가 변해도 버튼이 따라다니지 않게 뷰포트 고정.
    /cardio-calc에는 하단 탭바 섹션이 없어 충돌 없음. z는 아임웹 모달(17000)보다 아래. */
@@ -2630,7 +2638,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
   #yd-cardio-calc .yd-cc-flow a { font-size: 16.5px; min-height: 58px; }
   #yd-cardio-calc .yd-cc-flow a.more { padding: 0 26px; }
   /* 큐레이션 확장 */
-  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu { padding: 36px 56px 48px; }
+  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu { padding: 14px 0 24px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-h1 { font-size: 27px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-h1.sm { font-size: 21px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-sub { font-size: 15px; }
@@ -2659,7 +2667,9 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-day { padding: 16px 20px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-day-h b { font-size: 15.5px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-tag { font-size: 11px; }
-  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-row .nm { font-size: 15px; }
+  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-row .nm2 { font-size: 17px; }
+  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-row .tg i { font-size: 13px; }
+  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-copy { font-size: 16.5px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-row .nu { font-size: 12.5px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-tab { font-size: 14px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool table.yd-cu-wk { font-size: 13px; }
@@ -2677,7 +2687,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-plan .pr { font-size: 21px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cu-plan small { font-size: 13px; }
   /* 계산기 확장 */
-  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cc-calc { padding: 30px 40px 38px; gap: 24px; }
+  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cc-calc { padding: 14px 0 26px; gap: 24px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cc-seg button { font-size: 15.5px; padding: 12px 0; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cc-field label { font-size: 15px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-cc-readout { font-size: 24px; }
@@ -2699,26 +2709,26 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 }
 /* ═══ 큐레이션 → 장바구니 실담기 시트 ═══ */
 #yd-cardio-calc .yd-cu-cart { margin-top: 10px; background: #fff; border: 1px solid var(--yd-cc-sage-line); border-radius: 14px; padding: 14px; }
-#yd-cardio-calc .yd-cu-cart h5 { margin: 0 0 6px; font-size: 14px; font-weight: 800; color: var(--yd-cc-ink); }
-#yd-cardio-calc .yd-cu-cart-row { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px dashed var(--yd-cc-line); font-size: 13.5px; cursor: pointer; margin: 0; font-weight: 500; }
+#yd-cardio-calc .yd-cu-cart h5 { margin: 0 0 6px; font-size: 16px; font-weight: 800; color: var(--yd-cc-ink); }
+#yd-cardio-calc .yd-cu-cart-row { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px dashed var(--yd-cc-line); font-size: 15px; cursor: pointer; margin: 0; font-weight: 500; }
 #yd-cardio-calc .yd-cu-cart-row:last-of-type { border-bottom: 0; }
 #yd-cardio-calc .yd-cu-cart-row input { width: 17px; height: 17px; accent-color: var(--yd-cc-red); flex-shrink: 0; margin: 0; }
 #yd-cardio-calc .yd-cu-cart-row .nm { flex: 1; min-width: 0; color: var(--yd-cc-ink); }
-#yd-cardio-calc .yd-cu-cart-row .nm small { display: block; color: var(--yd-cc-grey); font-size: 11.5px; font-weight: 500; }
+#yd-cardio-calc .yd-cu-cart-row .nm small { display: block; color: var(--yd-cc-grey); font-size: 12.5px; font-weight: 500; }
 #yd-cardio-calc .yd-cu-cart-row .pr { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--yd-cc-ink); }
 #yd-cardio-calc .yd-cu-cart-row.off { opacity: .55; cursor: default; }
-#yd-cardio-calc .yd-cu-cart-total { display: flex; justify-content: space-between; margin-top: 10px; font-size: 14px; font-weight: 800; }
-#yd-cardio-calc .yd-cu-cart-msg { margin: 8px 0 0; font-size: 12.5px; color: var(--yd-cc-grey); line-height: 1.55; }
+#yd-cardio-calc .yd-cu-cart-total { display: flex; justify-content: space-between; margin-top: 10px; font-size: 15.5px; font-weight: 800; }
+#yd-cardio-calc .yd-cu-cart-msg { margin: 8px 0 0; font-size: 13.5px; color: var(--yd-cc-grey); line-height: 1.55; }
 #yd-cardio-calc .yd-cu-cart-msg.err { color: var(--yd-cc-red); font-weight: 700; }
 /* 시작 플랜 카드(1주/2주) */
 #yd-cardio-calc .yd-cu-plans { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 #yd-cardio-calc .yd-cu-plan { appearance: none; cursor: pointer; font-family: inherit; text-align: left; background: #fff; border: 1.5px solid var(--yd-cc-line); border-radius: 14px; padding: 13px 14px; color: var(--yd-cc-ink); }
 #yd-cardio-calc .yd-cu-plan.sel { border-color: var(--yd-cc-olive-deep); background: var(--yd-cc-sage); }
-#yd-cardio-calc .yd-cu-plan .bd { display: inline-block; font-size: 11px; font-weight: 800; color: var(--yd-cc-red); background: var(--yd-cc-red-soft); border-radius: 6px; padding: 2px 7px; }
-#yd-cardio-calc .yd-cu-plan b { display: block; font-size: 15.5px; font-weight: 900; margin-top: 6px; letter-spacing: -.02em; }
-#yd-cardio-calc .yd-cu-plan .pr { display: block; font-size: 17px; font-weight: 900; font-variant-numeric: tabular-nums; margin-top: 2px; }
+#yd-cardio-calc .yd-cu-plan .bd { display: inline-block; font-size: 12px; font-weight: 800; color: var(--yd-cc-red); background: var(--yd-cc-red-soft); border-radius: 6px; padding: 2px 7px; }
+#yd-cardio-calc .yd-cu-plan b { display: block; font-size: 17px; font-weight: 900; margin-top: 6px; letter-spacing: -.02em; }
+#yd-cardio-calc .yd-cu-plan .pr { display: block; font-size: 19px; font-weight: 900; font-variant-numeric: tabular-nums; margin-top: 2px; }
 #yd-cardio-calc .yd-cu-plan.sel .pr { color: var(--yd-cc-olive-deep); }
-#yd-cardio-calc .yd-cu-plan small { display: block; font-size: 11.5px; color: var(--yd-cc-grey); margin-top: 3px; }
+#yd-cardio-calc .yd-cu-plan small { display: block; font-size: 12.5px; color: var(--yd-cc-grey); margin-top: 3px; }
 /* 결과 화면 외에는 하단 고정 홈 바 숨김 */
 #yd-cardio-calc .yd-cc-wrap.hide-flow .yd-cc-flow { display: none; }
 #yd-cardio-calc .yd-cc-wrap.is-tool.hide-flow { padding-bottom: 60px; }

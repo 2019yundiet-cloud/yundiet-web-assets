@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_144__) {
+  if (window.__YD_FOOTER_V3_145__) {
     return;
   }
-  window.__YD_FOOTER_V3_144__ = true;
+  window.__YD_FOOTER_V3_145__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.144', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.145', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6391,7 +6391,7 @@
     root.setAttribute('data-yd-booted', '1');
 
     var CARDS = [
-      { id: 'curation', title: '1분 맞춤 식단 큐레이션', sub: '13문항으로 하루 목표 · 추천 메뉴 · 1·2주 식단표까지', render: renderCurationBody },
+      { id: 'curation', title: '1분 맞춤 식단 큐레이션', sub: '13문항으로 하루 목표 · 추천 메뉴 · 1·2주 시작 플랜까지', render: renderCurationBody },
       { id: 'cardio', title: '유산소 1시간, 기구별로 몇 kcal 태울까?', sub: '내 키·몸무게 기준으로 헬스장 유산소 기구 8종 비교', render: renderCardioBody }
     ];
 
@@ -6562,7 +6562,7 @@
   }
 
   /* ═══ 맞춤 식단 큐레이션 카드 (/cardio-calc 데이터로 관리하기) ═══
-     13문항 문답 → 하루/한 끼 목표(탄단지) → 1~3일차 구색 추천 → 1·2주 식단표.
+     13문항 문답 → 하루/한 끼 목표(탄단지) → 1~3일차 구색 추천(추천 이유 키워드 칩) → 1·2주 시작 플랜.
      - 영양 데이터: 자사몰 상세페이지 표시사항 실측본(2026-07 검증, vs:code/yundiet-products-nutrition.json)
      - 계산: Mifflin-St Jeor 기초대사 × 활동계수, 목표체중·기간에서 하루 적자 역산(1kg≈7,700kcal, 300~750 클램프)
      - 추천: 단백질 밀도·한끼 적합도·당류·나트륨·선호단백질·식사유형·관리강도 점수화 (리뷰순 아님)
@@ -6612,7 +6612,7 @@
       '<div class="yd-cu">' +
         '<div data-cu="intro">' +
           '<div class="yd-cu-h1">질문 13개에 답하면,<br>나에게 진짜 맞는 식단이 나옵니다</div>' +
-          '<div class="yd-cu-sub">리뷰나 판매순이 아니라 <b>내 몸의 숫자</b>로 — 하루·한 끼 목표 칼로리와 탄단지를 계산하고, 윤식단 전 메뉴에서 나에게 맞는 제품과 1·2주 식단표까지 만들어 드려요. 약 1분.</div>' +
+          '<div class="yd-cu-sub">리뷰나 판매순이 아니라 <b>내 몸의 숫자</b>로 — 하루·한 끼 목표 칼로리와 탄단지를 계산하고, 윤식단 전 메뉴에서 나에게 맞는 메뉴와 1·2주 시작 플랜까지 만들어 드려요. 약 1분.</div>' +
           '<button type="button" class="yd-cu-btn" data-cu="start">내 식단 검사 시작하기</button>' +
         '</div>' +
         '<div class="yd-cu-hidden" data-cu="quiz">' +
@@ -6774,8 +6774,22 @@
         paceTxt = ' · 목표 ' + targetW + 'kg, ' + period + '개월 플랜 (주 ' + (deficit * 7 / 7700).toFixed(1) + 'kg 페이스)' + (paceWarn ? ' — 기간 대비 목표가 커서 최대 안전 강도로 설계했어요' : '');
       }
 
-      ctx = { mains: mains, hasBf: hasBf, hasSnack: hasSnack, chB: chB, chickSnack: chickSnack, glp1: glp1 };
+      ctx = { mains: mains, hasBf: hasBf, hasSnack: hasSnack, chB: chB, chickSnack: chickSnack, glp1: glp1,
+              pmK: pm.k, pmP: pm.p,
+              /* 시작 플랜용 도시락 풀 — 점수순 전체(2주 플랜은 상위 3~4개가 아니라 더 다양한 메뉴로 구성).
+                 비만치료제 병행은 소량 설계 유지 — 450kcal 이하 도시락만 */
+              dishPool: scored.filter(function(x) { return x.cat === '도시락' && (!glp1 || x.kcal <= 450); }) };
 
+      /* 추천 이유 키워드 칩 — 숫자 박힌 카피로 "왜 이 메뉴인지"를 직관적으로 */
+      function reasonTags(pr) {
+        var t = [];
+        if (pr.p >= 30 || pr.p / pr.kcal >= 0.09) { t.push('단백질 ' + pr.p + 'g'); }
+        if (pr.sugar <= 1) { t.push('당류 ' + pr.sugar + 'g뿐'); }
+        if (pr.kcal < 450) { t.push('가벼운 ' + pr.kcal + 'kcal'); }
+        if (pr.sodium <= 500) { t.push('저염'); }
+        if (pr.spicy) { t.push('매콤'); }
+        return t.slice(0, 2);
+      }
       var dayRowsHtml = [0, 1, 2].map(function(d) {
         var n = mains.length, lunch = mains[d % n], dinner = mains[(d + 2) % n];
         if (dinner.id === lunch.id) { dinner = mains[(d + 1) % n]; }
@@ -6785,7 +6799,11 @@
         if (chickSnack) { rows.push(['간식', pById('chick100')]); }
         return '<div class="yd-cu-day"><div class="yd-cu-day-h"><b>' + (d + 1) + '일차 구성</b><span>' + (d === 0 ? '오늘 시작 구성' : '메뉴 로테이션') + '</span></div>' +
           rows.map(function(r) {
-            return '<div class="yd-cu-row"><span class="e">' + r[1].emoji + '</span><div class="t"><div><span class="yd-cu-tag">' + r[1].cat + '</span><span class="nm">' + r[1].name + '</span></div><div class="nu">' + r[0] + ' · ' + r[1].kcal + 'kcal · 단백질 ' + r[1].p + 'g · 당류 ' + r[1].sugar + 'g</div></div></div>';
+            return '<div class="yd-cu-row"><span class="e">' + r[1].emoji + '</span><div class="t">' +
+              '<div class="nm2">' + r[1].name + '</div>' +
+              '<div class="tg"><i class="c">' + r[1].cat + '</i>' + reasonTags(r[1]).map(function(x) { return '<i>' + x + '</i>'; }).join('') + '</div>' +
+              '<div class="nu">' + r[0] + ' · ' + r[1].kcal + 'kcal · 단백질 ' + r[1].p + 'g · 당류 ' + r[1].sugar + 'g</div>' +
+              '</div></div>';
           }).join('') + '</div>';
       }).join('');
 
@@ -6799,31 +6817,21 @@
         '</div>' +
         '<div class="yd-cu-pm"><h4>한 끼 목표 <span>하루 ' + mainMealN + '끼' + (hasSnack ? ' + 간식' : '') + ' 기준</span></h4>' +
           '<div class="yd-cu-pm-grid"><div><b>' + pm.k.toLocaleString() + '</b><span>kcal</span></div><div><b>' + pm.c + 'g</b><span>탄수화물</span></div><div><b>' + pm.p + 'g</b><span>단백질</span></div><div><b>' + pm.f + 'g</b><span>지방</span></div></div></div>' +
-        '<div class="yd-cu-sec"><h4>식단관리 필승템을 추천해드려요</h4><span>메뉴 단위 추천</span></div>' +
-        '<div class="yd-cu-sub" style="margin:2px 0 4px">목적(<b style="color:var(--yd-cc-olive-deep)">' + [goalTxt, intTxt, mtTxt].filter(Boolean).join(' · ') + '</b>)에 맞춰 일차별로 구색을 잡았어요</div>' +
+        '<div class="yd-cu-sec"><h4>왜 이 메뉴냐면요</h4><span>' + [goalTxt, intTxt, mtTxt].filter(Boolean).join(' · ') + ' 기준</span></div>' +
+        '<div class="yd-cu-copy">리뷰 많은 순이 아니에요 — <b>내 한 끼 목표 ' + pm.k.toLocaleString() + 'kcal · 단백질 ' + pm.p + 'g</b>에 가장 가까운 메뉴만 골랐어요</div>' +
         dayRowsHtml +
-        '<div class="yd-cu-sec"><h4>추천 식단표</h4><span>메뉴 로테이션</span></div>' +
-        '<div class="yd-cu-tabs"><button type="button" class="yd-cu-tab on" data-days="7">1주일 식단표</button><button type="button" class="yd-cu-tab" data-days="14">2주일 식단표</button></div>' +
-        '<div class="yd-cu-wk-wrap"><div data-cu="week"></div></div>' +
         '<details class="yd-cu-logic"><summary>이 추천, 어떻게 계산했나요?</summary><div class="b">' +
           '<p><b>① 목표 칼로리</b> — 기초대사량(Mifflin-St Jeor)×활동계수로 하루 소비량을 구하고, 목표 체중·기간에서 필요한 하루 적자량을 역산합니다(1kg≈7,700kcal, 안전 범위 내).</p>' +
           '<p><b>② 탄단지</b> — 단백질은 체중 1kg당 ' + pRate + 'g, 지방은 총열량의 ' + (glp1 ? 20 : 25) + '%, 나머지가 탄수화물.</p>' +
           '<p><b>③ 제품 매칭</b> — 전 메뉴의 실제 영양성분표로 단백질 밀도·한 끼 적합도·당류·나트륨·선호·강도를 점수화합니다. 리뷰순이 아니라 내 목표와의 거리.</p>' +
           '<p style="color:var(--yd-cc-olive)">※ 일반적 영양 기준의 참고용 안내이며, 질환이 있는 경우 전문의와 상담하세요.</p>' +
         '</div></details>' +
-        '<div class="yd-cu-sec"><h4>추천 구성으로 바로 시작하기</h4><span>1·2주 플랜</span></div>' +
-        '<div class="yd-cu-sub" style="margin:2px 0 4px">위 추천 메뉴로 담아드리는 시작 플랜이에요 — 하루 1팩(한 끼)을 윤식단으로 바꿔보세요</div>' +
+        '<div class="yd-cu-sec"><h4>하루 1팩만 바꿔보세요</h4><span>1·2주 시작 플랜</span></div>' +
+        '<div class="yd-cu-copy">하루 <b>한 끼만 윤식단으로</b> 바꿔도 그날 식사가 목표 안으로 들어옵니다 — 위 추천 메뉴로 바로 담아드려요</div>' +
         '<div data-cu="cartbox"><div class="yd-cu-cart"><div class="yd-cu-cart-msg">추천 구성을 불러오고 있어요…</div></div></div>' +
         '<a class="yd-cu-btn ghost" href="/soonsoodanback">단백질 간편식 보러 가기</a>' +
         '<button type="button" class="yd-cu-btn ghost" data-cu="redo" style="margin-top:8px">처음부터 다시 검사하기</button>';
 
-      renderWeekTable(7);
-      qsa('.yd-cu-tab', el('result')).forEach(function(tab) {
-        tab.addEventListener('click', function() {
-          qsa('.yd-cu-tab', el('result')).forEach(function(t2) { t2.className = 'yd-cu-tab' + (t2 === tab ? ' on' : ''); });
-          renderWeekTable(+tab.getAttribute('data-days'));
-        });
-      });
       el('edit').addEventListener('click', function() { qi = Q.length - 1; showPane('quiz'); renderQ(); });
       el('redo').addEventListener('click', function() { ans = {}; qi = 0; showPane('quiz'); renderQ(); });
       loadPlans();
@@ -6837,28 +6845,8 @@
       ydMark('curation', true, '큐레이션 결과 렌더(' + kcal + 'kcal)');
     }
 
-    var BF_SIDE = ['삶은 계란 2개', '그릭요거트 1개', '사과 1개', '바나나 1개', '방울토마토 한 컵', '무가당 두유 1팩', '블루베리 한 컵'];
-    var LUNCH_SIDE = ['샐러드 한 접시', '오이·당근 스틱', '양배추찜', '미역국(저염)', '브로콜리 찜', '파프리카 슬라이스', '상추쌈 채소'];
-    var DINNER_SIDE = ['버섯볶음', '시금치나물', '가지구이', '콩나물국(저염)', '토마토 샐러드', '애호박전(기름 적게)', '김구이·오이무침'];
-    var SNACK_ROT = ['그릭요거트 1개', '아몬드 10알', '바나나 1개', '프로틴 쉐이크', '방울토마토 한 컵', '키위 1개', '치즈 1장·견과'];
-    function renderWeekTable(days) {
-      if (!ctx) { return; }
-      var n = ctx.mains.length;
-      var bfLabel = ctx.hasBf ? ctx.chB.name.replace('슬라이스 ', '') + (ctx.glp1 ? '' : ' + 잡곡밥') : null;
-      var rows = '';
-      for (var d = 0; d < days; d++) {
-        var lunch = ctx.mains[d % n], dinner = ctx.mains[(d + 2) % n];
-        if (dinner.id === lunch.id) { dinner = ctx.mains[(d + 1) % n]; }
-        var snackTxt = ctx.glp1 ? '소량 분식' : (ctx.chickSnack && d % 2 === 0 ? '닭가슴살 + ' + SNACK_ROT[d % 7] : SNACK_ROT[(d + 3) % 7]);
-        rows += '<tr><td class="d">DAY ' + (d + 1) + '</td>' +
-          (ctx.hasBf ? '<td>' + bfLabel + '<small>+ ' + BF_SIDE[d % 7] + '</small></td>' : '') +
-          '<td><b>' + lunch.name + '</b><small>+ ' + LUNCH_SIDE[d % 7] + '</small></td>' +
-          '<td><b>' + dinner.name + '</b>' + ((dinner.id === 'lsjeyuk' || dinner.id === 'lsbulg') ? ' + 잡곡밥' : '') + '<small>+ ' + DINNER_SIDE[d % 7] + '</small></td>' +
-          (ctx.hasSnack ? '<td>' + snackTxt + '</td>' : '') + '</tr>';
-      }
-      el('week').innerHTML = '<table class="yd-cu-wk"><tr><th></th>' + (ctx.hasBf ? '<th>아침</th>' : '') + '<th>점심</th><th>저녁</th>' + (ctx.hasSnack ? '<th>간식</th>' : '') + '</tr>' + rows + '</table>' +
-        '<div class="yd-cu-wk-note">💡 메인은 추천 상위 ' + n + '개 메뉴 로테이션(이틀 연속 중복 없음), 채소·과일 곁들임은 매일 바뀌어요.</div>';
-    }
+    /* 주간 식단표(1·2주 탭)는 v3.145에서 삭제 — 모바일에서 표가 너무 작아 전달력이 없다는 소유자 판단.
+       "일차별 구성" 카드(큰 타이포+추천 이유 칩)가 그 역할을 대신한다. */
 
     /* ═══ 추천 구성 장바구니 실담기 ═══
        추천 메뉴를 실판매 상품 옵션에 매핑해 add_cart 계약(cartCarryAddItem)으로 실제로 담는다.
@@ -6921,8 +6909,8 @@
       }
       return null;
     }
-    function buildCandidates() {
-      var items = recommendedItems();
+    function buildCandidates(list) {
+      var items = list || recommendedItems();
       var prodSet = {};
       items.forEach(function(p) { var mp = CART_MAP[p.id]; if (mp) { prodSet[mp.prod] = 1; } });
       var idxs = Object.keys(prodSet);
@@ -6962,33 +6950,35 @@
         });
       });
     }
-    /* 시작 플랜 2종 — 가격 밴드 우선 배분: 추천 도시락(672 필수옵션)을 점수 순 로테이션으로
-       목표 금액에 닿을 때까지 1팩씩 쌓는다 → 1주 관리는 항상 3만원대, 2주 관리는 5만원대에 안착.
+    /* 시작 플랜 2종 — 1주는 7팩 고정(집중 상위 3메뉴), 2주는 도시락 풀 전체 로테이션으로
+       메뉴 다양성을 넓혀 14팩을 지향하되, 실판가 기준 소유자 지정 상한 59,900원을 넘기 직전에
+       멈춘다(현 단가로는 약 10팩·5만원대 안착 — 14팩 실판가는 7만원대라 상한 우선, 2026-09-02 지시).
        담기 성공은 장바구니 API 재조회로 확증한 뒤 /shop_cart로 바로 이동한다. */
-    function allocPlan(dishes, targetWon) {
+    function allocPacks(dishes, maxPacks, priceCap) {
       var rows = dishes.map(function(c) { return { c: c, qty: 0 }; });
-      var total = 0, i = 0;
-      while (total < targetWon && i < 60) {
-        var row = rows[i % rows.length];
-        row.qty += 1; total += row.c.opt.price;
-        i++;
+      var total = 0, n = 0;
+      while (n < maxPacks) {
+        var row = rows[n % rows.length];
+        if (priceCap && total + row.c.opt.price > priceCap) { break; }
+        row.qty += 1; total += row.c.opt.price; n++;
       }
-      return { rows: rows.filter(function(r) { return r.qty > 0; }), total: total, packs: i };
+      return { rows: rows.filter(function(r) { return r.qty > 0; }), total: total, packs: n };
     }
     function loadPlans() {
       var box = el('cartbox');
       if (!box) { return; }
       var fallbackHtml = '<div class="yd-cu-cart"><div class="yd-cu-cart-msg err">추천 구성을 불러오지 못했어요. ' +
         '<a href="/shop_view/?idx=672" style="color:inherit;text-decoration:underline">상품 페이지에서 직접 담기 ›</a></div></div>';
-      buildCandidates().then(function(cands) {
+      buildCandidates((ctx && ctx.dishPool && ctx.dishPool.length) ? ctx.dishPool : null).then(function(cands) {
         var dishes = cands.filter(function(c) { return c.opt && c.prod === 672 && c.opt.req; });
         if (!dishes.length) { box.innerHTML = fallbackHtml; return; }
+        var w1 = allocPacks(dishes.slice(0, 3), 7, 0);
+        var w2 = allocPacks(dishes, 14, 59900);
         var plans = [
-          { id: 'w1', name: '1주 관리', target: 30000, desc: '하루 1팩 · 약 1주 분량' },
-          { id: 'w2', name: '2주 관리', target: 50000, desc: '하루 1팩 · 약 2주 분량' }
+          { id: 'w1', name: '1주 관리', a: w1, desc: '매일 1팩 × 1주' },
+          { id: 'w2', name: '2주 관리', a: w2, desc: w2.packs === 14 ? '매일 1팩 × 2주' : (w2.packs === 10 ? '평일 1팩 × 2주' : '하루 1팩 · 약 2주') }
         ].map(function(p) {
-          var a = allocPlan(dishes, p.target);
-          p.rows = a.rows; p.total = a.total; p.packs = a.packs;
+          p.rows = p.a.rows; p.total = p.a.total; p.packs = p.a.packs;
           p.band = Math.floor(p.total / 10000) + '만원대';
           return p;
         });
@@ -7005,7 +6995,7 @@
                 '<small>' + p.desc + ' · ' + p.packs + '팩</small></button>';
             }).join('') +
             '</div>' +
-            '<div class="yd-cu-cart-msg" style="margin:10px 0 2px"><b>' + plan.name + '</b> = 내 목표에 맞춘 추천 메뉴 ' + plan.packs + '팩이에요. 하루 한 끼를 윤식단으로 바꾸는 플랜 — 메뉴·수량은 장바구니에서 자유롭게 조절할 수 있어요.</div>' +
+            '<div class="yd-cu-cart-msg" style="margin:10px 0 2px"><b>' + plan.name + '</b> — 추천 메뉴 ' + plan.rows.length + '가지를 섞어 총 ' + plan.packs + '팩. 하루 한 끼만 윤식단으로 바꾸는 구성이에요. 메뉴·수량은 장바구니에서 조절할 수 있어요.</div>' +
             plan.rows.map(function(r) {
               return '<div class="yd-cu-cart-row"><span class="nm">' + r.c.opt.vn[0] + '<small>' + r.c.p.name + '</small></span>' +
                 '<span class="pr">' + r.qty + '팩 · ' + (r.c.opt.price * r.qty).toLocaleString() + '원</span></div>';
@@ -7217,7 +7207,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.144] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.145] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
