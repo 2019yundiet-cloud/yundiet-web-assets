@@ -2633,6 +2633,9 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 #yd-cardio-calc .yd-gr-pill-text { fill: var(--yd-cc-ground); font-family: inherit; font-size: 10.5px; font-weight: 800; opacity: 0; }
 #yd-cardio-calc .yd-gr-svg.yd-gr-in .yd-gr-dot, #yd-cardio-calc .yd-gr-svg.yd-gr-in .yd-gr-pill, #yd-cardio-calc .yd-gr-svg.yd-gr-in .yd-gr-pill-text { opacity: 1; transition: opacity .3s ease 1.05s; }
 #yd-cardio-calc .yd-hidden { display: none; }
+#yd-cardio-calc .yd-an { padding: 30px 0 34px; text-align: center; }
+#yd-cardio-calc .yd-an .yd-cu-spin { margin: 0 auto; }
+#yd-cardio-calc .yd-an-msg { margin-top: 12px; font-size: 14px; color: var(--yd-cc-grey); }
 #yd-cardio-calc .yd-dd-output, #yd-cardio-calc .yd-yy-output { opacity: 1; transition: opacity .2s; }
 #yd-cardio-calc .yd-dd-output.is-stale, #yd-cardio-calc .yd-yy-output.is-stale { opacity: .45; }
 #yd-cardio-calc .yd-dd-datebox { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 14px; border: 1px solid var(--yd-cc-line); border-radius: 14px; background: var(--yd-cc-ground); }
@@ -2769,6 +2772,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-gr-wrap { padding: 18px 16px 8px; border-radius: 18px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-gr-axis { font-size: 12.5px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-gr-pill-text { font-size: 11.5px; }
+  #yd-cardio-calc .yd-cc-wrap.is-tool .yd-an-msg { font-size: 15.5px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-dd-datebox { padding: 18px 20px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-dd-badge { font-size: 21px; }
   #yd-cardio-calc .yd-cc-wrap.is-tool .yd-dd-date { font-size: 15px; padding: 10px 12px; }

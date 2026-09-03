@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_152__) {
+  if (window.__YD_FOOTER_V3_153__) {
     return;
   }
-  window.__YD_FOOTER_V3_152__ = true;
+  window.__YD_FOOTER_V3_153__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -50,7 +50,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.152', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.153', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -6539,6 +6539,15 @@
     });
   }
 
+  function ydAnalyzeGate(host, msgs, done) {
+    host.innerHTML = '<div class="yd-an"><div class="yd-cu-spin" aria-hidden="true"></div><div class="yd-an-msg">' + msgs[0] + '</div></div>';
+    var msg = host.querySelector('.yd-an-msg');
+    window.setTimeout(function() {
+      if (msg && msg.parentNode) { msg.textContent = msgs[1]; }
+    }, 900);
+    window.setTimeout(done, 1700);
+  }
+
   function renderDdayBody(root) {
     var state = { sex: 'M', age: 30, ht: 170, wt: 70, activity: 'sit', meals: 7, shown: false };
     var today = new Date();
@@ -6695,7 +6704,15 @@
         markStale();
       }
     });
-    v('action').addEventListener('click', render);
+    v('action').addEventListener('click', function() {
+      var button = v('action');
+      if (button.disabled) { return; }
+      button.disabled = true;
+      v('output').classList.remove('yd-hidden', 'is-stale');
+      ydAnalyzeGate(v('graph'), ['입력하신 신체 정보로 대사량을 계산하고 있어요…', 'D-day까지의 체중 곡선을 그리는 중…'], function() {
+        try { render(); } finally { button.disabled = false; }
+      });
+    });
     syncInputs();
   }
 
@@ -6769,13 +6786,7 @@
         root.querySelector('[data-rc="output"]').innerHTML = '';
       });
     });
-    root.querySelector('[data-rc="make"]').addEventListener('click', function() {
-      var sum = total();
-      var output = root.querySelector('[data-rc="output"]');
-      if (!sum) {
-        output.innerHTML = '<div class="yd-cu-cart-msg err">어제 드신 걸 1개 이상 선택해 주세요</div>';
-        return;
-      }
+    function renderPlan(sum, output) {
       var excess = Math.max(0, sum - 600);
       if (excess === 0) {
         output.innerHTML = '<div class="yd-rc-result">이 정도면 평소 저녁 한 끼 범위예요 — 복구 플랜 없이, 오늘 평소 식사로 돌아가기만 하면 됩니다.</div>' +
@@ -6801,6 +6812,20 @@
           '<small>초과분 = 선택 합계 − 평소 저녁 한 끼(600kcal) · 1kg ≈ 7,700kcal</small></div>' +
         '<div class="yd-cu-sec"><h4>일차별 복구 플랜</h4><span>' + days.toLocaleString() + '일</span></div>' + dayHtml +
         '<a class="yd-cu-btn red" href="/cardio-calc?tool=curation">복구 식단 메뉴 담으러 가기 — 1분 큐레이션</a>';
+    }
+    root.querySelector('[data-rc="make"]').addEventListener('click', function() {
+      var button = root.querySelector('[data-rc="make"]');
+      if (button.disabled) { return; }
+      var sum = total();
+      var output = root.querySelector('[data-rc="output"]');
+      if (!sum) {
+        output.innerHTML = '<div class="yd-cu-cart-msg err">어제 드신 걸 1개 이상 선택해 주세요</div>';
+        return;
+      }
+      button.disabled = true;
+      ydAnalyzeGate(output, ['어제 초과 칼로리를 계산하고 있어요…', '식단 70 : 운동 30으로 회복을 배분하는 중…'], function() {
+        try { renderPlan(sum, output); } finally { button.disabled = false; }
+      });
     });
   }
 
@@ -6909,7 +6934,15 @@
         markStale();
       });
     });
-    v('action').addEventListener('click', render);
+    v('action').addEventListener('click', function() {
+      var button = v('action');
+      if (button.disabled) { return; }
+      button.disabled = true;
+      v('output').classList.remove('yd-hidden', 'is-stale');
+      ydAnalyzeGate(v('graph'), ['감량 후 대사 적응(−10%)을 반영하는 중…', '26주 체중 곡선을 시뮬레이션하고 있어요…'], function() {
+        try { render(); } finally { button.disabled = false; }
+      });
+    });
     syncInputs();
   }
 
@@ -7768,7 +7801,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.152] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.153] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
