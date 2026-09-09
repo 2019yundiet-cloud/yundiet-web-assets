@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_154__) {
+  if (window.__YD_FOOTER_V3_155__) {
     return;
   }
-  window.__YD_FOOTER_V3_154__ = true;
+  window.__YD_FOOTER_V3_155__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -52,7 +52,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.154', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.155', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2182,6 +2182,9 @@
     var flowIdx = new URLSearchParams(location.search).get('idx') || '';
     /* 상품별 세부 오버라이드 (자동 감지 값 덮어쓰기) */
     var FLOW_OVERRIDES = {
+      '88': { min: 6,
+              headline: '단백밥 메뉴를 6개 이상 골라주세요.',
+              lead: '총 6개 이상 선택해 주세요. 이 할인 상품은 1인당 구매수량 확인을 위해 로그인 후 구매할 수 있습니다.' },
       '672': { min: 6,
                headline: '단백밥 메뉴를 6개 이상 골라주세요.',
                lead: 'S, L, 프리미엄을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' },
@@ -3016,6 +3019,25 @@
       ydMark('cartDetailRowsHidden', hidden > 0, '숨김 행 ' + hidden + '개');
     }
 
+    /* 88번은 아임웹의 1인당 구매수량 제한으로 비회원 주문이 거절된다.
+       선택된 상품만 검사하며, 가격·구매제한·네이티브 주문 검증은 변경하지 않는다. */
+    function selectedDiscountNeedsLogin() {
+      const cart = qs('fo-shopping-cart');
+      if (!cart) return false;
+      return qsa('a[href]', cart).some(function(link) {
+        let url;
+        try { url = new URL(link.getAttribute('href'), location.href); } catch (err) { return false; }
+        if (url.origin !== location.origin || url.searchParams.get('idx') !== '88') return false;
+        let row = link.parentElement;
+        while (row && row !== cart) {
+          const check = qs('input[type="checkbox"]', row);
+          if (check) return check.checked;
+          row = row.parentElement;
+        }
+        return true; /* 선택 UI를 찾지 못하면 로그인 안내를 유지한다. */
+      });
+    }
+
     function applyOrderButton() {
       const guest = isGuestUser();
 
@@ -3051,6 +3073,7 @@
             const bar = document.createElement('div');
             bar.id = 'yd-guest-orderbar';
             bar.innerHTML =
+              '<p class="yd-gob-notice" role="status" hidden></p>' +
               '<button type="button" class="yd-gob-guest">비회원 구매</button>' +
               '<button type="button" class="yd-gob-join">3초 회원가입 후 구매하기</button>';
             document.body.appendChild(bar);
@@ -3083,6 +3106,10 @@
               });
             });
             qs('.yd-gob-guest', bar).addEventListener('click', function() {
+              if (selectedDiscountNeedsLogin()) {
+                qs('.yd-gob-join', bar).click();
+                return;
+              }
               /* 네이티브 주문하기 트리거 — '로그인 전 바로 주문 허용' ON이라 비회원 주문서로 진행 */
               btn.click();
             });
@@ -3115,6 +3142,19 @@
           }
         }
       });
+      const guestBar = qs('#yd-guest-orderbar');
+      if (guest && guestBar) {
+        const needsLogin = selectedDiscountNeedsLogin();
+        const notice = qs('.yd-gob-notice', guestBar);
+        const guestBtn = qs('.yd-gob-guest', guestBar);
+        const label = needsLogin ? '로그인 후 구매' : '비회원 구매';
+        if (guestBtn.textContent !== label) guestBtn.textContent = label;
+        if (notice) {
+          const message = needsLogin ? '골라담기 할인 상품은 1인당 구매수량 확인을 위해 로그인 후 구매할 수 있습니다.' : '';
+          if (notice.textContent !== message) notice.textContent = message;
+          if (notice.hidden !== !needsLogin) notice.hidden = !needsLogin;
+        }
+      }
       ydMark('cartOrderButton', found, guest ? '비로그인: 듀얼 주문바' : '로그인: 하단 고정');
     }
 
@@ -7913,7 +7953,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.154] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.155] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
