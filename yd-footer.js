@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_153__) {
+  if (window.__YD_FOOTER_V3_154__) {
     return;
   }
-  window.__YD_FOOTER_V3_153__ = true;
+  window.__YD_FOOTER_V3_154__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -19,6 +19,8 @@
     MEMBERSHIP_SCHEMA: 'yundiet-membership-ui/v1',
     MEMBERSHIP_REQUEST_TIMEOUT: 5000,
     BOOST_COUPON_URL: '/?coupon=7C18FC5909F58&utm_source=onsite_popup&utm_medium=popup&utm_campaign=first_buy_boost&utm_content=coupon2000',
+    /* 배송비 쿠폰 A/B (2026-09-09 대표 승인): 무료배송 쿠폰 [60,000원 이상] · 단독사용 · 발급 후 2일 (imweb c202609098795bf53ac03f) */
+    SHIP_COUPON_URL: '/?coupon=6E32DEC94E5F8&utm_source=onsite_popup&utm_medium=popup&utm_campaign=ship_saver&utm_content=freeship60k',
     DISCOUNT_MAP_URL: 'https://2019yundiet-cloud.github.io/yundiet-web-assets/discount-map.json',
     DAYS: ['일', '월', '화', '수', '목', '금', '토'],
     TOP_BANNER_AB: {
@@ -50,7 +52,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.153', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.154', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -5849,6 +5851,43 @@
         laterLabel: '카카오톡으로 문의하기',
         onCta: function() {}
       };
+    },
+    /* #5 배송비 쿠폰 A/B (2026-09-09 대표 승인): 장바구니 합계 6만~9만 구간 A그룹에만 노출.
+       9만 무료배송 문턱은 그대로 두고 쿠폰(6만 이상·단독사용·발급 후 2일)으로만 배송비를 보전한다.
+       부스터 2,000원과의 중복은 쿠폰 자체의 단독사용 설정이 결제 단계에서 차단한다. */
+    ship_saver: function(info) {
+      const total = info && info.total ? Number(info.total).toLocaleString('ko-KR') + '원' : '';
+      return {
+        id: 'ship_saver',
+        capExempt: true,
+        claimedKey: 'yd_ship_claimed',
+        seenCapKey: 'yd_ship_seen_count',
+        seenCapMax: 3,
+        trackParams: { ab_group: 'A', cart_total: info && info.total ? Number(info.total) : 0 },
+        bodyHtml: '<div class="yd-pop-body"><p class="yd-pop-kicker">지금 담긴 주문' + (total ? ' ' + popEscapeHtml(total) : '') + '</p>' +
+          '<div class="yd-bt-wrap"><div class="yd-bt-amt"><b style="font-size:19px;line-height:1.2;">배송비<br>0원</b><span>COUPON</span></div>' +
+          '<div class="yd-bt-body"><div class="t">이 주문 배송비,<br>저희가 낼게요</div>' +
+          '<div class="d">6만원 이상 주문 전용 · 발급 후 2일<br>다른 쿠폰과 중복 사용은 안 돼요</div></div></div></div>',
+        ctaLabel: '배송비 무료 쿠폰 받기',
+        ctaRed: true,
+        laterLabel: '괜찮아요',
+        onCta: function() {
+          /* 클릭은 수령 완료가 아니다(부스터와 동일 계약). 발급 대기만 남기고
+             쿠폰함 확인 성공 뒤에만 yd_ship_claimed를 기록한다. */
+          try {
+            window.localStorage.setItem('yd_ship_pending', JSON.stringify({ at: Date.now(), popup_id: 'ship_saver' }));
+            window.localStorage.removeItem('yd_ship_claimed');
+          } catch (err) {}
+          if (isGuestUser()) {
+            try {
+              window.localStorage.setItem('yd_kakao_direct', String(Date.now()));
+              window.localStorage.removeItem('yd_pay_resume');
+            } catch (err) {}
+          }
+          try { (window.top || window).location.href = CONFIG.SHIP_COUPON_URL; }
+          catch (err) { window.location.href = CONFIG.SHIP_COUPON_URL; }
+        }
+      };
     }
   };
 
@@ -5972,8 +6011,9 @@
         });
       }
       if (id === 'exit_cart') return popShowCard(POPUP_DEFS.exit_cart({ count: 2, price: 41800 }), { force: true, silent: true });
+      if (id === 'ship_saver') return popShowCard(POPUP_DEFS.ship_saver({ total: 74800 }), { force: true, silent: true });
       if (POPUP_DEFS[id]) return popShowCard(POPUP_DEFS[id](), { force: true, silent: true });
-      console.warn('[YD] 알 수 없는 팝업 id: ' + id + ' (signup_dwell|exit_cart|checkout_stall|signup_welcome)');
+      console.warn('[YD] 알 수 없는 팝업 id: ' + id + ' (signup_dwell|exit_cart|checkout_stall|ship_saver|signup_welcome)');
       return null;
     };
 
@@ -6053,6 +6093,26 @@
         }
       }, 1000);
       armed.push('signup_dwell');
+    }
+
+    /* #5 배송비 쿠폰 A/B (2026-09-09): 장바구니 페이지 진입 5초 후, 합계(할인 반영)가
+       6만 이상 ~ 9만 미만이면 A그룹에 무료배송 쿠폰 팝업. B그룹은 노출 없이 조건 충족만 기록. */
+    if (pageIs('/shop_cart')) {
+      window.setTimeout(function() {
+        fetch(CONFIG.CART_API, { credentials: 'same-origin' })
+          .then(function(res) { return res.json(); })
+          .then(function(data) {
+            const sum = ((((data || {}).data) || {}).cart_price_summary) || {};
+            const total = Math.max(0, (Number(sum.product_price) || 0) - (Number(sum.total_discount_price) || 0));
+            if (!(total >= 60000 && total < CONFIG.FREE_SHIP_THRESHOLD)) return;
+            const group = ydShipAbGroup();
+            ydGaEvent('yd_ship_ab_hit', { ab_group: group, cart_total: total, page_path: location.pathname });
+            if (group !== 'A') return;
+            popShowCard(POPUP_DEFS.ship_saver({ total: total }));
+          })
+          .catch(function() {});
+      }, 5000);
+      armed.push('ship_saver');
     }
 
     /* #3 exit intent + 장바구니 있음 — 결제/장바구니 페이지 제외 전 페이지 */
@@ -6184,6 +6244,57 @@
         readViaIframe();
       })
       .catch(readViaIframe);
+  }
+
+  /* 배송비 쿠폰 A/B 그룹 배정: 브라우저당 1회 무작위 50% 고정. 저장 불가 환경은 A로 폴백. */
+  function ydShipAbGroup() {
+    try {
+      let group = window.localStorage.getItem('yd_ship_ab');
+      if (group !== 'A' && group !== 'B') {
+        group = Math.random() < 0.5 ? 'A' : 'B';
+        window.localStorage.setItem('yd_ship_ab', group);
+        ydGaEvent('yd_ship_ab_assign', { ab_group: group, page_path: location.pathname });
+      }
+      return group;
+    } catch (err) { return 'A'; }
+  }
+
+  /* 배송비 쿠폰 수령 확인: 쿠폰 링크 랜딩 복귀 시 쿠폰함 실재 확인 뒤에만 완료 처리(부스터와 동일 계약) */
+  function bindShipCouponResume() {
+    if (IS_IFRAME) return;
+    let rawShip = null;
+    try { rawShip = window.localStorage.getItem('yd_ship_pending'); } catch (err) {}
+    if (!rawShip) return;
+    let pendingShip = null;
+    try { pendingShip = JSON.parse(rawShip); } catch (err) { pendingShip = { at: Number(rawShip) }; }
+    const ageShip = Date.now() - Number((pendingShip || {}).at);
+    if (!(ageShip >= 0 && ageShip < BOOST_PENDING_TTL_MS)) {
+      try { window.localStorage.removeItem('yd_ship_pending'); } catch (err) {}
+      return;
+    }
+    if (isGuestUser()) { ydMark('shipCouponResume', true, '비회원 — 가입 복귀 대기'); return; }
+    if (!/[?&]coupon=/.test(location.search)) return;
+    ydReadCouponBox(function(text) {
+      return text.indexOf('무료배송 쿠폰 [60,000원 이상]') !== -1;
+    }, function(matched, how) {
+      if (matched) {
+        try {
+          window.localStorage.setItem('yd_ship_claimed', String(Date.now()));
+          window.localStorage.removeItem('yd_ship_pending');
+        } catch (err) {}
+        popConvert('coupon_issued');
+        ydGaEvent('yd_pop_coupon_verified', {
+          popup_id: 'ship_saver', page_path: location.pathname, verify_channel: how
+        });
+        ydMark('shipCouponResume', true, '쿠폰함 확인 성공(' + how + ') — 수령 완료');
+        return;
+      }
+      try { window.localStorage.removeItem('yd_ship_pending'); } catch (err) {}
+      ydGaEvent('yd_pop_coupon_unverified', {
+        popup_id: 'ship_saver', page_path: location.pathname, verify_channel: how
+      });
+      ydMark('shipCouponResume', false, '쿠폰함 미확인(' + how + ') — 수령 완료로 저장하지 않음');
+    });
   }
 
   /* 부스터 경유 가입 복귀: 회원 확인 → 쿠폰 링크 → 쿠폰함 실재 확인 뒤에만 완료 처리 */
@@ -7783,6 +7894,7 @@
     bindMagazineJourney();
     bindOnsitePopups();
     bindBoostCouponResume();
+    bindShipCouponResume();
     bindGaRelay();
     bindDetailEngagement();
     bindCartUx();
@@ -7801,7 +7913,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.153] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.154] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
