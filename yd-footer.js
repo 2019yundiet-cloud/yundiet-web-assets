@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_155__) {
+  if (window.__YD_FOOTER_V3_156__) {
     return;
   }
-  window.__YD_FOOTER_V3_155__ = true;
+  window.__YD_FOOTER_V3_156__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -23,6 +23,11 @@
     SHIP_COUPON_URL: '/?coupon=6E32DEC94E5F8&utm_source=onsite_popup&utm_medium=popup&utm_campaign=ship_saver&utm_content=freeship60k',
     DISCOUNT_MAP_URL: 'https://2019yundiet-cloud.github.io/yundiet-web-assets/discount-map.json',
     DAYS: ['일', '월', '화', '수', '목', '금', '토'],
+    /* 연휴 배송 중단 기간 배송 일정 카드 일시 숨김 (2026-09-22 대표 지시: 추석 연휴 배송 불가 — 9/24~9/28 대체공휴일).
+       until(KST) 이후 자동 복귀. 기간 연장·조기 해제는 이 값만 바꾼다(빈 문자열이면 즉시 해제).
+       대상: 상세 배송 카드·홈 배송 카드·장바구니 배송 배너·결제완료 '발송 예정' 치환.
+       확인용 쿼리: ?yd_ship_pause=1(강제 숨김) / =0(강제 노출) */
+    SHIP_SCHEDULE_PAUSE: { until: '2026-09-29T00:00:00+09:00', reason: '추석 연휴 배송 중단' },
     TOP_BANNER_AB: {
       experimentId: 'top_banner_coupon_20260817',
       storageKey: 'yd_exp_top_banner_coupon_20260817',
@@ -52,7 +57,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.155', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.156', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1702,6 +1707,19 @@
   }
 
   /* ═══ 배송일정 계산 ═══ */
+  function isShipSchedulePaused() {
+    const q = location.search.match(/[?&]yd_ship_pause=([01])(?:&|$)/);
+    if (q) {
+      return q[1] === '1';
+    }
+    const cfg = CONFIG.SHIP_SCHEDULE_PAUSE;
+    if (!cfg || !cfg.until) {
+      return false;
+    }
+    const end = Date.parse(cfg.until);
+    return isFinite(end) && Date.now() < end;
+  }
+
   function formatDate(date) {
     return (date.getMonth() + 1) + '/' + date.getDate() + '(' + CONFIG.DAYS[date.getDay()] + ')';
   }
@@ -2028,7 +2046,9 @@
     }
 
     function tick() {
-      const texts = computeShippingTexts();
+      /* 연휴 일시 숨김: 카드/배너 DOM은 유지·미삽입하고 노출만 막는다(광고 타이머 앵커 보존) */
+      const paused = isShipSchedulePaused();
+      const texts = paused ? null : computeShippingTexts();
 
       if (onDetail) {
         let card = qs('#yd-ship-card-detail');
@@ -2047,9 +2067,15 @@
           }
         }
         if (card) {
-          updateShipCard(card, texts);
+          const cardWant = paused ? 'none' : '';
+          if (card.style.display !== cardWant) {
+            card.style.display = cardWant;
+          }
+          if (!paused) {
+            updateShipCard(card, texts);
+          }
         }
-        ydMark('detailShipCard', !!card, card ? '표시됨' : '앵커 탐색 중');
+        ydMark('detailShipCard', !!card, card ? (paused ? '연휴 일시 숨김' : '표시됨') : '앵커 탐색 중');
 
         /* 광고 랜딩 전용 할인 타이머 — 배송 카드 바로 아래 */
         const pIdx = promoIdx();
@@ -2087,7 +2113,7 @@
             row.insertAdjacentElement('afterend', card);
           }
           const rowHidden = row.offsetParent === null;
-          const want = rowHidden ? 'none' : '';
+          const want = (rowHidden || paused) ? 'none' : '';
           if (card.style.display !== want) {
             card.style.display = want;
           }
@@ -2095,16 +2121,18 @@
             visibleCount += 1;
             syncHomeCardEdges(card);
           }
-          updateShipCard(card, texts);
+          if (!paused) {
+            updateShipCard(card, texts);
+          }
         });
-        ydMark('homeShipCard', visibleCount > 0, '행 ' + rows.length + '개 / 노출 카드 ' + visibleCount + '개');
+        ydMark('homeShipCard', visibleCount > 0, (paused ? '연휴 일시 숨김 · ' : '') + '행 ' + rows.length + '개 / 노출 카드 ' + visibleCount + '개');
       }
 
       if (onCart) {
         let banner = qs('#yd-ship-banner-cart');
 
-        /* 빈 장바구니면 배너 제거 */
-        if (banner && cartItemCount === 0) {
+        /* 빈 장바구니 또는 연휴 일시 숨김이면 배너 제거 */
+        if (banner && (cartItemCount === 0 || paused)) {
           const sp = qs('#yd-ship-banner-spacer');
           if (sp) {
             sp.remove();
@@ -2114,7 +2142,7 @@
         }
 
         /* React 영역 밖(장바구니 컴포넌트 바로 앞)에 삽입 → 재렌더에도 안 밀림 */
-        if (!banner && cartItemCount !== null && cartItemCount > 0) {
+        if (!banner && !paused && cartItemCount !== null && cartItemCount > 0) {
           const host = qs('fo-shopping-cart') || qs('.shop-table._shop_table');
           if (host && host.parentNode) {
             banner = buildBanner('yd-ship-banner-cart');
@@ -2132,9 +2160,9 @@
           }
           cartBannerScrollSync();
         }
-        ydMark('cartBanner', !!banner, banner
+        ydMark('cartBanner', !!banner || paused, paused ? '연휴 일시 숨김' : (banner
           ? '표시됨 (상품 ' + cartItemCount + '개)'
-          : (cartItemCount === 0 ? '빈 장바구니: 미표시(정상)' : '장바구니 확인 중'));
+          : (cartItemCount === 0 ? '빈 장바구니: 미표시(정상)' : '장바구니 확인 중')));
       }
     }
 
@@ -3345,7 +3373,8 @@
         return ((el.textContent || '').trim().replace(/\s+/g, '') === '배송방법');
       });
 
-      if (labelEl) {
+      /* 연휴 일시 숨김 중에는 '배송방법: 직접 배송'(네이티브)을 그대로 둔다 */
+      if (labelEl && !isShipSchedulePaused()) {
         labelEl.textContent = '배송일정';
 
         const valueEl =
@@ -7953,7 +7982,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.155] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.156] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
