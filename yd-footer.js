@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_156__) {
+  if (window.__YD_FOOTER_V3_157__) {
     return;
   }
-  window.__YD_FOOTER_V3_156__ = true;
+  window.__YD_FOOTER_V3_157__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -27,7 +27,8 @@
        until(KST) 이후 자동 복귀. 기간 연장·조기 해제는 이 값만 바꾼다(빈 문자열이면 즉시 해제).
        대상: 상세 배송 카드·홈 배송 카드·장바구니 배송 배너·결제완료 '발송 예정' 치환.
        확인용 쿼리: ?yd_ship_pause=1(강제 숨김) / =0(강제 노출) */
-    SHIP_SCHEDULE_PAUSE: { until: '2026-09-29T00:00:00+09:00', reason: '추석 연휴 배송 중단' },
+    /* 2026-09-27 대표 지시로 조기 복원(until 비움). 다음 연휴는 until에 KST 시각만 넣으면 된다. */
+    SHIP_SCHEDULE_PAUSE: { until: '', reason: '추석 연휴 배송 중단(9/22~9/27 적용, 9/27 복원)' },
     TOP_BANNER_AB: {
       experimentId: 'top_banner_coupon_20260817',
       storageKey: 'yd_exp_top_banner_coupon_20260817',
@@ -57,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.156', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.157', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -7982,7 +7983,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.156] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.157] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
