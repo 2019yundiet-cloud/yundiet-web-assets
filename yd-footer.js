@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_158__) {
+  if (window.__YD_FOOTER_V3_159__) {
     return;
   }
-  window.__YD_FOOTER_V3_158__ = true;
+  window.__YD_FOOTER_V3_159__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.158', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.159', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1831,7 +1831,7 @@
      만료되면 표시하지 않는다(없는 할인을 표시하지 않기 위함).
      옵션 선택 중(바텀시트 열림)에는 숨긴다. */
   const PROMO = {
-    PRODUCTS: ['672', '1117', '1138', '1218', '1240', '1241'],
+    PRODUCTS: ['672', '1117', '1138', '1218', '1240', '1241', '1263'],
     HOURS: 72,
     KEY: 'ydPromoEnd_'
   };
@@ -2671,6 +2671,8 @@
             });
           });
           if (!availableSizes.length) availableSizes = ['L'];
+          /* 1263(급찐급빠 광고 전용 랜딩): 페이지·광고가 '420g 10종'이라 첫 탭을 L로 연다(S 1종 탭으로 열리면 메뉴가 안 보이는 문제) */
+          if (activeTab === null && flowIdx === '1263' && availableSizes.indexOf('L') > -1) activeTab = 'L';
           if (activeTab === null || availableSizes.indexOf(activeTab) === -1) activeTab = availableSizes[0];
           var items = [];
           s.cat.groups.forEach(function(g) { if (g.main) g.items.forEach(function(it) { if (flowCategoryOf(it[0]) === activeTab) items.push(it); }); });
@@ -7991,7 +7993,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.158] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.159] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
