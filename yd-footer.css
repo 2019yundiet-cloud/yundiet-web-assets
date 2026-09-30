@@ -258,6 +258,19 @@
     display: none !important;
   }
 
+  /* 아임웹 '내 예상 최저가' 계산기는 비회원에게 비노출 — 수동 지정 쇼핑등급(Special 100%)이
+     비회원에게도 "100% 0원"으로 계산돼 보이던 문제(2026-09-30). 계산기가 숨겨둔 네이티브
+     쿠폰 카드(data-lpc-native-restore)는 비회원에게 원래대로 복원하되, 단백밥 쿠폰 숨김 상품은 제외. */
+  html.yd-guest-lpc-off ._lowest_price_calculator_magnet_wrap,
+  html.yd-guest-lpc-off #foLowestPriceCalculatorMagnet,
+  html.yd-guest-lpc-off fo-shopping-lowest-price-calculator {
+    display: none !important;
+  }
+
+  html.yd-guest-lpc-off:not(.yd-danbaekbap-hide-coupon) .prod-detail-coupon-container-style-a[data-lpc-native-restore] {
+    display: block !important;
+  }
+
   /* 단백밥 SET(675) 상품명 옆 무료배송 기준 태그 */
   .doz_sys.shop_view h1.view_tit > .yd-set-free-shipping-tag {
     display: inline-flex;

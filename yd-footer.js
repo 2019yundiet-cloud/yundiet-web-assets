@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_160__) {
+  if (window.__YD_FOOTER_V3_161__) {
     return;
   }
-  window.__YD_FOOTER_V3_160__ = true;
+  window.__YD_FOOTER_V3_161__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.160', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.161', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -304,7 +304,7 @@
   }
 
   const PURE_PROTEIN_NO_SHIP_GAUGE_IDS = new Set(['1125', '1214', '1233', '1235', '1242', '1246']);
-  const DANBAEKBAP_HIDE_COUPON_IDS = new Set(['672', '675']);
+  const DANBAEKBAP_HIDE_COUPON_IDS = new Set(['672', '675', '1264']);
   const PURE_PROTEIN_COUPON_LABELS = {
     '1125': '[순수단백 3세트] 한돈스테이크 무료배송',
     '1214': '[순수단백 3세트] 단백 직화 불고기 무료배송',
@@ -1078,6 +1078,24 @@
     ensureObserver('danbaekbapCouponHide', sync);
   }
 
+  /* ═══ 비회원 '내 예상 최저가' 계산기 숨김 ═══
+     계산기는 페이지 로드 수 초 뒤 비동기로 그려지므로 html 클래스(CSS)로 미리 막아 둔다. */
+  function bindGuestLowestPriceHide() {
+    function sync() {
+      const guest = isGuestUser();
+      const root = document.documentElement;
+      if (root.classList.contains('yd-guest-lpc-off') !== guest) {
+        root.classList.toggle('yd-guest-lpc-off', guest);
+      }
+      if (guest) {
+        ydMark('guestLowestPriceHide', true, '비회원 — 예상 최저가 계산기 비노출·쿠폰 카드 복원');
+      }
+    }
+
+    sync();
+    window.setTimeout(sync, 1500);
+  }
+
   /* ═══ 단백밥 SET 무료배송 기준 태그 ═══
    * 675 상품의 제목과 상세정보 본문 시작점에 배송비 기준을 빨간 태그로 안내한다.
    * 기존 아임웹 배송정책/결제 로직은 변경하지 않는다. */
@@ -1831,7 +1849,7 @@
      만료되면 표시하지 않는다(없는 할인을 표시하지 않기 위함).
      옵션 선택 중(바텀시트 열림)에는 숨긴다. */
   const PROMO = {
-    PRODUCTS: ['672', '1117', '1138', '1218', '1240', '1241', '1260', '1263'],
+    PRODUCTS: ['672', '1117', '1138', '1218', '1240', '1241', '1260', '1263', '1264'],
     HOURS: 72,
     KEY: 'ydPromoEnd_'
   };
@@ -2217,6 +2235,10 @@
               headline: '단백밥 메뉴를 6개 이상 골라주세요.',
               lead: '총 6개 이상 선택해 주세요. 이 할인 상품은 1인당 구매수량 확인을 위해 로그인 후 구매할 수 있습니다.' },
       '672': { min: 6,
+               headline: '단백밥 메뉴를 6개 이상 골라주세요.',
+               lead: 'S, L, 프리미엄을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' },
+      /* 1264 = 672 복제 광고 랜딩(밥도감+단백밥, 2026-09-30) — 672와 같은 설정 */
+      '1264': { min: 6,
                headline: '단백밥 메뉴를 6개 이상 골라주세요.',
                lead: 'S, L, 프리미엄을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' },
       '1098': { min: 6, scheme: 'size', categories: ['L', 'P'],
@@ -7958,6 +7980,7 @@
     bindOptionKeepOpen();
     bindCartAwareFreeShip();
     bindDanbaekbapCouponHide();
+    bindGuestLowestPriceHide();
     bindDanbaekbapSetFreeShippingTag();
     bindPureProteinCouponButton();
     bindFreeShipOptionCouponNote();
@@ -7993,7 +8016,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.160] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.161] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
