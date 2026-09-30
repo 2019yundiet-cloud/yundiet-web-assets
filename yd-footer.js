@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_159__) {
+  if (window.__YD_FOOTER_V3_160__) {
     return;
   }
-  window.__YD_FOOTER_V3_159__ = true;
+  window.__YD_FOOTER_V3_160__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.159', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.160', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1831,7 +1831,7 @@
      만료되면 표시하지 않는다(없는 할인을 표시하지 않기 위함).
      옵션 선택 중(바텀시트 열림)에는 숨긴다. */
   const PROMO = {
-    PRODUCTS: ['672', '1117', '1138', '1218', '1240', '1241', '1263'],
+    PRODUCTS: ['672', '1117', '1138', '1218', '1240', '1241', '1260', '1263'],
     HOURS: 72,
     KEY: 'ydPromoEnd_'
   };
@@ -2642,7 +2642,7 @@
         var proteinGroup = /단백질\s*추가구성/.test(g.label);
         var discountMatch = flowIdx === '1220' ? g.label.match(/(\d+)%\s*할인/) : null;
         var discountBadge = discountMatch ? '<span class="yd-bs-discount-badge">' + escT(discountMatch[1]) + '% 할인</span>' : '';
-        var welcomeOffer = proteinGroup && promoIdx() === '1241';
+        var welcomeOffer = proteinGroup && (promoIdx() === '1241' || promoIdx() === '1260');
         return '<section class="yd-bs-addon-group' + (welcomeOffer ? ' yd-bs-welcome-offer' : '') + '"><div class="yd-bs-addon-head"><h4>' + escT(g.label) + '</h4><span>' + groupQty + '개 선택</span></div><div class="yd-bs-addon-list">' + g.items.map(function(pair) {
           var name = pair[0], price = pair[1];
           var found = s.opt.find(function(x) { return x.label === name; });
@@ -7993,7 +7993,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.159] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.160] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
