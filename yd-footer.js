@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_161__) {
+  if (window.__YD_FOOTER_V3_162__) {
     return;
   }
-  window.__YD_FOOTER_V3_161__ = true;
+  window.__YD_FOOTER_V3_162__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.161', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.162', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -5994,6 +5994,10 @@
   };
 
   const EXIT_CART_POPUP_ENABLED = false; /* ③ 이탈 리마인드 — 대표 결정 대기(코드는 유지) */
+  /* 배송비 쿠폰 A/B(ship_saver) 종료 (2026-09-30 대표 지시): BigQuery 판정 — 7일 구매 A 75.7% vs B 76.0% 무차이,
+     9만↑ 주문 비중 A 10.7% vs B 22.0%, 사용자당 공헌이익 약 −750원. 장바구니 무장·A/B 배정·hit 기록을 끈다.
+     이미 받은 쿠폰의 결제 사용은 아임웹 네이티브라 영향 없음. 재개하려면 true로 바꾸고 아임웹 쿠폰 발급도 재개. */
+  const SHIP_COUPON_POPUP_ENABLED = false;
 
   /* CTA 클릭 뒤의 목표 행동은 실제 확인된 지점에서만 전환으로 기록한다. */
   function popConvert(action) {
@@ -6199,7 +6203,7 @@
 
     /* #5 배송비 쿠폰 A/B (2026-09-09): 장바구니 페이지 진입 5초 후, 합계(할인 반영)가
        6만 이상 ~ 9만 미만이면 A그룹에 무료배송 쿠폰 팝업. B그룹은 노출 없이 조건 충족만 기록. */
-    if (pageIs('/shop_cart')) {
+    if (SHIP_COUPON_POPUP_ENABLED && pageIs('/shop_cart')) {
       window.setTimeout(function() {
         fetch(CONFIG.CART_API, { credentials: 'same-origin' })
           .then(function(res) { return res.json(); })
@@ -6367,6 +6371,11 @@
     let rawShip = null;
     try { rawShip = window.localStorage.getItem('yd_ship_pending'); } catch (err) {}
     if (!rawShip) return;
+    /* A/B 종료 후: 남은 수령 대기 표식만 정리(쿠폰함 확인·전환 기록 없음) */
+    if (!SHIP_COUPON_POPUP_ENABLED) {
+      try { window.localStorage.removeItem('yd_ship_pending'); } catch (err) {}
+      return;
+    }
     let pendingShip = null;
     try { pendingShip = JSON.parse(rawShip); } catch (err) { pendingShip = { at: Number(rawShip) }; }
     const ageShip = Date.now() - Number((pendingShip || {}).at);
@@ -8016,7 +8025,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.161] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.162] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
