@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_162__) {
+  if (window.__YD_FOOTER_V3_163__) {
     return;
   }
-  window.__YD_FOOTER_V3_162__ = true;
+  window.__YD_FOOTER_V3_163__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.162', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.163', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1517,6 +1517,8 @@
   function bindDetailVideoFix() {
     function run() {
       document.querySelectorAll('.fr-view video[src], #prod_detail video[src]').forEach(function(v) {
+        /* 헤드 코드 선행 렌더(early-detail)가 화면 가까이 올 때까지 미뤄 둔 영상은 건드리지 않는다 — load()가 지연 로딩을 깨뜨림 */
+        if (v.hasAttribute('data-yd-preload') && !v.hasAttribute('data-yd-woken')) { return; }
         var tries = Number(v.dataset.ydVfix || 0);
         if ((v.error || v.readyState === 0) && tries < 2) {
           v.dataset.ydVfix = String(tries + 1);
@@ -8025,7 +8027,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.162] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.163] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
