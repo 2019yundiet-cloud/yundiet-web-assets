@@ -1,4 +1,4 @@
-/* 윤식단 상세 본문 선행 렌더 — v3 2026-10-01 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
+/* 윤식단 상세 본문 선행 렌더 — v4 2026-10-01 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
    문제: 아임웹은 상세 본문을 <template id="prodDetailMobile">에 담아 두고, 동기 스크립트 90여 개를 모두 받은 뒤
          HTML 맨 끝의 SITE_SHOP_DETAIL.initDetail()에서야 본문 칸에 끼워 넣는다(이미지 치수 HEAD 조회까지 끝낸 뒤).
          휴대폰 4G 실측으로 본문 첫 이미지가 8~9초에야 뜨고, 그동안 광고로 들어와 스크롤한 사람은 빈 칸을 본다.
@@ -15,7 +15,7 @@
     if (/[?&]yd_early=0/.test(location.search)) return;
     if (!window.fetch || !window.MutationObserver || !window.Promise || !window.URL || !('content' in document.createElement('template'))) return;
 
-    var st = window.__ydEarlyDetail = { v: 3, t0: Math.round(performance.now()) };
+    var st = window.__ydEarlyDetail = { v: 4, t0: Math.round(performance.now()) };
     var UP_HOST = 'cdn.imweb.me', OPT_HOST = 'cdn-optimized.imweb.me', UP_PATH = '/upload/';
     var SRCSET_W = [1536, 1280, 1080, 828, 768, 640, 576, 368];
     var PROBE_TIMEOUT = 4000;
@@ -42,6 +42,33 @@
       st.vw = vw;
       if (!vw || vw >= 768) { st.skip = 'not-mobile-width'; return; }  // 아임웹 is_mobile_width 기준(768)과 동일
       render(tpl, box);
+    }
+
+    /* 앞쪽 본문 이미지 N장은 template를 읽는 즉시 '높은 우선순위'로 요청 — 같은 CDN 연결에서 먼저 요청된(안 보이는) 갤러리 사진 뒤에 줄 서지 않게.
+       실측(1264): 본문 3번째 이미지 8.6초(갤러리 2.6MB 뒤에 밀림) */
+    var FIRST_N = 3;
+    var preloads = [];
+    function sizesValue() {
+      var dpr = window.devicePixelRatio || 1;
+      return DPR_CAP && dpr > DPR_CAP ? Math.round(100 * DPR_CAP / dpr) + 'vw' : '100vw';
+    }
+    function srcsetOf(href) { return SRCSET_W.map(function (w) { return optUrl(href, w).href + ' ' + w + 'w'; }).join(', '); }
+    function preloadFirst(imgs) {
+      var n = 0;
+      for (var i = 0; i < imgs.length && n < FIRST_N; i++) {
+        var src;
+        try { src = new URL(imgs[i].getAttribute('src') || '', location.href); } catch (e) { continue; }
+        if (src.host !== UP_HOST || src.pathname.indexOf(UP_PATH) !== 0) continue;
+        imgs[i].setAttribute('data-yd-first', '1');
+        var pre = new Image();
+        try { pre.fetchPriority = 'high'; } catch (e) {}
+        pre.sizes = sizesValue();
+        pre.srcset = srcsetOf(src.href);
+        pre.src = optUrl(src.href, 1920).href;
+        preloads.push(pre);  // 요청이 끝날 때까지 참조 유지
+        n++;
+      }
+      st.first = n;
     }
 
     function optUrl(src, w) {
@@ -91,9 +118,9 @@
             img.classList.add('loaded');
           }
           img.src = big.href;
-          var dpr = window.devicePixelRatio || 1;
-          img.sizes = DPR_CAP && dpr > DPR_CAP ? Math.round(100 * DPR_CAP / dpr) + 'vw' : '100vw';
-          img.srcset = SRCSET_W.map(function (w) { return optUrl(src.href, w).href + ' ' + w + 'w'; }).join(', ');
+          if (img.getAttribute('data-yd-first')) { try { img.fetchPriority = 'high'; } catch (e) {} img.setAttribute('fetchpriority', 'high'); }
+          img.sizes = sizesValue();
+          img.srcset = srcsetOf(src.href);
           img.loading = 'lazy';
           img.addEventListener('error', function () {
             img.src = img.getAttribute('data-original') || src.href;
@@ -158,6 +185,7 @@
       st.videos = deferVideos(frag);
       var imgs = frag.querySelectorAll('img');
       st.imgs = imgs.length;
+      preloadFirst(imgs);
       st.files = {};
       for (var k = 0; k < imgs.length; k++) st.files[fileOf(imgs[k].getAttribute('src'))] = 1;
       var jobs = [];
