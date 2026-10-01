@@ -1,4 +1,4 @@
-/* 윤식단 상세 본문 선행 렌더 — v4 2026-10-01 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
+/* 윤식단 상세 본문 선행 렌더 — v5 2026-10-01 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
    문제: 아임웹은 상세 본문을 <template id="prodDetailMobile">에 담아 두고, 동기 스크립트 90여 개를 모두 받은 뒤
          HTML 맨 끝의 SITE_SHOP_DETAIL.initDetail()에서야 본문 칸에 끼워 넣는다(이미지 치수 HEAD 조회까지 끝낸 뒤).
          휴대폰 4G 실측으로 본문 첫 이미지가 8~9초에야 뜨고, 그동안 광고로 들어와 스크롤한 사람은 빈 칸을 본다.
@@ -15,7 +15,7 @@
     if (/[?&]yd_early=0/.test(location.search)) return;
     if (!window.fetch || !window.MutationObserver || !window.Promise || !window.URL || !('content' in document.createElement('template'))) return;
 
-    var st = window.__ydEarlyDetail = { v: 4, t0: Math.round(performance.now()) };
+    var st = window.__ydEarlyDetail = { v: 5, t0: Math.round(performance.now()) };
     var UP_HOST = 'cdn.imweb.me', OPT_HOST = 'cdn-optimized.imweb.me', UP_PATH = '/upload/';
     var SRCSET_W = [1536, 1280, 1080, 828, 768, 640, 576, 368];
     var PROBE_TIMEOUT = 4000;
@@ -71,10 +71,14 @@
       st.first = n;
     }
 
+    /* 본문 이미지 화질 q=80(치수 조회 w=100 제외). 아임웹 CDN 기본 WebP 화질이 매우 높아 같은 828px가 54~65% 가벼워지고
+       휴대폰 화면에서 글자·음식 사진 차이가 보이지 않음(2026-10-01 실측). 새 주소라 landing-registry/perf/warm_cdn.py로 미리 데운 뒤 반영 */
+    var QUALITY = /[?&]yd_q=0/.test(location.search) ? 0 : 80;  // 끄기: URL ?yd_q=0 (푸터 bindImageQuality와 같은 이름) 또는 상수 0
     function optUrl(src, w) {
       var u = new URL(src);
       u.host = OPT_HOST;
       u.searchParams.set('w', w);
+      if (QUALITY && w > 100) u.searchParams.set('q', QUALITY);
       if (/\.gif$/i.test(u.pathname)) u.searchParams.set('f', iOS ? 'gif' : 'webp');
       return u;
     }

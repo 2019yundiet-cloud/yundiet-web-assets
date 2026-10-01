@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_165__) {
+  if (window.__YD_FOOTER_V3_166__) {
     return;
   }
-  window.__YD_FOOTER_V3_165__ = true;
+  window.__YD_FOOTER_V3_166__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.165', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.166', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -304,7 +304,7 @@
   }
 
   const PURE_PROTEIN_NO_SHIP_GAUGE_IDS = new Set(['1125', '1214', '1233', '1235', '1242', '1246']);
-  const DANBAEKBAP_HIDE_COUPON_IDS = new Set(['672', '675', '1264', '1265']);
+  const DANBAEKBAP_HIDE_COUPON_IDS = new Set(['672', '675', '1264', '1265', '1266']);
   const PURE_PROTEIN_COUPON_LABELS = {
     '1125': '[순수단백 3세트] 한돈스테이크 무료배송',
     '1214': '[순수단백 3세트] 단백 직화 불고기 무료배송',
@@ -1511,6 +1511,146 @@
     else { window.addEventListener('load', arm); }
   }
 
+  /* ═══ 안 보이는 사진 받지 않기 ═══
+     ① 아임웹 '모바일 숨김'(.mobile_hide) PC 전용 섹션(예: 다른 상품 추천 슬라이드)은 휴대폰에서 안 보이는데
+        owl 슬라이드가 사진(800px)을 받는다.
+     ② 구매평을 펼쳐야 보이는 사진(.thumb_detail_img_wrap, display:none)을 아임웹이 1280px로 즉시 받는다.
+     → 숨겨진 칸 안 사진은 주소를 data-yd-src로 비켜 두고(받던 중이면 중단), 칸이 보이게 되거나(IntersectionObserver)
+        그 구매평을 누르면(캡처 단계 클릭) 즉시 되돌린다. 실측(1265, 휴대폰 4G): 방문마다 약 2~3.5MB 절약,
+        로딩 완료(진행 막대 끝) 크게 단축. 보이는 사진·PC에서 보이는 섹션은 건드리지 않는다. */
+  function bindHiddenImageSaver() {
+    if (window.__ydHiddenImgSaver) { return; }
+    window.__ydHiddenImgSaver = true;
+    var BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+    var HOLD_SEL = '.mobile_hide, .thumb_detail_img_wrap';
+    var held = 0;
+    var hidden = function(el) { return !el.getClientRects().length; };
+    var restore = function(img) {
+      var u = img.getAttribute('data-yd-src');
+      if (!u) { return; }
+      img.removeAttribute('data-yd-src');
+      img.setAttribute('data-yd-free', '1'); /* 한 번 되돌린 사진은 다시 보류하지 않는다 */
+      var ss = img.getAttribute('data-yd-srcset');
+      if (ss) { img.removeAttribute('data-yd-srcset'); img.setAttribute('srcset', ss); }
+      img.setAttribute('src', u);
+    };
+    var io = window.IntersectionObserver ? new IntersectionObserver(function(ents) {
+      ents.forEach(function(e) { if (e.isIntersecting) { restore(e.target); io.unobserve(e.target); } });
+    }, { rootMargin: '600px 0px' }) : null;
+    var hold = function(img) {
+      if (img.tagName !== 'IMG' || img.hasAttribute('data-yd-src') || img.hasAttribute('data-yd-free')) { return; }
+      var box = img.closest(HOLD_SEL);
+      if (!box || !hidden(box)) { return; }
+      /* 지연 로딩용 진짜 주소(data-src·data-original)는 아임웹·owl이 읽기 전에 치워 둔다(실측: 추천 사진은 이 경로로 받음) */
+      var lazy = img.getAttribute('data-src') || img.getAttribute('data-original');
+      if (lazy && /^https?:|^\/\//.test(lazy)) {
+        img.setAttribute('data-yd-src', lazy);
+        img.removeAttribute('data-src');
+        img.removeAttribute('data-original');
+        held += 1; img.setAttribute('data-yd-io', '1');
+        if (io) { io.observe(img); }
+        return;
+      }
+      var src = img.getAttribute('src') || '';
+      if (!/^https?:|^\/\//.test(src) || /placeholder_image/.test(src)) { return; }
+      if (img.complete && img.naturalWidth > 1) { return; } /* 이미 받은 것은 그대로 */
+      if (img.hasAttribute('srcset')) { img.setAttribute('data-yd-srcset', img.getAttribute('srcset')); img.removeAttribute('srcset'); }
+      img.setAttribute('data-yd-src', src);
+      img.setAttribute('src', BLANK);
+      held += 1; img.setAttribute('data-yd-io', '1');
+      if (io) { io.observe(img); }
+    };
+    var watchPre = function(img) {  /* 응답에서 미리 바꿔 둔 사진: 보이게 되면 되돌리도록 IO에만 등록 */
+      if (img.hasAttribute('data-yd-io') || !img.hasAttribute('data-yd-src')) { return; }
+      img.setAttribute('data-yd-io', '1'); held += 1;
+      if (io) { io.observe(img); }
+    };
+    var scan = function(root) {
+      if (!root || root.nodeType !== 1) { return; }
+      if (root.tagName === 'IMG') { if (root.hasAttribute('data-yd-src')) { watchPre(root); } else { hold(root); } return; }
+      if (!root.querySelector || !root.querySelector('img')) { return; }
+      root.querySelectorAll('img[data-yd-src]:not([data-yd-io])').forEach(watchPre);
+      root.querySelectorAll('.mobile_hide img, .thumb_detail_img_wrap img').forEach(hold);
+      if (root.closest && root.closest(HOLD_SEL)) { root.querySelectorAll('img').forEach(hold); }
+    };
+    /* ① owl 슬라이드는 사진 주소를 넣는 순간 이미 요청이 나가 뒤늦은 보류로는 못 막는다(실측) →
+       휴대폰에서 숨겨진 .mobile_hide 칸의 슬라이드는 만들 때 lazyLoad만 끄고, 사진은 보이게 될 때(IO) 넣는다 */
+    var guardOwl = function() {
+      var $ = window.jQuery;
+      if (!$ || !$.fn || typeof $.fn.owlCarousel !== 'function' || $.fn.owlCarousel.__ydHiddenGuard) { return !!($ && $.fn && $.fn.owlCarousel && $.fn.owlCarousel.__ydHiddenGuard); }
+      var orig = $.fn.owlCarousel;
+      var wrapped = function(opts) {
+        var args = Array.prototype.slice.call(arguments);
+        try {
+          if (opts && typeof opts === 'object' && opts.lazyLoad && this.length && this.toArray().every(function(el) {
+            var sec = el.closest && el.closest('.mobile_hide'); return !!sec && hidden(sec);
+          })) {
+            args[0] = $.extend({}, opts, { lazyLoad: false });
+            this.find('img[data-src]').each(function() {
+              if (this.hasAttribute('data-yd-src')) { return; }
+              this.setAttribute('data-yd-src', this.getAttribute('data-src'));
+              held += 1;
+              if (io) { io.observe(this); }
+            });
+          }
+        } catch (err) {}
+        return orig.apply(this, args);
+      };
+      for (var k in orig) { if (Object.prototype.hasOwnProperty.call(orig, k)) { wrapped[k] = orig[k]; } }
+      wrapped.__ydHiddenGuard = true;
+      $.fn.owlCarousel = wrapped;
+      return true;
+    };
+    if (!guardOwl()) { var tries = 0, t = window.setInterval(function() { if (guardOwl() || ++tries > 40) { window.clearInterval(t); } }, 100); }
+    /* ② 구매평 목록은 XHR(prod_review*_html.cm)로 받은 HTML을 끼워 넣는 순간 사진 요청이 나가 뒤늦은 보류로는 못 멈춘다(실측) →
+       응답 HTML에서 펼침 칸(thumb_detail_img_wrap) 사진의 src만 data-yd-src로 바꿔 두고, 아임웹이 그 HTML을 쓰게 한다 */
+    try {
+      var XO = XMLHttpRequest.prototype.open;
+      if (!XO.__ydReviewHold) {
+        var rewrite = function(html) {  /* 펼침 칸 안 <img>의 src·srcset을 보류 속성으로(srcset이 있으면 브라우저는 그것으로 받는다) */
+          return html.replace(/(<div[^>]*class="[^"]*thumb_detail_img_wrap[^"]*"[^>]*>)([\s\S]*?)(<\/div>)/g, function(m, open, body, close) {
+            return open + body.replace(/<img\b[^>]*>/g, function(tag) {
+              if (/data-yd-src=/.test(tag) || !/\ssrc="https?:/.test(tag)) { return tag; }
+              return tag.replace(/\ssrcset="([^"]*)"/, ' data-yd-srcset="$1"').replace(/\ssrc="([^"]*)"/, ' src="' + BLANK + '" data-yd-src="$1"');
+            }) + close;
+          });
+        };
+        var hooked = function(method, url) {
+          var xhr = this;
+          if (/\/shop\/prod_review[a-z_]*html\.cm/.test(String(url || ''))) {
+            xhr.addEventListener('readystatechange', function() {
+              if (xhr.readyState !== 4) { return; }
+              try {
+                var txt = xhr.responseText;
+                if (typeof txt === 'string' && txt.indexOf('thumb_detail_img_wrap') !== -1) {
+                  var out = rewrite(txt);
+                  if (out !== txt) { Object.defineProperty(xhr, 'responseText', { configurable: true, value: out }); Object.defineProperty(xhr, 'response', { configurable: true, value: out }); }
+                }
+              } catch (err) {}
+            });
+          }
+          return XO.apply(this, arguments);
+        };
+        hooked.__ydReviewHold = true;
+        XMLHttpRequest.prototype.open = hooked;
+      }
+    } catch (err) {}
+    scan(document.body);
+    new MutationObserver(function(recs) {
+      for (var i = 0; i < recs.length; i++) {
+        var r = recs[i];
+        if (r.type === 'attributes') { if (r.target.tagName === 'IMG' && !/^data:/.test(r.target.getAttribute('src') || '')) { hold(r.target); } continue; }
+        for (var j = 0; j < r.addedNodes.length; j++) { scan(r.addedNodes[j]); }
+      }
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
+    /* 구매평을 누르면 그 구매평의 보류 사진을 클릭 처리 전에 되돌린다(아임웹이 주소를 읽어 팝업을 만들 수 있으므로) */
+    document.addEventListener('click', function(e) {
+      var item = e.target && e.target.closest && e.target.closest('[class*=review], ._review_wrap');
+      if (item) { item.querySelectorAll('img[data-yd-src]').forEach(restore); }
+    }, true);
+    window.setTimeout(function() { if (held) { ydMark('hiddenImageSaver', true, '안 보이는 사진 ' + held + '장 보류'); } }, 15000);
+  }
+
   /* ═══ 상세 비디오 로드 픽스 ═══
      아임웹 상세 지연삽입(_prod_detail_detail_lazy_load_*)이 넣은 <video>는 초기 로드가
      'URL safety check'로 거부되는 경우가 있다(실측). load() 재시도 한 번이면 정상 로드된다. */
@@ -1851,7 +1991,7 @@
      만료되면 표시하지 않는다(없는 할인을 표시하지 않기 위함).
      옵션 선택 중(바텀시트 열림)에는 숨긴다. */
   const PROMO = {
-    PRODUCTS: ['672', '1117', '1138', '1218', '1240', '1241', '1260', '1263', '1264', '1265'],
+    PRODUCTS: ['672', '1117', '1138', '1218', '1240', '1241', '1260', '1263', '1264', '1265', '1266'],
     HOURS: 72,
     KEY: 'ydPromoEnd_'
   };
@@ -2236,6 +2376,10 @@
     var TAB4_ENABLED = false;
     var tab4On = TAB4_ENABLED || /[?&]yd_tab4=1(?:&|$)/.test(location.search);
     /* 밥도감+단백밥 상품(672·1264·1265)의 새 옵션창 문구 — 합계 단위도 '도시락' */
+    var TAB4_WHOLESALE_COPY = {
+      '1098': { title: '윤식단 단백밥', headline: '도시락 메뉴를 6개 이상 골라주세요.', lead: '원하는 도시락을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' },
+      '1111': { title: '윤식단 단백밥', headline: '도시락 메뉴를 6개 이상 골라주세요.', lead: '원하는 도시락을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' }
+    };
     var TAB4_COPY = { headline: '도시락 메뉴를 6개 이상 골라주세요.', lead: '원하는 도시락을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.', unit: '도시락' };
     /* 상품별 세부 오버라이드 (자동 감지 값 덮어쓰기) */
     var FLOW_OVERRIDES = {
@@ -2251,6 +2395,10 @@
                lead: 'S, L, 프리미엄을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' },
       /* 1265 = 1264 복제 회사 점심(S1) 광고 랜딩(밥도감+단백밥, 2026-10-01) — 1264와 같은 설정 */
       '1265': { min: 6,
+               headline: '단백밥 메뉴를 6개 이상 골라주세요.',
+               lead: 'S, L, 프리미엄을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' },
+      /* 1266 = 1265 복제 애덤 밥도감 광고 랜딩(가성비 미친 도시락, 밥도감+단백밥, 2026-10-01) — 1265와 같은 설정 */
+      '1266': { min: 6,
                headline: '단백밥 메뉴를 6개 이상 골라주세요.',
                lead: 'S, L, 프리미엄을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' },
       '1098': { min: 6, scheme: 'size', categories: ['L', 'P'],
@@ -2319,6 +2467,15 @@
       var mixedLines = tab4On && hasReq(/밥도감/) && hasReq(/단백밥/);
       var detectedScheme = ((hasReq(/^\[S\]/i) && hasReq(/^\[L\]/i)) || mixedLines) ? 'size' : 'groups';
       if (mixedLines) ov = Object.assign({}, ov, TAB4_COPY);
+      /* 50g([L])+저당 한식만 있고 [S]가 없는 단백밥 상품(1260·1251)도 2탭으로 (2026-10-01 대표 지시). 최소 수량은 지금 그대로(재정의 없으면 1) */
+      var lineAndPremium = tab4On && !mixedLines && fam.k === 'danbaekbap' && !ov.scheme && !hasReq(/^\[S\]/i) &&
+        hasReq(/^\[L\]/i) && hasReq(premiumPattern);
+      if (lineAndPremium) {
+        detectedScheme = 'size';
+        ov = Object.assign({ min: 1, headline: '도시락 메뉴를 골라주세요.', lead: '원하는 도시락을 자유롭게 섞어 담을 수 있습니다.', unit: '도시락' }, ov);
+      }
+      /* 도매 1098·1111: 제목·안내문의 L·프리미엄/S 글자를 새 탭 이름에 맞춘다(긴 제목 잘림도 해결) */
+      if (tab4On && TAB4_WHOLESALE_COPY[flowIdx]) ov = Object.assign({}, ov, TAB4_WHOLESALE_COPY[flowIdx]);
       var scheme = ov.scheme || detectedScheme;
       var min = ov.min != null ? ov.min : (scheme === 'size' ? 6 : 1);
       cfg = {
@@ -2549,8 +2706,8 @@
       if (category === 'S' && hasSeparateSauce(name)) return '오리지널S+저당소스가 별도 제공됩니다.';
       if (category === 'S') return '단백질 38g의 식단 정석 닭가슴살 도시락';
       if (/쌈장\s*제육/.test(clean)) return '구수한 저당 쌈장에 부드러운 목전지를 볶아 깊은 감칠맛을 살린 단백질 32g 도시락';
-      if (/직화\s*제육|제육\s*볶음/.test(clean)) return '매콤한 저당 제육 양념을 부드러운 목전지에 입히고 은은한 직화 풍미를 더한 단백질 32g 도시락';
-      if (/불고기/.test(clean)) return '달콤짭짤한 저당 불고기 양념을 부드러운 목전지에 입혀 촉촉한 단짠 풍미를 살린 단백질 32g 도시락';
+      if (/직화\s*제육|제육\s*볶음/.test(clean)) return '매콤한 저당 제육 양념을 부드러운 목전지에 입히고 은은한 직화 풍미를 더한 단백질 25g 도시락';
+      if (/불고기/.test(clean)) return '달콤짭짤한 저당 불고기 양념을 부드러운 목전지에 입혀 촉촉한 단짠 풍미를 살린 단백질 25g 도시락';
       if (/훈제\s*오리/.test(clean)) return '은은한 훈연 향의 오리고기를 한 번 삶아 담백하고 부드럽게 완성한 단백질 29g 도시락';
       if (/함박/.test(clean) && hasSeparateSauce(name)) return '그릴드함박+저당소스가 별도 제공됩니다.';
       if (/함박/.test(clean)) return '지방이 적은 돼지 뒷다리살로 빚어 담백한 고기 맛과 부드러운 식감을 살린 단백질 32g 도시락';
@@ -2592,6 +2749,8 @@
       s.req.forEach(function(x) { counts[flowCategoryOf(x.label)] += x.qty; });
       var tabPrice = flowIdx === '1251' ? { S: '4,800원', L: '4,990원' } : {};
       available = available && available.length ? available : ['S', 'L', 'P'];
+      /* 탭이 1개뿐이면(도매 1111) 고를 것이 없으니 탭 줄을 숨긴다 */
+      if (available.length === 1) return '';
       return '<div class="yd-bs-category-grid is-named is-count-' + available.length + '" role="group" aria-label="도시락 종류 선택">' + available.map(function(v) {
         var l = categoryLines(v), name = categoryLabel(v);
         var price = tabPrice[v] ? '<em class="yd-bs-cat-price">' + tabPrice[v] + '</em>' : '';
@@ -2791,6 +2950,8 @@
           if (activeTab === null && flowIdx === '1263' && availableSizes.indexOf('L') > -1) activeTab = 'L';
           /* 밥도감이 있으면(672·1264) 메뉴가 가장 많은 밥도감 탭으로 연다 — S·L은 1종씩이라 첫 화면이 비어 보인다 */
           if (activeTab === null && availableSizes.indexOf('B') > -1) activeTab = 'B';
+          /* 새 옵션창: 밥도감이 없으면 메뉴가 많은 50g 탭을 먼저 연다(1218은 38g 탭이 메뉴 1개라 첫 화면이 비어 보였다) */
+          if (activeTab === null && tab4On && availableSizes.indexOf('L') > -1) activeTab = 'L';
           if (activeTab === null || availableSizes.indexOf(activeTab) === -1) activeTab = availableSizes[0];
           var items = [];
           s.cat.groups.forEach(function(g) { if (g.main) g.items.forEach(function(it) { if (flowCategoryOf(it[0]) === activeTab) items.push(it); }); });
@@ -8055,6 +8216,10 @@
     }, 4000);
   }
 
+  /* 안 보이는 사진 받지 않기는 즉시 부팅 — 아임웹이 DOMContentLoaded에서 추천 슬라이드(owl)를 먼저 만들기 때문에
+     onReady에 두면 늦는다(실측: 가드 설치 전에 w=800 사진 요청이 나감) */
+  try { bindHiddenImageSaver(); } catch (err) {}
+
   /* 옵션 플로우는 본문 파싱 직후 즉시 부팅 (yd-bs-root 가드로 중복 방지) */
   try { bindOptionFlow(); } catch (err) {}
 
@@ -8122,7 +8287,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.165] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.166] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
