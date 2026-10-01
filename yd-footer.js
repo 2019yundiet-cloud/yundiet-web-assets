@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_167__) {
+  if (window.__YD_FOOTER_V3_168__) {
     return;
   }
-  window.__YD_FOOTER_V3_167__ = true;
+  window.__YD_FOOTER_V3_168__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.167', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.168', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2453,9 +2453,14 @@
       var ov = FLOW_OVERRIDES[flowIdx] || {};
       var hasReq = function(re) { return reqNames.some(function(n) { return re.test(n); }); };
       /* 밥도감+단백밥 혼합 상품(672·1264, 옵션명 '[01 밥도감] …'·'[13 단백밥] …')도 도시락 종류 탭으로 그린다 (2026-10-01 대표 지시) */
-      var mixedLines = tab4On && hasReq(/밥도감/) && hasReq(/단백밥/);
-      var detectedScheme = ((hasReq(/^\[S\]/i) && hasReq(/^\[L\]/i)) || mixedLines) ? 'size' : 'groups';
+      /* 단품 골라담기 옵션명은 '[01 밥도감] …'·'[13 단백밥] …'처럼 번호가 붙는다 — 세트 상품(675 '7. [신제품/12팩] 밥도감 전메뉴')이 걸리지 않게 번호 꼴로만 본다 */
+      var mixedLines = tab4On && hasReq(/^\[\s*\d+\s*밥도감\s*\]/) && hasReq(/^\[\s*\d+\s*단백밥\s*\]/);
+      /* 밥도감만 있는 상품(1262): 탭 1개라 탭 줄은 숨기고 메뉴 설명·실제 가격만 새 방식으로 */
+      var bapdogamOnly = tab4On && !mixedLines && reqNames.length > 0 && hasReq(/^\[\s*\d+\s*밥도감\s*\]/) &&
+        reqNames.every(function(n) { return /밥도감/.test(n) || isNoticeOption(n); });
+      var detectedScheme = ((hasReq(/^\[S\]/i) && hasReq(/^\[L\]/i)) || mixedLines || bapdogamOnly) ? 'size' : 'groups';
       if (mixedLines) ov = Object.assign({}, ov, TAB4_COPY);
+      if (bapdogamOnly) ov = Object.assign({ min: 1, headline: '도시락 메뉴를 골라주세요.', lead: '원하는 도시락을 자유롭게 섞어 담을 수 있습니다.', unit: '도시락' }, ov);
       /* 50g([L])+저당 한식만 있고 [S]가 없는 단백밥 상품(1260·1251)도 2탭으로 (2026-10-01 대표 지시). 최소 수량은 지금 그대로(재정의 없으면 1) */
       var lineAndPremium = tab4On && !mixedLines && fam.k === 'danbaekbap' && !ov.scheme && !hasReq(/^\[S\]/i) &&
         hasReq(/^\[L\]/i) && hasReq(premiumPattern);
@@ -2689,8 +2694,8 @@
     }
 
     function danbaekbapMenuDescription(name, category) {
+      if (cfg && cfg.scheme === 'size' && category === 'B') return bapdogamMenuDescription(name);
       if (!cfg || cfg.family !== 'danbaekbap' || cfg.scheme !== 'size') return '';
-      if (category === 'B') return bapdogamMenuDescription(name);
       var clean = normalizeT(String(name).replace(/\[[^\]]*\]/g, ' ').replace(/[🌶️]/g, ' '));
       if (category === 'S' && hasSeparateSauce(name)) return '오리지널S+저당소스가 별도 제공됩니다.';
       if (category === 'S') return '단백질 38g의 식단 정석 닭가슴살 도시락';
@@ -8276,7 +8281,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.167] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.168] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
