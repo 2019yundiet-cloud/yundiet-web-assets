@@ -1849,32 +1849,16 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     }
   }
 
-  /* 도시락 종류 탭(2026-10-01): S/L 글자 대신 이름 한 줄 — 3개는 한 줄, 2·4개는 2열(4개면 2×2) */
+  /* 도시락 종류 탭(2026-10-01): 예전 탭 칸 모양(큰 글씨·작은 글씨·중량) 그대로 — 3개는 한 줄, 2·4개는 2열(4개면 2×2) */
   #yd-bs-root .yd-bs-category-grid.is-named { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   #yd-bs-root .yd-bs-category-grid.is-named.is-count-2,
   #yd-bs-root .yd-bs-category-grid.is-named.is-count-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #yd-bs-root .yd-bs-category-grid.is-named.is-count-1 { grid-template-columns: minmax(0, 1fr); }
-  #yd-bs-root .yd-bs-category-grid.is-named .yd-bs-category {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: auto;
-    min-height: 62px;
-    padding: 10px 10px;
-  }
-  #yd-bs-root .yd-bs-category-grid.is-named .yd-bs-cat-name {
-    display: block;
-    font-size: 16px;
-    font-weight: 800;
-    line-height: 1.35;
-    letter-spacing: -0.02em;
-    word-break: keep-all;
-  }
-  #yd-bs-root .yd-bs-category-grid.is-named .yd-bs-cat-line { display: block; font-size: inherit; font-weight: inherit; line-height: inherit; color: inherit; }
+  #yd-bs-root .yd-bs-category-grid.is-named strong.is-wide { font-size: 17px; letter-spacing: -0.03em; white-space: nowrap; }
+  #yd-bs-root .yd-bs-category-grid.is-named.is-count-3 strong.is-wide { font-size: 16px; }
   @media (min-width: 768px) {
-    #yd-bs-root .yd-bs-category-grid.is-named .yd-bs-category { min-height: 84px; }
-    #yd-bs-root .yd-bs-category-grid.is-named .yd-bs-cat-name { font-size: 19px; }
+    #yd-bs-root .yd-bs-category-grid.is-named strong.is-wide,
+    #yd-bs-root .yd-bs-category-grid.is-named.is-count-3 strong.is-wide { font-size: 22px; }
   }
 
   /* 닭가슴살 카드 아래 '소스 옵션 추가' 칸(2026-10-01) — 저당소스 선택옵션을 바로 담는다 */

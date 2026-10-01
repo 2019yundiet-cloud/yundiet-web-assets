@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_164__) {
+  if (window.__YD_FOOTER_V3_165__) {
     return;
   }
-  window.__YD_FOOTER_V3_164__ = true;
+  window.__YD_FOOTER_V3_165__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.164', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.165', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2428,11 +2428,13 @@
       return cfg && cfg.categories && cfg.categories.length === 1 ? cfg.categories[0] : categoryOf(name);
     };
     /* 탭·확인 행 이름: S/L 글자 대신 도시락 이름 (2026-10-01 대표 지시, S 단백질은 라벨 38g) — 탭에서는 줄 단위로 끊어 쓴다 */
-    var CATEGORY_LINES = { S: ['닭가슴살', '단백질 38g 도시락'], L: ['닭가슴살', '단백질 50g 도시락'], P: ['저당 한식 도시락'], B: ['맛있는 도시락'] };
+    /* 예전 탭 모양(큰 글씨 · 작은 글씨 · 맨 아래 줄)에 이름을 넣는다 (2026-10-01 대표 지시: S=단백질 38g 닭가슴살 도시락, L=단백질 50g 닭가슴살 도시락, 프리미엄=저당 한식 도시락, 밥도감=맛있는 도시락 [밥도감]) */
+    var CATEGORY_LINES = { S: ['단백질 38g', '닭가슴살 도시락', '325g'], L: ['단백질 50g', '닭가슴살 도시락', '420g'], P: ['저당 한식', '도시락', ''], B: ['맛있는', '도시락', '[밥도감]'] };
     var categoryLines = function(v) { return CATEGORY_LINES[v] || CATEGORY_LINES.L; };
     var categoryLabel = function(v) {
       if (!tab4On) return v === 'S' ? '단백밥 S' : v === 'P' ? '프리미엄' : '단백밥 L';
-      return categoryLines(v).join(' ');
+      var l = categoryLines(v);
+      return l[0] + ' ' + l[1] + (v === 'B' ? ' ' + l[2] : '');
     };
 
     function scheduleRender(withFollowup) {
@@ -2519,8 +2521,30 @@
     var saucePattern = /볼케이노|양념치킨|블랙\s*알리오|블랙알리오|데리야끼|바베큐/;
     var hasSeparateSauce = function(name) { return !/\(소스X\)/.test(name) && saucePattern.test(name); };
 
+    /* 밥도감 12종 메뉴 설명 1차 초안(2026-10-01 대표 지시, 미리보기 전용) — 단백질은 672 상세 라벨, 재료는 밥도감 정본 v2.16 레시피
+       (출처 정리본: vs:code/yundiet-menu-share/build.py). 옵션 번호가 바뀌어도 맞도록 메뉴 이름으로 찾는다 */
+    var BAPDOGAM_DESCRIPTIONS = [
+      [/양념치킨/, '추억의 치킨집 양념 맛을 국내산 닭가슴살에 입히고 단호박을 곁들인 단백질 39g 도시락'],
+      [/카레/, '푹 끓인 듯 진한 카레에 국내산 닭가슴살과 구운 채소를 듬뿍 담은 단백질 39g 도시락'],
+      [/찜닭/, '짭조름한 찜닭 간장 양념에 은은한 매콤함을 더하고 단호박을 곁들인 단백질 39g 도시락'],
+      [/짜장\s*덮밥/, '고소하고 깊은 짜장 소스를 국내산 닭가슴살과 잡곡밥에 듬뿍 올린 단백질 39g 도시락'],
+      [/불갈비/, '갈비 양념에 매콤함을 더한 국내산 돼지고기 함박에 연근튀김을 곁들인 단백질 26g 도시락'],
+      [/데리야끼/, '은은한 숯불향의 달콤짭짤한 데리야끼 소스를 국내산 돼지고기 함박에 올린 단백질 25g 도시락'],
+      [/떡볶이/, '후추향이 은은한 매콤 떡볶이 양념을 국내산 돼지고기 함박에 입힌 단백질 26g 도시락'],
+      [/로제/, '토마토에 생크림을 더한 부드러운 로제 소스를 국내산 돼지고기 함박에 올린 단백질 25g 도시락'],
+      [/짜장\s*면/, '진하고 짭조름한 짜장 소스에 스파게티면과 국내산 닭가슴살을 담은 단백질 36g 도시락'],
+      [/토마토\s*파스타/, '새콤한 토마토 소스에 모짜렐라 치즈와 국내산 닭가슴살을 올린 단백질 36g 도시락'],
+      [/알리오/, '편마늘 향을 듬뿍 담은 담백한 오일 파스타에 국내산 닭가슴살을 올린 단백질 35g 도시락'],
+      [/까르보/, '구운 양송이와 꾸덕한 크림소스에 국내산 닭가슴살을 더한 단백질 35g 도시락']
+    ];
+    function bapdogamMenuDescription(name) {
+      var hit = BAPDOGAM_DESCRIPTIONS.find(function(row) { return row[0].test(name); });
+      return hit ? hit[1] : '';
+    }
+
     function danbaekbapMenuDescription(name, category) {
-      if (!cfg || cfg.family !== 'danbaekbap' || cfg.scheme !== 'size' || category === 'B') return '';
+      if (!cfg || cfg.family !== 'danbaekbap' || cfg.scheme !== 'size') return '';
+      if (category === 'B') return bapdogamMenuDescription(name);
       var clean = normalizeT(String(name).replace(/\[[^\]]*\]/g, ' ').replace(/[🌶️]/g, ' '));
       if (category === 'S' && hasSeparateSauce(name)) return '오리지널S+저당소스가 별도 제공됩니다.';
       if (category === 'S') return '단백질 38g의 식단 정석 닭가슴살 도시락';
@@ -2561,7 +2585,7 @@
         return btn(v, defs[v][0], defs[v][1]);
       }).join('') + '</div>';
     }
-    /* 도시락 종류 탭 (2026-10-01 대표 지시): S/L/PREMIUM 글자·중량 줄 대신 이름 — 4개면 2×2 */
+    /* 도시락 종류 탭 (2026-10-01 대표 지시): 예전 탭 모양 그대로, S/L/PREMIUM 글자 대신 이름 — 4개면 2×2 */
     function sizeTabs(s, available) {
       if (!tab4On) return sizeTabsLegacy(s, available);
       var counts = { S: 0, L: 0, P: 0, B: 0 };
@@ -2569,10 +2593,10 @@
       var tabPrice = flowIdx === '1251' ? { S: '4,800원', L: '4,990원' } : {};
       available = available && available.length ? available : ['S', 'L', 'P'];
       return '<div class="yd-bs-category-grid is-named is-count-' + available.length + '" role="group" aria-label="도시락 종류 선택">' + available.map(function(v) {
-        var name = categoryLabel(v);
-        var lines = categoryLines(v).map(function(t) { return '<span class="yd-bs-cat-line">' + t + '</span>'; }).join('');
+        var l = categoryLines(v), name = categoryLabel(v);
         var price = tabPrice[v] ? '<em class="yd-bs-cat-price">' + tabPrice[v] + '</em>' : '';
-        return '<button class="yd-bs-category ' + (activeTab === v ? 'is-selected' : '') + '" data-category="' + v + '" aria-label="' + name + ', ' + counts[v] + '개 선택" aria-pressed="' + (activeTab === v) + '"><span class="yd-bs-cat-name">' + lines + '</span>' + price + '</button>';
+        var foot = l[2] ? '<b class="yd-bs-size-guide">' + l[2] + '</b>' : '';
+        return '<button class="yd-bs-category ' + (activeTab === v ? 'is-selected' : '') + '" data-category="' + v + '" aria-label="' + name + ', ' + counts[v] + '개 선택" aria-pressed="' + (activeTab === v) + '"><strong class="is-wide">' + l[0] + '</strong><span>' + l[1] + '</span>' + price + foot + '</button>';
       }).join('') + '</div>';
     }
     /* 네이티브 그룹 라벨 → 고객용 표기 (소유자 지시 2026-07-21) */
@@ -8098,7 +8122,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.164] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.165] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
