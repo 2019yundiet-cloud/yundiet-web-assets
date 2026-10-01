@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_169__) {
+  if (window.__YD_FOOTER_V3_170__) {
     return;
   }
-  window.__YD_FOOTER_V3_169__ = true;
+  window.__YD_FOOTER_V3_170__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.169', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.170', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -70,6 +70,59 @@
     }
     return ydStatus;
   };
+
+  /* v3.170: 옵션 도크 '보이는 화면' 맞춤 — 자동 감지.
+     일부 휴대폰 브라우저는 position:fixed의 바닥을 하단 도구막대 아래(보이지 않는 곳)로 잡는다.
+     → #yd-bs-root(inset:0) 바닥에 붙은 '리뷰보기·옵션 보기' 도크가 통째로 가려짐(대표 제보 10/1, 675 상세).
+     숨은 측정 상자(루트와 같은 inset:0 + 100dvh)의 바닥과 visualViewport(실제로 보이는 영역) 바닥을 비교해
+     6px 넘게 어긋날 때만 루트를 보이는 영역에 맞춘다(.yd-vv-fit). 정상 기기는 기존 동작 그대로.
+     제외: 입력칸 편집 중(키보드), 손가락 확대(scale>1). 끄기 ?yd_vvfit=0 / 강제 ?yd_vvfit=force / 상태 window.__ydVvFit */
+  function fitRootToVisibleViewport(root) {
+    var mode = (location.search.match(/[?&]yd_vvfit=([^&#]*)/) || [])[1] || '';
+    if (mode === '0') { ydMark('vvFit', true, 'off(?yd_vvfit=0)'); return; }
+    var vv = window.visualViewport;
+    if (!vv || !root) { ydMark('vvFit', true, 'visualViewport 없음'); return; }
+    var probe = document.createElement('div');
+    probe.setAttribute('aria-hidden', 'true');
+    probe.style.cssText = 'position:fixed;inset:0;width:0;height:100dvh;visibility:hidden;pointer-events:none;z-index:-1;';
+    document.documentElement.appendChild(probe);
+    var state = { active: false, gap: 0, checks: 0, hits: 0, mode: mode || 'auto' };
+    window.__ydVvFit = state;
+    var raf = 0;
+    var editing = function() {
+      var a = document.activeElement;
+      return !!(a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)));
+    };
+    var apply = function() {
+      raf = 0;
+      state.checks += 1;
+      var vh = vv.height, vt = vv.offsetTop;
+      var gap = Math.round(probe.getBoundingClientRect().bottom - (vt + vh));
+      var usable = vv.scale <= 1.01 && vh > 200 && !editing();
+      var want = mode === 'force' || (usable && (gap > 6 || (state.active && gap > 2)));
+      state.gap = gap;
+      if (want) {
+        root.style.setProperty('--yd-vv-top', Math.max(0, Math.round(vt)) + 'px');
+        root.style.setProperty('--yd-vv-h', Math.round(vh) + 'px');
+        if (!state.active) { state.active = true; state.hits += 1; root.classList.add('yd-vv-fit'); }
+      } else if (state.active) {
+        state.active = false;
+        root.classList.remove('yd-vv-fit');
+      }
+      ydMark('vvFit', true, (state.active ? 'ON' : 'off') + ' gap=' + gap);
+    };
+    var queue = function() { if (!raf) raf = window.requestAnimationFrame(apply); };
+    vv.addEventListener('resize', queue);
+    vv.addEventListener('scroll', queue);
+    window.addEventListener('resize', queue);
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('orientationchange', queue);
+    window.addEventListener('pageshow', queue);
+    document.addEventListener('visibilitychange', queue);
+    document.addEventListener('focusout', queue);
+    window.setInterval(function() { if (!document.hidden) queue(); }, 1000);
+    queue();
+  }
 
   function qs(sel, root) {
     return (root || document).querySelector(sel);
@@ -2427,6 +2480,7 @@
     root.setAttribute('aria-label', '상품 옵션 선택');
     root.innerHTML = '';
     document.documentElement.appendChild(root);
+    fitRootToVisibleViewport(root);
 
     var optionNameOf = function(a){ return normalizeT(a && (a.querySelector('.margin-bottom-lg') || {}).textContent || a && a.textContent); };
     var isNoticeOption = function(name){ return /주말\s*수령|배송메모/.test(name); };
@@ -8282,7 +8336,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.169] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.170] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

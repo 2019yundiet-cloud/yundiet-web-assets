@@ -498,6 +498,10 @@
     --yd-line:#dce1da; --yd-soft:#f3f5f1; --yd-selected:#123f24; --yd-warn:#fff8e7;
     position:fixed; inset:0; z-index:16000; width:100%; height:100dvh; pointer-events:none; color:var(--yd-ink);
     font-family:"Pretendard","SUIT","Noto Sans KR","Apple SD Gothic Neo",-apple-system,BlinkMacSystemFont,sans-serif;}
+/* v3.170: 보이는 화면 맞춤 — 일부 휴대폰 브라우저가 fixed 바닥을 하단 도구막대 아래로 잡아
+   '리뷰보기·옵션 보기' 도크가 통째로 가려지던 문제(대표 제보 10/1, 675). JS(fitRootToVisibleViewport)가
+   어긋남을 감지했을 때만 붙인다 — 정상 기기는 기존 inset:0 그대로. 끄기 ?yd_vvfit=0 */
+#yd-bs-root.yd-vv-fit{inset:auto; top:var(--yd-vv-top,0px); left:0; right:0; bottom:auto; height:var(--yd-vv-h,100svh);}
 .yd-bs-native-source{position:absolute!important; width:1px!important; height:1px!important; overflow:hidden!important; clip-path:inset(50%)!important; opacity:.001!important; pointer-events:none!important;}
 /* v3.13: JS 부팅 전 깜빡임 제거 — 플로우 대상 네이티브 UI를 CSS로 즉시 차단.
    플로우 미적용 판정 시 html.yd-bs-native-visible 부여로 원래 스타일 복원(셀렉터 해제 방식) */
@@ -1219,6 +1223,7 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
     .yd-bs-open { min-height:58px; border-radius:13px; padding:0 17px; font-size:17px; }
     .yd-bs-open small { font-size:13px; }
     .yd-bs-sheet { width:100%; height:100dvh; max-height:none; border:0; border-radius:0; }
+    #yd-bs-root.yd-vv-fit .yd-bs-sheet { height:100%; }
     .yd-bs-grab { display:none; }
     .yd-bs-head { min-height:96px; padding:16px 20px 15px; }
     .yd-bs-mode { font-size:11px; }
