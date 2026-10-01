@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_166__) {
+  if (window.__YD_FOOTER_V3_167__) {
     return;
   }
-  window.__YD_FOOTER_V3_166__ = true;
+  window.__YD_FOOTER_V3_167__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.166', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.167', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1451,50 +1451,39 @@
   /* ═══ 상세 이미지 선행 워밍 ═══
      아임웹이 lazy로 미룬 아래쪽 상세 이미지를 페이지 로드 후 유휴 시간에 미리 받아 캐시한다
      → 스크롤 도달 시 즉시 표시. 아직 시작 안 된 다운로드만 다루므로 실효가 있다.
-     동시에 sizes를 실제 렌더 폭으로 고정해 1920px 과대 변형 대신 적정 크기를 받게 한다. */
+     동시에 sizes를 실제 렌더 폭(2배 밀도 상한 — 선행 렌더 early-detail.js DPR_CAP=2와 같은 결과)으로 고정해 과대 변형 대신 적정 크기를 받게 한다.
+     미리 받기는 그 이미지와 같은 sizes·srcset으로 해서 브라우저가 같은 주소를 고르게 한다
+     (2026-10-01 실측: sizes를 렌더 폭 그대로(390px) 두면 3배 밀도 폰이 1280을 골라, 828로 미리 받은 것과 한 장을 두 번 받았다 — 675 끝까지 약 10MB 낭비). */
   function bindDetailImageWarm() {
     try { if (navigator.connection && navigator.connection.saveData) { return; } } catch (err) {}
     var startedWarm = false;
-    function pickFromSrcset(img, needW) {
-      var srcset = img.getAttribute('srcset');
-      if (!srcset) { return img.getAttribute('src'); }
-      var best = null;
-      srcset.split(',').forEach(function(part) {
-        var m = part.trim().match(/^(\S+)\s+(\d+)w$/);
-        if (!m) { return; }
-        var cand = { url: m[1], w: Number(m[2]) };
-        if (cand.w >= needW) { if (!best || cand.w < best.w) { best = cand; } }
-      });
-      if (!best) {
-        srcset.split(',').forEach(function(part) {
-          var m = part.trim().match(/^(\S+)\s+(\d+)w$/);
-          if (m && (!best || Number(m[2]) > best.w)) { best = { url: m[1], w: Number(m[2]) }; }
-        });
-      }
-      return best ? best.url : img.getAttribute('src');
-    }
     function startWarm() {
       if (startedWarm) { return; }
       startedWarm = true;
-      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      var realDpr = window.devicePixelRatio || 1;
+      var dpr = Math.min(2, realDpr);
       var imgs = Array.prototype.slice.call(document.querySelectorAll('#prod_detail img[loading="lazy"], .fr-view img[loading="lazy"]'))
         .filter(function(im) { return !(im.complete && im.naturalWidth > 0); });
       var queue = [];
       imgs.forEach(function(im) {
         var cssW = Math.round(im.getBoundingClientRect().width) || Math.min(680, window.innerWidth);
-        var needW = Math.ceil(cssW * dpr);
-        if (im.getAttribute('srcset')) { im.setAttribute('sizes', cssW + 'px'); }
-        var url = pickFromSrcset(im, needW);
-        if (url) { queue.push(url); }
+        var srcset = im.getAttribute('srcset');
+        if (srcset) {
+          im.setAttribute('sizes', Math.round(cssW * dpr / realDpr) + 'px');
+          queue.push({ sizes: im.getAttribute('sizes'), srcset: srcset });
+        } else if (im.getAttribute('src')) {
+          queue.push({ src: im.getAttribute('src') });
+        }
       });
       var active = 0, MAX = 3;
       var pump = function() {
         while (active < MAX && queue.length) {
-          var url = queue.shift();
+          var item = queue.shift();
           active += 1;
           var warm = new Image();
           warm.onload = warm.onerror = function() { active -= 1; pump(); };
-          warm.src = url;
+          if (item.srcset) { warm.sizes = item.sizes; warm.srcset = item.srcset; }
+          else { warm.src = item.src; }
         }
       };
       pump();
@@ -8287,7 +8276,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.166] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.167] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

@@ -1,4 +1,4 @@
-/* 윤식단 상세 본문 선행 렌더 — v5 2026-10-01 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
+/* 윤식단 상세 본문 선행 렌더 — v6 2026-10-01 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
    문제: 아임웹은 상세 본문을 <template id="prodDetailMobile">에 담아 두고, 동기 스크립트 90여 개를 모두 받은 뒤
          HTML 맨 끝의 SITE_SHOP_DETAIL.initDetail()에서야 본문 칸에 끼워 넣는다(이미지 치수 HEAD 조회까지 끝낸 뒤).
          휴대폰 4G 실측으로 본문 첫 이미지가 8~9초에야 뜨고, 그동안 광고로 들어와 스크롤한 사람은 빈 칸을 본다.
@@ -15,7 +15,7 @@
     if (/[?&]yd_early=0/.test(location.search)) return;
     if (!window.fetch || !window.MutationObserver || !window.Promise || !window.URL || !('content' in document.createElement('template'))) return;
 
-    var st = window.__ydEarlyDetail = { v: 5, t0: Math.round(performance.now()) };
+    var st = window.__ydEarlyDetail = { v: 6, t0: Math.round(performance.now()) };
     var UP_HOST = 'cdn.imweb.me', OPT_HOST = 'cdn-optimized.imweb.me', UP_PATH = '/upload/';
     var SRCSET_W = [1536, 1280, 1080, 828, 768, 640, 576, 368];
     var PROBE_TIMEOUT = 4000;
@@ -258,5 +258,129 @@
     }
   } catch (err) {
     try { (window.__ydEarlyDetail = window.__ydEarlyDetail || {}).error = String(err && err.message || err); } catch (e) {}
+  }
+})();
+
+/* ── 먼저 보이는 구매 버튼 줄(v6, 2026-10-01) ──
+   문제: 푸터의 '리뷰보기·옵션 보기' 줄은 아임웹 동기 스크립트(약 3MB)가 다 받아지고 옵션 목록을 그린 뒤(DOMContentLoaded)에야 생긴다.
+         실측(1265·1264): LTE 약 5.5초, 느린 4G 약 9.5초 동안 화면 아래에 살 수 있는 버튼이 없다(본문은 2~3초에 이미 보임).
+   처리: 광고 랜딩에서는 같은 모양·같은 자리의 버튼 줄을 화면이 처음 그려질 때부터 보여 준다.
+         진짜 버튼 줄이 생기면 그 순간 치운다(같은 자리라 바뀌는 것이 안 보임).
+         그 전에 누르면 '메뉴를 불러오고 있어요' 창을 띄우고, 준비되는 즉시 진짜 버튼을 대신 눌러 준다(리뷰보기도 같은 방식).
+   안전: 휴대폰 폭·/shop_view/·아래 상품만·팝업(iframe) 제외. 옵션 플로우가 안 뜨는 경우(네이티브 복원·30초 초과)엔 흔적 없이 치운다.
+   끄기: URL ?yd_dock=0 (또는 ?yd_early=0) / 상태 window.__ydEarlyDock */
+(function () {
+  try {
+    if (window.__ydEarlyDock) return;
+    if (window.top !== window) return;
+    if (!/^\/shop_view\/?$/.test(location.pathname)) return;
+    if (/[?&](yd_dock|yd_early)=0(?:&|$)/.test(location.search)) return;
+    var m = location.search.match(/[?&]idx=(\d+)/);
+    var IDS = { '672': 1, '1218': 1, '1260': 1, '1262': 1, '1263': 1, '1264': 1, '1265': 1, '1266': 1 };  // 광고 랜딩(옵션 플로우 확인된 상품만)
+    if (!m || !IDS[m[1]]) return;
+    var ds = window.__ydEarlyDock = { v: 1, t0: Math.round(performance.now()) };
+    var dock = null, wait = null, pending = null, timer = 0, built = false;
+    function now() { return Math.round(performance.now()); }
+
+    /* 뷰포트 메타가 읽힌 뒤(body 생성 후)에 폭을 판단한다 — head 단계의 innerWidth는 980일 수 있다 */
+    function tryBuild() {
+      if (built || !document.body) return false;
+      built = true;
+      var vw = Math.min(window.innerWidth || 0, document.documentElement.clientWidth || 0);
+      ds.vw = vw;
+      if (!vw || vw >= 768) { ds.skip = 'not-mobile-width'; return true; }
+      if (realOpen()) { ds.skip = 'real-first'; return true; }
+      var css = document.createElement('style');
+      css.id = 'yd-early-dock-css';
+      css.textContent =
+        '#yd-early-dock{position:fixed;left:50%;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);width:calc(100% - 18px);z-index:16000;display:flex;gap:8px;align-items:stretch;padding:9px;margin:0;box-sizing:border-box;border-radius:12.6px;font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Apple SD Gothic Neo",-apple-system,system-ui,sans-serif;}' +
+        '#yd-early-dock button{-webkit-appearance:none;appearance:none;margin:0;box-sizing:border-box;min-height:52px;font-family:inherit;font-size:16px;line-height:normal;letter-spacing:-0.02em;cursor:pointer;-webkit-tap-highlight-color:transparent;}' +
+        '#yd-early-dock .yd-ed-review{flex:4 1 0;padding:1px 6px;border:1px solid #dde0d8;border-radius:14px;background:#fff;color:#525a31;font-weight:850;}' +
+        '#yd-early-dock .yd-ed-open{flex:6 1 0;display:flex;align-items:center;justify-content:center;padding:0 17px;border:0;border-radius:12.6px;background:#3b4024;color:#fff;font-weight:700;}' +
+        '#yd-early-wait{position:fixed;left:0;right:0;top:0;bottom:0;z-index:16001;display:flex;align-items:flex-end;background:rgba(20,22,15,.42);font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Apple SD Gothic Neo",-apple-system,system-ui,sans-serif;}' +
+        '#yd-early-wait .yd-ed-panel{width:100%;box-sizing:border-box;padding:30px 20px calc(22px + env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:#fff;text-align:center;color:#151b16;}' +
+        '#yd-early-wait .yd-ed-spin{width:34px;height:34px;margin:0 auto 16px;border:3px solid #e3e6dc;border-top-color:#3b4024;border-radius:50%;animation:yd-ed-spin .8s linear infinite;}' +
+        '#yd-early-wait strong{display:block;font-size:18px;font-weight:700;letter-spacing:-0.02em;}' +
+        '#yd-early-wait p{margin:8px 0 18px;font-size:14px;color:#6b7065;}' +
+        '#yd-early-wait button{-webkit-appearance:none;appearance:none;width:100%;min-height:50px;border:1px solid #dde0d8;border-radius:14px;background:#fff;color:#525a31;font-family:inherit;font-size:16px;font-weight:700;}' +
+        '@keyframes yd-ed-spin{to{transform:rotate(360deg);}}';
+      document.head.appendChild(css);
+      dock = document.createElement('div');
+      dock.id = 'yd-early-dock';
+      dock.innerHTML = '<button type="button" class="yd-ed-review">리뷰보기</button><button type="button" class="yd-ed-open"><span>옵션 보기</span></button>';
+      dock.addEventListener('click', function (e) {
+        var b = e.target.closest ? e.target.closest('button') : null;
+        if (!b) return;
+        e.preventDefault();
+        pending = b.className.indexOf('yd-ed-review') >= 0 ? 'review' : 'open';
+        ds.tap = pending; ds.tapAt = now();
+        showWait();
+        poll();
+      });
+      document.documentElement.appendChild(dock);
+      ds.shown = now();
+      timer = setInterval(poll, 120);
+      setTimeout(function () { finish('timeout-30s'); }, 30000);
+      return true;
+    }
+
+    function realRoot() { return document.getElementById('yd-bs-root'); }
+    function realOpen() { var r = realRoot(); return r && r.querySelector('.yd-bs-open'); }
+
+    function showWait() {
+      if (wait) return;
+      wait = document.createElement('div');
+      wait.id = 'yd-early-wait';
+      wait.setAttribute('role', 'dialog');
+      wait.setAttribute('aria-modal', 'true');
+      wait.innerHTML = '<div class="yd-ed-panel"><div class="yd-ed-spin"></div><strong>' + (pending === 'review' ? '리뷰를 불러오고 있어요' : '메뉴를 불러오고 있어요') +
+        '</strong><p>잠시만 기다려 주세요. 준비되면 바로 열립니다.</p><button type="button">닫기</button></div>';
+      wait.addEventListener('click', function (e) {
+        if (e.target === wait || (e.target.tagName === 'BUTTON')) { pending = null; ds.cancel = now(); hideWait(); }
+      });
+      document.documentElement.appendChild(wait);
+    }
+    function hideWait() { if (wait && wait.parentNode) wait.parentNode.removeChild(wait); wait = null; }
+
+    function poll() {
+      if (!dock) return;
+      var real = realOpen();
+      if (real) {
+        var todo = pending;
+        removeDock();
+        ds.handoff = now();
+        if (todo) {
+          var target = todo === 'review' ? realRoot().querySelector('.yd-bs-review-btn') : real;
+          ds.forwarded = todo;
+          try { (target || real).click(); } catch (e) { ds.forwardError = String(e && e.message || e); }
+        }
+        setTimeout(hideWait, 60);
+        return;
+      }
+      /* 옵션 플로우가 안 뜨는 상품으로 판정됐거나(네이티브 UI 복원) 플로우 상자가 사라진 경우 */
+      if (document.documentElement.classList.contains('yd-bs-native-visible')) finish('native-visible');
+      else if (document.readyState === 'complete' && !realRoot() && ds.loadSeen && now() - ds.loadSeen > 4000) finish('no-flow-after-load');
+      else if (document.readyState === 'complete' && !ds.loadSeen) ds.loadSeen = now();
+    }
+    function removeDock() {
+      if (timer) { clearInterval(timer); timer = 0; }
+      if (dock && dock.parentNode) dock.parentNode.removeChild(dock);
+      dock = null;
+    }
+    function finish(why) {
+      if (!dock) return;
+      ds.gaveUp = why; ds.gaveUpAt = now();
+      pending = null;
+      removeDock();
+      hideWait();
+    }
+
+    if (!tryBuild()) {
+      var mo = new MutationObserver(function () { if (tryBuild()) mo.disconnect(); });
+      mo.observe(document.documentElement, { childList: true });
+      document.addEventListener('DOMContentLoaded', function () { if (tryBuild()) mo.disconnect(); });
+    }
+  } catch (err) {
+    try { (window.__ydEarlyDock = window.__ydEarlyDock || {}).error = String(err && err.message || err); } catch (e) {}
   }
 })();
