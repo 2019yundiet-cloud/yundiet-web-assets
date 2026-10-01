@@ -1,4 +1,4 @@
-/* 윤식단 상세 본문 선행 렌더 — v7 2026-10-01 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
+/* 윤식단 상세 본문 선행 렌더 — v8 2026-10-01 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
    문제: 아임웹은 상세 본문을 <template id="prodDetailMobile">에 담아 두고, 동기 스크립트 90여 개를 모두 받은 뒤
          HTML 맨 끝의 SITE_SHOP_DETAIL.initDetail()에서야 본문 칸에 끼워 넣는다(이미지 치수 HEAD 조회까지 끝낸 뒤).
          휴대폰 4G 실측으로 본문 첫 이미지가 8~9초에야 뜨고, 그동안 광고로 들어와 스크롤한 사람은 빈 칸을 본다.
@@ -15,7 +15,7 @@
     if (/[?&]yd_early=0/.test(location.search)) return;
     if (!window.fetch || !window.MutationObserver || !window.Promise || !window.URL || !('content' in document.createElement('template'))) return;
 
-    var st = window.__ydEarlyDetail = { v: 7, t0: Math.round(performance.now()) };
+    var st = window.__ydEarlyDetail = { v: 8, t0: Math.round(performance.now()) };
     var UP_HOST = 'cdn.imweb.me', OPT_HOST = 'cdn-optimized.imweb.me', UP_PATH = '/upload/';
     var SRCSET_W = [1536, 1280, 1080, 828, 768, 640, 576, 368];
     var PROBE_TIMEOUT = 4000;
@@ -181,31 +181,54 @@
       return false;
     }
 
-    /* v7: 본문 사진을 화면 아래 AHEAD px 안에 들어오면 바로 받는다(loading=lazy → eager).
-       사파리·인스타 앱 안 브라우저(WebKit)는 지연 로딩 사진을 거의 화면에 닿을 때가 돼서야 받기 시작해
-       (크롬은 1,250~2,500px 앞에서 받음) 스크롤하면 사진이 늦게 뜬다는 대표 체감(2026-10-01 1265) 대응.
+    /* v7~v8: 본문 사진 미리 받기·미리 그리기(사파리·인스타 앱 브라우저 체감 "사진이 늦게 뜬다", 2026-10-01 1265)
+       ① WebKit은 지연 로딩(loading=lazy) 사진을 거의 화면에 닿을 때가 돼서야 받는다(크롬은 1,250~2,500px 앞).
+          → 화면 아래 AHEAD px 안에 들어오면 loading=eager로 바꿔 즉시 받는다. 페이지 로딩 전 4,000px, 로딩 뒤 9,000px(경쟁 없음).
+       ② 본문 사진은 한 장이 화면 2~3개 높이(1620×6000 원본)라 받은 뒤에도 화면에 들어올 때 그리기(디코딩)가 걸린다.
+          → 화면 아래 1,600px 안에 들어오면 img.decode()로 미리 그려 둔다(메모리 때문에 가까운 것만).
        아임웹이 직접 그린 경우(imweb-first·rollback)도 load 때 한 번 더 걸어 둔다. 끄기 ?yd_ahead=0 */
-    var AHEAD = /[?&]yd_ahead=0(?:&|$)/.test(location.search) ? 0 : 3000;
-    var aheadIO = null;
-    function promoteNear(root) {
-      if (!AHEAD || !window.IntersectionObserver || !root) return;
-      if (!aheadIO) {
-        aheadIO = new IntersectionObserver(function (ents) {
-          ents.forEach(function (e) {
-            if (!e.isIntersecting) return;
-            var im = e.target;
-            aheadIO.unobserve(im);
-            if (im.getAttribute('loading') === 'lazy') { im.setAttribute('loading', 'eager'); st.promoted = (st.promoted || 0) + 1; }
-          });
-        }, { rootMargin: '0px 0px ' + AHEAD + 'px 0px' });
+    var AHEAD_ON = !/[?&]yd_ahead=0(?:&|$)/.test(location.search);
+    var aheadIO = null, decodeIO = null, aheadPx = 0;
+    function promote(im) {
+      if (im.getAttribute('loading') === 'lazy') { im.setAttribute('loading', 'eager'); st.promoted = (st.promoted || 0) + 1; }
+    }
+    function preDecode(im) {
+      if (!im.decode) return;
+      var go = function () { im.decode().then(function () { st.decoded = (st.decoded || 0) + 1; }).catch(function () {}); };
+      if (im.complete && im.naturalWidth) go(); else im.addEventListener('load', go, { once: true });
+    }
+    function makeAhead(px) {
+      if (aheadIO) aheadIO.disconnect();
+      aheadPx = px;
+      aheadIO = new IntersectionObserver(function (ents) {
+        ents.forEach(function (e) { if (e.isIntersecting) { aheadIO.unobserve(e.target); e.target.setAttribute('data-yd-ahead', 'done'); promote(e.target); } });
+      }, { rootMargin: '0px 0px ' + px + 'px 0px' });
+    }
+    function promoteNear(root, px) {
+      if (!AHEAD_ON || !window.IntersectionObserver || !root) return;
+      if (!aheadIO || (px && px !== aheadPx)) {
+        makeAhead(px || aheadPx || 4000);
+        var again = root.querySelectorAll('img[data-yd-ahead="1"]');  // 거리 넓힐 때 아직 안 받은 것 다시 등록
+        for (var k = 0; k < again.length; k++) aheadIO.observe(again[k]);
       }
-      var imgs = root.querySelectorAll('img[loading="lazy"]:not([data-yd-ahead])');
-      for (var i = 0; i < imgs.length; i++) { imgs[i].setAttribute('data-yd-ahead', '1'); aheadIO.observe(imgs[i]); }
+      if (!decodeIO) {
+        decodeIO = new IntersectionObserver(function (ents) {
+          ents.forEach(function (e) { if (e.isIntersecting) { decodeIO.unobserve(e.target); preDecode(e.target); } });
+        }, { rootMargin: '0px 0px 1600px 0px' });
+      }
+      var imgs = root.querySelectorAll('img:not([data-yd-ahead])');
+      for (var i = 0; i < imgs.length; i++) {
+        imgs[i].setAttribute('data-yd-ahead', '1');
+        aheadIO.observe(imgs[i]);
+        decodeIO.observe(imgs[i]);
+      }
+      st.aheadPx = aheadPx;
     }
     window.addEventListener('load', function () {
       if (st.skip === 'not-mobile-width') return;
-      promoteNear(document.querySelector('._prod_detail_detail_lazy_load_mobile'));
-      setTimeout(function () { promoteNear(document.querySelector('._prod_detail_detail_lazy_load_mobile')); }, 3000);
+      var box = function () { return document.querySelector('._prod_detail_detail_lazy_load_mobile'); };
+      promoteNear(box(), 9000);
+      setTimeout(function () { promoteNear(box(), 9000); }, 3000);
     });
 
     function render(tpl, box) {
@@ -249,7 +272,7 @@
       st.mounted = Math.round(performance.now());
       st.nodes = ours.length;
       wakeVideos(box);
-      promoteNear(box);
+      promoteNear(box, 4000);
       /* 아임웹이 initDetail에서 같은 본문 한 벌(스타일 제외 최상위 노드 구성이 같음)을 붙이면 들어오는 즉시 걷어낸다 */
       var guard = new MutationObserver(function (recs) {
         var alive = false;

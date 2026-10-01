@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_168__) {
+  if (window.__YD_FOOTER_V3_169__) {
     return;
   }
-  window.__YD_FOOTER_V3_168__ = true;
+  window.__YD_FOOTER_V3_169__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.168', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.169', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2362,8 +2362,9 @@
     var flowIdx = new URLSearchParams(location.search).get('idx') || '';
     /* 도시락 종류 탭(2026-10-01 대표 지시) 미리보기 스위치: 주소에 ?yd_tab4=1 이 있을 때만 새 옵션창(이름 탭·실제 가격·소스 추가).
        대표 승인 전이라 손님 화면은 그대로 둔다 — 승인되면 TAB4_ENABLED를 true로 바꿔 전체 적용 */
-    var TAB4_ENABLED = false;
-    var tab4On = TAB4_ENABLED || /[?&]yd_tab4=1(?:&|$)/.test(location.search);
+    var TAB4_ENABLED = true; /* 2026-10-01 대표 지시 '전체 적용' (v3.169) */
+    /* ?yd_tab4=0 이면 예전 옵션창(비교·긴급 확인용), ?yd_tab4=1 이면 강제 켬 */
+    var tab4On = /[?&]yd_tab4=1(?:&|$)/.test(location.search) || (TAB4_ENABLED && !/[?&]yd_tab4=0(?:&|$)/.test(location.search));
     /* 밥도감+단백밥 상품(672·1264·1265)의 새 옵션창 문구 — 합계 단위도 '도시락' */
     var TAB4_WHOLESALE_COPY = {
       '1098': { title: '윤식단 단백밥', headline: '도시락 메뉴를 6개 이상 골라주세요.', lead: '원하는 도시락을 자유롭게 섞어 총 6개 이상 선택할 수 있습니다.' },
@@ -8281,7 +8282,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.168] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.169] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
