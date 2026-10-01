@@ -1,4 +1,4 @@
-/* 윤식단 상세 본문 선행 렌더 — v2 2026-10-01 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
+/* 윤식단 상세 본문 선행 렌더 — v3 2026-10-01 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
    문제: 아임웹은 상세 본문을 <template id="prodDetailMobile">에 담아 두고, 동기 스크립트 90여 개를 모두 받은 뒤
          HTML 맨 끝의 SITE_SHOP_DETAIL.initDetail()에서야 본문 칸에 끼워 넣는다(이미지 치수 HEAD 조회까지 끝낸 뒤).
          휴대폰 4G 실측으로 본문 첫 이미지가 8~9초에야 뜨고, 그동안 광고로 들어와 스크롤한 사람은 빈 칸을 본다.
@@ -15,10 +15,13 @@
     if (/[?&]yd_early=0/.test(location.search)) return;
     if (!window.fetch || !window.MutationObserver || !window.Promise || !window.URL || !('content' in document.createElement('template'))) return;
 
-    var st = window.__ydEarlyDetail = { v: 2, t0: Math.round(performance.now()) };
+    var st = window.__ydEarlyDetail = { v: 3, t0: Math.round(performance.now()) };
     var UP_HOST = 'cdn.imweb.me', OPT_HOST = 'cdn-optimized.imweb.me', UP_PATH = '/upload/';
     var SRCSET_W = [1536, 1280, 1080, 828, 768, 640, 576, 368];
     var PROBE_TIMEOUT = 4000;
+    /* 본문 이미지 화면 밀도 상한(0=끔·아임웹과 동일 sizes=100vw). 2면 3배 밀도 폰에서도 2배 밀도 해상도(390폭→828px)를 고른다.
+       푸터 bindDetailImageWarm도 2배 상한으로 아래쪽 이미지를 미리 받으므로 주소가 일치한다. 실측(1260): 본문 첫 이미지 4.3→3.6초, 용량 약 절반, 화면상 차이 거의 없음 */
+    var DPR_CAP = 2;
     var iOS = /(iPad|iPhone|iPod)/i.test(navigator.userAgent) || (/Macintosh/i.test(navigator.userAgent) && /Mobile/i.test(navigator.userAgent));
 
     var watch = new MutationObserver(check);
@@ -88,7 +91,8 @@
             img.classList.add('loaded');
           }
           img.src = big.href;
-          img.sizes = '100vw';
+          var dpr = window.devicePixelRatio || 1;
+          img.sizes = DPR_CAP && dpr > DPR_CAP ? Math.round(100 * DPR_CAP / dpr) + 'vw' : '100vw';
           img.srcset = SRCSET_W.map(function (w) { return optUrl(src.href, w).href + ' ' + w + 'w'; }).join(', ');
           img.loading = 'lazy';
           img.addEventListener('error', function () {
