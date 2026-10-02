@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_171__) {
+  if (window.__YD_FOOTER_V3_172__) {
     return;
   }
-  window.__YD_FOOTER_V3_171__ = true;
+  window.__YD_FOOTER_V3_172__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.171', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.172', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1501,14 +1501,19 @@
 
   }
 
-  /* ═══ 상세 이미지 선행 워밍 ═══
-     아임웹이 lazy로 미룬 아래쪽 상세 이미지를 페이지 로드 후 유휴 시간에 미리 받아 캐시한다
-     → 스크롤 도달 시 즉시 표시. 아직 시작 안 된 다운로드만 다루므로 실효가 있다.
-     동시에 sizes를 실제 렌더 폭(2배 밀도 상한 — 선행 렌더 early-detail.js DPR_CAP=2와 같은 결과)으로 고정해 과대 변형 대신 적정 크기를 받게 한다.
-     미리 받기는 그 이미지와 같은 sizes·srcset으로 해서 브라우저가 같은 주소를 고르게 한다
-     (2026-10-01 실측: sizes를 렌더 폭 그대로(390px) 두면 3배 밀도 폰이 1280을 골라, 828로 미리 받은 것과 한 장을 두 번 받았다 — 675 끝까지 약 10MB 낭비). */
+  /* ═══ 상세 이미지 스크롤 앞 받기 (v3.171, 2026-10-02 대표 "한 번에 다 받지 말고 스크롤하면서") ═══
+     예전(~v3.170): 페이지 로드 0.8초 뒤 아래쪽 상세 이미지를 전부(40여 장) 미리 받았다 → 스크롤 안 하는 손님도
+     3~4MB를 더 받고, 그동안 다른 손님 화면 작업(구매 시트·리뷰)과 회선을 나눠 썼다.
+     지금: 화면 아래 AHEAD_PX 안으로 들어온 사진만 그때 받는다(IntersectionObserver). 읽는 속도로 스크롤하면
+     화면에 닿기 전에 받아져 빈칸이 거의 없고, 안 내려가는 손님은 안 받는다.
+     sizes는 실제 렌더 폭(2배 밀도 상한 — 선행 렌더 early-detail.js DPR_CAP=2와 같은 결과)으로 고정하고,
+     받기는 그 이미지와 같은 sizes·srcset의 new Image()로 해서 브라우저가 같은 주소를 고르게 한다
+     (2026-10-01 실측: sizes를 렌더 폭 그대로 두면 3배 밀도 폰이 1280을 골라 한 장을 두 번 받았다).
+     끄기(예전처럼 전부 미리 받기): ?yd_warm=all */
   function bindDetailImageWarm() {
     try { if (navigator.connection && navigator.connection.saveData) { return; } } catch (err) {}
+    var WARM_ALL = /[?&]yd_warm=all(?:&|$)/.test(location.search);
+    var AHEAD_PX = 3000;
     var startedWarm = false;
     function startWarm() {
       if (startedWarm) { return; }
@@ -1517,30 +1522,51 @@
       var dpr = Math.min(2, realDpr);
       var imgs = Array.prototype.slice.call(document.querySelectorAll('#prod_detail img[loading="lazy"], .fr-view img[loading="lazy"]'))
         .filter(function(im) { return !(im.complete && im.naturalWidth > 0); });
-      var queue = [];
-      imgs.forEach(function(im) {
+      var queue = [], warmed = 0;
+      var itemOf = function(im) {
         var cssW = Math.round(im.getBoundingClientRect().width) || Math.min(680, window.innerWidth);
         var srcset = im.getAttribute('srcset');
         if (srcset) {
           im.setAttribute('sizes', Math.round(cssW * dpr / realDpr) + 'px');
-          queue.push({ sizes: im.getAttribute('sizes'), srcset: srcset });
-        } else if (im.getAttribute('src')) {
-          queue.push({ src: im.getAttribute('src') });
+          return { sizes: im.getAttribute('sizes'), srcset: srcset };
         }
-      });
+        return im.getAttribute('src') ? { src: im.getAttribute('src') } : null;
+      };
       var active = 0, MAX = 3;
       var pump = function() {
         while (active < MAX && queue.length) {
           var item = queue.shift();
           active += 1;
+          warmed += 1;
           var warm = new Image();
           warm.onload = warm.onerror = function() { active -= 1; pump(); };
           if (item.srcset) { warm.sizes = item.sizes; warm.srcset = item.srcset; }
           else { warm.src = item.src; }
         }
       };
-      pump();
-      if (imgs.length) { ydMark('detailImageWarm', true, '아래쪽 이미지 ' + imgs.length + '장 선행 캐시'); }
+      var push = function(im) {
+        if (im.complete && im.naturalWidth > 0) { return; }
+        var item = itemOf(im);
+        if (item) { queue.push(item); pump(); }
+      };
+      if (WARM_ALL || !window.IntersectionObserver) {
+        imgs.forEach(push);
+        if (imgs.length) { ydMark('detailImageWarm', true, '아래쪽 이미지 ' + imgs.length + '장 전부 선행 캐시'); }
+        return;
+      }
+      /* sizes는 지금 바로 고정(아임웹·브라우저 지연 로딩이 먼저 받아도 적정 폭), 받기는 화면 가까이 올 때만 */
+      imgs.forEach(function(im) {
+        if (im.getAttribute('srcset')) {
+          var cssW = Math.round(im.getBoundingClientRect().width) || Math.min(680, window.innerWidth);
+          im.setAttribute('sizes', Math.round(cssW * dpr / realDpr) + 'px');
+        }
+      });
+      var io = new IntersectionObserver(function(ents) {
+        ents.forEach(function(e) { if (e.isIntersecting) { io.unobserve(e.target); push(e.target); } });
+      }, { rootMargin: '0px 0px ' + AHEAD_PX + 'px 0px' });
+      imgs.forEach(function(im) { io.observe(im); });
+      window.__ydDetailWarm = { mode: 'scroll', aheadPx: AHEAD_PX, total: imgs.length, warmed: function() { return warmed; } };
+      if (imgs.length) { ydMark('detailImageWarm', true, '아래쪽 이미지 ' + imgs.length + '장 스크롤 앞 ' + AHEAD_PX + 'px 받기'); }
     }
     var kick = function() { window.setTimeout(startWarm, 800); };
     /* 안전망 포함 전부 load 이후에만 발화 — 콜드 로드(load 19s 실측)에서
@@ -5986,9 +6012,10 @@
     lastPrefix: 'yd_pop_last_',
     cooldownMs: 24 * 60 * 60 * 1000
   };
-  /* 부스터 발화 대기: 상품 목록·상세 진입 후 30초 (2026-08-31 대표 지시).
-     매거진·가이드 등 콘텐츠 문맥에서는 발화하지 않고 구매 탐색 문맥에서만 센다. */
-  const BOOST_FIRE_AFTER_MS = 30 * 1000;
+  /* 부스터 발화 대기: 상품 목록·상세 진입 후 30초 (2026-08-31 대표 지시) → 2분 30초 (2026-10-02 대표 지시: "너무 빨리 나와 2분 정도 늦춰").
+     매거진·가이드 등 콘텐츠 문맥에서는 발화하지 않고 구매 탐색 문맥에서만 센다.
+     시작 시각은 이번 방문(탭 세션)에서 처음 상품을 본 때 — 페이지를 옮겨도 0초로 돌아가지 않는다(yd_boost_t0). */
+  const BOOST_FIRE_AFTER_MS = 150 * 1000;
   const BOOST_PENDING_TTL_MS = 10 * 60 * 1000;
   /* 가입 팝업 체류 조건: 20초→40초 (2026-08-28 대표 지시) */
   const SIGNUP_DWELL_MS = 40 * 1000;
@@ -6159,7 +6186,7 @@
     },
     /* #2 첫구매 응원 부스터 (2026-08-26 대표 확정)
        대상: 미회원 + 신규가입 세션 회원(구매이력 없는 층 근사 — 클라이언트에서 구매이력 조회 불가).
-       발동: 상품 목록·상세 진입 후 30초 미구매(매거진·콘텐츠 문맥 제외, 8/31 조정).
+       발동: 상품 목록·상세 첫 진입 후 2분 30초 미구매(10/2 30초→2분 30초, 매거진·콘텐츠 문맥 제외).
        쿠폰: [첫구매 응원] 2,000원 시크릿 다운로드(1인 1회·1일 만료·도매 9종 제외·중복사용 가능). */
     first_buy_boost: function(triggerSurface) {
       /* 노출 3회 캡(8/28 대표 확정): 1·2회차 = E안, 3회차(마지막) = D안 합계 프레임, 이후 미노출 */
@@ -6645,7 +6672,7 @@
       armed.push('exit_cart(armed-if-cart)');
     }
 
-    /* #2 첫구매 응원 부스터 — 상품 목록·상세 진입 30초 + 미구매 + (비회원 || 신규가입 세션) */
+    /* #2 첫구매 응원 부스터 — 상품 목록·상세 첫 진입 후 2분 30초(방문 누적) + 미구매 + (비회원 || 신규가입 세션) */
     (function armBoost() {
       const surface = boostSurface();
       if (!surface) return;
@@ -6658,7 +6685,12 @@
       if (newMember && Date.now() - Number(newMember) > 30 * 60 * 1000) newMember = null; /* 30분 TTL */
       if (verified || purchased) return;
       if (!isGuestUser() && !newMember) return; /* 기존 회원(구매이력 미상)에겐 노출 안 함 */
-      const eligibleT0 = Date.now();
+      let eligibleT0 = Date.now();
+      try {
+        const savedT0 = Number(window.sessionStorage.getItem('yd_boost_t0') || 0);
+        if (savedT0 > 0 && savedT0 <= eligibleT0) eligibleT0 = savedT0;
+        else window.sessionStorage.setItem('yd_boost_t0', String(eligibleT0));
+      } catch (err) {}
       const boostCheck = function() {
         let bought = null, couponVerified = null, lastCard = 0;
         try {
@@ -6667,7 +6699,7 @@
           lastCard = Number(window.sessionStorage.getItem('yd_last_card_at') || 0);
         } catch (err) {}
         if (bought || couponVerified || !boostSurface()) { window.clearInterval(boostTimer); return; }
-        /* 다른 팝업이 떴다면 그 시점부터 다시 30초를 센다. */
+        /* 다른 팝업이 떴다면 그 시점부터 다시 2분 30초를 센다. */
         const baseT = Math.max(eligibleT0, lastCard);
         if (Date.now() - baseT >= BOOST_FIRE_AFTER_MS) {
           if (qs('.yd-pop-wrap')) return; /* 다른 카드 표시 중 — 닫힌 뒤 다음 틱에 재시도 */
@@ -6686,7 +6718,7 @@
       };
       const boostTimer = window.setInterval(boostCheck, 1000);
       window.setTimeout(boostCheck, 1000);
-      armed.push('first_buy_boost(30s:' + surface + ')');
+      armed.push('first_buy_boost(' + Math.round(BOOST_FIRE_AFTER_MS / 1000) + 's:' + surface + ')');
     })();
 
     /* 미리보기: ?yd_pop=<팝업id> — 캡·대상조건 무시 강제 렌더(계측 제외, 소유자 검수용) */
@@ -8423,7 +8455,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.171] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.172] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

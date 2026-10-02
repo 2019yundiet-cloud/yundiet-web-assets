@@ -1,4 +1,4 @@
-/* 윤식단 상세 본문 선행 렌더 — v8 2026-10-01 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
+/* 윤식단 상세 본문 선행 렌더 — v9 2026-10-02 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
    문제: 아임웹은 상세 본문을 <template id="prodDetailMobile">에 담아 두고, 동기 스크립트 90여 개를 모두 받은 뒤
          HTML 맨 끝의 SITE_SHOP_DETAIL.initDetail()에서야 본문 칸에 끼워 넣는다(이미지 치수 HEAD 조회까지 끝낸 뒤).
          휴대폰 4G 실측으로 본문 첫 이미지가 8~9초에야 뜨고, 그동안 광고로 들어와 스크롤한 사람은 빈 칸을 본다.
@@ -15,7 +15,7 @@
     if (/[?&]yd_early=0/.test(location.search)) return;
     if (!window.fetch || !window.MutationObserver || !window.Promise || !window.URL || !('content' in document.createElement('template'))) return;
 
-    var st = window.__ydEarlyDetail = { v: 8, t0: Math.round(performance.now()) };
+    var st = window.__ydEarlyDetail = { v: 9, t0: Math.round(performance.now()) };
     var UP_HOST = 'cdn.imweb.me', OPT_HOST = 'cdn-optimized.imweb.me', UP_PATH = '/upload/';
     var SRCSET_W = [1536, 1280, 1080, 828, 768, 640, 576, 368];
     var PROBE_TIMEOUT = 4000;
@@ -183,11 +183,14 @@
 
     /* v7~v8: 본문 사진 미리 받기·미리 그리기(사파리·인스타 앱 브라우저 체감 "사진이 늦게 뜬다", 2026-10-01 1265)
        ① WebKit은 지연 로딩(loading=lazy) 사진을 거의 화면에 닿을 때가 돼서야 받는다(크롬은 1,250~2,500px 앞).
-          → 화면 아래 AHEAD px 안에 들어오면 loading=eager로 바꿔 즉시 받는다. 페이지 로딩 전 4,000px, 로딩 뒤 9,000px(경쟁 없음).
+          → 화면 아래 AHEAD px 안에 들어오면 loading=eager로 바꿔 즉시 받는다. 페이지 로딩 전 AHEAD_EARLY, 로딩 뒤 AHEAD_LATE.
+          v9(2026-10-02 대표 "한 번에 다 받지 말고 스크롤하면서"): 4,000/9,000px → 2,500/4,000px. 9,000px면 휴대폰에서
+          본문 대부분(1260 높이 36,000px 중 앞 1/4, 사진 수로는 절반 이상)을 스크롤 전에 받았다. 읽는 속도(초당 약 800px)면 4,000px는 약 5초 앞.
        ② 본문 사진은 한 장이 화면 2~3개 높이(1620×6000 원본)라 받은 뒤에도 화면에 들어올 때 그리기(디코딩)가 걸린다.
           → 화면 아래 1,600px 안에 들어오면 img.decode()로 미리 그려 둔다(메모리 때문에 가까운 것만).
        아임웹이 직접 그린 경우(imweb-first·rollback)도 load 때 한 번 더 걸어 둔다. 끄기 ?yd_ahead=0 */
     var AHEAD_ON = !/[?&]yd_ahead=0(?:&|$)/.test(location.search);
+    var AHEAD_EARLY = 2500, AHEAD_LATE = 4000;
     var aheadIO = null, decodeIO = null, aheadPx = 0;
     function promote(im) {
       if (im.getAttribute('loading') === 'lazy') { im.setAttribute('loading', 'eager'); st.promoted = (st.promoted || 0) + 1; }
@@ -207,7 +210,7 @@
     function promoteNear(root, px) {
       if (!AHEAD_ON || !window.IntersectionObserver || !root) return;
       if (!aheadIO || (px && px !== aheadPx)) {
-        makeAhead(px || aheadPx || 4000);
+        makeAhead(px || aheadPx || AHEAD_EARLY);
         var again = root.querySelectorAll('img[data-yd-ahead="1"]');  // 거리 넓힐 때 아직 안 받은 것 다시 등록
         for (var k = 0; k < again.length; k++) aheadIO.observe(again[k]);
       }
@@ -227,8 +230,8 @@
     window.addEventListener('load', function () {
       if (st.skip === 'not-mobile-width') return;
       var box = function () { return document.querySelector('._prod_detail_detail_lazy_load_mobile'); };
-      promoteNear(box(), 9000);
-      setTimeout(function () { promoteNear(box(), 9000); }, 3000);
+      promoteNear(box(), AHEAD_LATE);
+      setTimeout(function () { promoteNear(box(), AHEAD_LATE); }, 3000);
     });
 
     function render(tpl, box) {
@@ -272,7 +275,7 @@
       st.mounted = Math.round(performance.now());
       st.nodes = ours.length;
       wakeVideos(box);
-      promoteNear(box, 4000);
+      promoteNear(box, AHEAD_EARLY);
       /* 아임웹이 initDetail에서 같은 본문 한 벌(스타일 제외 최상위 노드 구성이 같음)을 붙이면 들어오는 즉시 걷어낸다 */
       var guard = new MutationObserver(function (recs) {
         var alive = false;
@@ -315,7 +318,7 @@
 /* ── 먼저 보이는 구매 버튼 줄(v6, 2026-10-01) ──
    문제: 푸터의 '리뷰보기·옵션 보기' 줄은 아임웹 동기 스크립트(약 3MB)가 다 받아지고 옵션 목록을 그린 뒤(DOMContentLoaded)에야 생긴다.
          실측(1265·1264): LTE 약 5.5초, 느린 4G 약 9.5초 동안 화면 아래에 살 수 있는 버튼이 없다(본문은 2~3초에 이미 보임).
-   처리: 광고 랜딩에서는 같은 모양·같은 자리의 버튼 줄을 화면이 처음 그려질 때부터 보여 준다.
+   처리: 광고 랜딩·주력 상품(v9부터 675·1198·1232·1125·1214·1233·650 추가)에서는 같은 모양·같은 자리의 버튼 줄을 화면이 처음 그려질 때부터 보여 준다.
          진짜 버튼 줄이 생기면 그 순간 치운다(같은 자리라 바뀌는 것이 안 보임).
          그 전에 누르면 '메뉴를 불러오고 있어요' 창을 띄우고, 준비되는 즉시 진짜 버튼을 대신 눌러 준다(리뷰보기도 같은 방식).
    안전: 휴대폰 폭·/shop_view/·아래 상품만·팝업(iframe) 제외. 옵션 플로우가 안 뜨는 경우(네이티브 복원·30초 초과)엔 흔적 없이 치운다.
@@ -327,7 +330,8 @@
     if (!/^\/shop_view\/?$/.test(location.pathname)) return;
     if (/[?&](yd_dock|yd_early)=0(?:&|$)/.test(location.search)) return;
     var m = location.search.match(/[?&]idx=(\d+)/);
-    var IDS = { '672': 1, '1218': 1, '1260': 1, '1262': 1, '1263': 1, '1264': 1, '1265': 1, '1266': 1 };  // 광고 랜딩(옵션 플로우 확인된 상품만)
+    var IDS = { '672': 1, '1218': 1, '1260': 1, '1262': 1, '1263': 1, '1264': 1, '1265': 1, '1266': 1,  // 광고 랜딩(옵션 플로우 확인된 상품만)
+      '675': 1, '1198': 1, '1232': 1, '1125': 1, '1214': 1, '1233': 1, '650': 1 };  // v9(2026-10-02) 주력 상품 — 라이브에서 '리뷰보기·옵션 보기' 줄 확인
     if (!m || !IDS[m[1]]) return;
     var ds = window.__ydEarlyDock = { v: 1, t0: Math.round(performance.now()) };
     var dock = null, wait = null, pending = null, timer = 0, built = false;
