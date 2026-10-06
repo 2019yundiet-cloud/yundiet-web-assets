@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_172__) {
+  if (window.__YD_FOOTER_V3_173__) {
     return;
   }
-  window.__YD_FOOTER_V3_172__ = true;
+  window.__YD_FOOTER_V3_173__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.172', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.173', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1129,6 +1129,89 @@
 
     sync();
     ensureObserver('danbaekbapCouponHide', sync);
+  }
+
+  /* ═══ 재구매 문자 쿠폰 한 번에 받기 (?yd_cp=키) ═══
+     crm-repeat 엔진(codex apps/ops-portal/scripts/crm-repeat) 문자 링크용. 링크 하나로 묶음 쿠폰을
+     아임웹 다운로드 경로(/shop/download_coupon_by_url.cm — ?coupon= 링크와 같은 경로)로 차례로 받고 안내창 1개를 띄운다.
+     비로그인이면 아임웹 자체 로그인 이동(SITE_COUPON)으로 보냈다가, 돌아오면 같은 주소라 자동으로 다시 받는다.
+     묶음 키·쿠폰 코드 정본은 crm-repeat config.mjs의 COUPON_PACKS와 같아야 한다. */
+  const CRM_COUPON_PACKS = {
+    r3: { title: '재구매 쿠폰', items: [['9D0501004491A', '3,000원 할인']] },
+    fs: { title: '무료배송 쿠폰', items: [['004E4AFF598FB', '무료배송']] },
+    vip: { title: 'VIP 쿠폰팩', items: [['2953238159E4C', '3,000원 할인 (2번 사용)'], ['CB8D9F3926D31', '무료배송 (1번 사용)']] },
+    vipp: { title: 'VIP+ 쿠폰팩', items: [['9AB104EDD0320', '5,000원 할인 (2번 사용)'], ['A405384E75EE0', '무료배송 (2번 사용)']] }
+  };
+
+  function bindCrmCouponPack() {
+    let key = '';
+    try { key = new URLSearchParams(window.location.search).get('yd_cp') || ''; } catch (err) {}
+    if (!key) { ydMark('crmCouponPack', true, '대상 아님(yd_cp 없음)'); return; }
+    const pack = CRM_COUPON_PACKS[key];
+    if (!pack) { ydMark('crmCouponPack', false, '알 수 없는 쿠폰 묶음: ' + key); return; }
+    if (window.__ydCrmCouponPackRunning) return;
+    window.__ydCrmCouponPackRunning = true;
+
+    function stripParam() {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('yd_cp');
+        window.history.replaceState(window.history.state, '', url.pathname + (url.search ? url.search : '') + url.hash);
+      } catch (err) {}
+    }
+
+    function goLogin(firstCode) {
+      ydMark('crmCouponPack', true, '비로그인 → 로그인 이동(돌아오면 자동 발급)');
+      if (window.SITE_COUPON && typeof window.SITE_COUPON.downloadSingleCoupon === 'function') {
+        window.SITE_COUPON.downloadSingleCoupon(firstCode);
+        return;
+      }
+      window.location.href = '/login?back_url=' + encodeURIComponent(btoa(window.location.href));
+    }
+
+    function download(code) {
+      return fetch('/shop/download_coupon_by_url.cm', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest' },
+        body: 'coupon_url=' + encodeURIComponent(code)
+      }).then(function(res) { return res.json(); }).catch(function() { return { success: false, message: '잠시 후 다시 시도해 주세요' }; });
+    }
+
+    function render(results) {
+      const okCount = results.filter(function(r) { return r.state === 'ok'; }).length;
+      const dupCount = results.filter(function(r) { return r.state === 'dup'; }).length;
+      const dim = document.createElement('div');
+      dim.className = 'yd-cp-dim';
+      dim.setAttribute('data-yd-crm-coupon-pack', key);
+      const headline = okCount ? '쿠폰 ' + okCount + '장이 쿠폰함에 들어왔어요' : (dupCount ? '이미 받으신 쿠폰이에요' : '쿠폰을 받지 못했어요');
+      const sub = okCount || dupCount ? '결제 화면에서 쿠폰을 선택하면 바로 할인돼요 (5만원 이상 주문)' : '고객센터(카카오 채널 @윤식단)로 알려 주시면 바로 넣어 드릴게요';
+      const rows = results.map(function(r) {
+        const tag = r.state === 'ok' ? '<span class="ok">받기 완료</span>' : r.state === 'dup' ? '<span class="dup">이미 받음</span>' : '<span class="fail">실패</span>';
+        return '<li>' + r.label + tag + '</li>';
+      }).join('');
+      dim.innerHTML = '<div class="yd-cp-sheet" role="dialog" aria-modal="true" aria-label="' + pack.title + '">' +
+        '<span class="yd-cp-badge">' + pack.title + '</span><h3>' + headline + '</h3><p>' + sub + '</p><ul>' + rows + '</ul>' +
+        '<button type="button" data-yd-cp-close>바로 쇼핑하기</button></div>';
+      dim.addEventListener('click', function(e) {
+        if (e.target === dim || (e.target.closest && e.target.closest('[data-yd-cp-close]'))) dim.remove();
+      });
+      document.body.appendChild(dim);
+    }
+
+    (async function run() {
+      const results = [];
+      for (const item of pack.items) {
+        const res = await download(item[0]);
+        if (res && res.need_login) { goLogin(item[0]); return; }
+        const msg = String((res && res.message) || '');
+        const state = res && res.success ? 'ok' : (/이미|발급받|다운로드 받/.test(msg) ? 'dup' : 'fail');
+        results.push({ code: item[0], label: item[1], state: state, message: msg });
+      }
+      stripParam();
+      render(results);
+      ydMark('crmCouponPack', results.every(function(r) { return r.state !== 'fail'; }), key + ': ' + results.map(function(r) { return r.state; }).join(','));
+    })();
   }
 
   /* ═══ 비회원 '내 예상 최저가' 계산기 숨김 ═══
@@ -8412,6 +8495,7 @@
       bindCartKakaoBanner();
       bindBrandStoryFeed();
       bindCardioCalc();
+      bindCrmCouponPack();
     }
     bindDataTabSwap();
     bindGnbDataDirect();
@@ -8455,7 +8539,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.172] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.173] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

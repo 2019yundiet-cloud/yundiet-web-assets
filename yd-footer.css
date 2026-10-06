@@ -1,4 +1,17 @@
 
+  /* ── 재구매 문자 쿠폰 한 번에 받기 안내창 (?yd_cp=) ── */
+  .yd-cp-dim { position: fixed; inset: 0; background: rgba(20, 24, 18, .55); z-index: 2147483000; display: flex; align-items: flex-end; justify-content: center; }
+  .yd-cp-sheet { width: 100%; max-width: 480px; background: #fffdf6; border-radius: 22px 22px 0 0; padding: 26px 22px calc(22px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 30px rgba(0,0,0,.18); font-family: inherit; }
+  .yd-cp-sheet .yd-cp-badge { display: inline-block; background: #225c3a; color: #ffd640; font-weight: 800; font-size: 13px; border-radius: 999px; padding: 4px 12px; }
+  .yd-cp-sheet h3 { margin: 12px 0 6px; font-size: 21px; font-weight: 800; color: #1c211e; line-height: 1.35; }
+  .yd-cp-sheet p { margin: 0 0 14px; font-size: 14px; color: #5f6e64; }
+  .yd-cp-sheet ul { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 8px; }
+  .yd-cp-sheet li { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff; border: 1.5px dashed #225c3a; border-radius: 12px; padding: 12px 14px; font-size: 15px; font-weight: 700; color: #1c211e; }
+  .yd-cp-sheet li span { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+  .yd-cp-sheet li .ok { background: #e3efe6; color: #225c3a; }
+  .yd-cp-sheet li .dup { background: #f1efe6; color: #6b6b5c; }
+  .yd-cp-sheet li .fail { background: #f8e4df; color: #b4442e; }
+  .yd-cp-sheet button { width: 100%; border: 0; border-radius: 14px; background: #225c3a; color: #ffd640; font-size: 17px; font-weight: 800; padding: 15px; cursor: pointer; }
   /* 홈의 PC 전용 전상품 섹션이 모바일에서도 노출되는 아임웹 가시성 오류 보정 */
   @media (max-width: 991px) {
     #s202406266d537535b781f {
