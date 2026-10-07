@@ -1,17 +1,23 @@
 
   /* ── 재구매 문자 쿠폰 한 번에 받기 안내창 (?yd_cp=) ── */
-  .yd-cp-dim { position: fixed; inset: 0; background: rgba(20, 24, 18, .55); z-index: 2147483000; display: flex; align-items: flex-end; justify-content: center; }
-  .yd-cp-sheet { width: 100%; max-width: 480px; background: #fffdf6; border-radius: 22px 22px 0 0; padding: 26px 22px calc(22px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 30px rgba(0,0,0,.18); font-family: inherit; }
-  .yd-cp-sheet .yd-cp-badge { display: inline-block; background: #225c3a; color: #ffd640; font-weight: 800; font-size: 13px; border-radius: 999px; padding: 4px 12px; }
-  .yd-cp-sheet h3 { margin: 12px 0 6px; font-size: 21px; font-weight: 800; color: #1c211e; line-height: 1.35; }
-  .yd-cp-sheet p { margin: 0 0 14px; font-size: 14px; color: #5f6e64; }
-  .yd-cp-sheet ul { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 8px; }
-  .yd-cp-sheet li { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff; border: 1.5px dashed #225c3a; border-radius: 12px; padding: 12px 14px; font-size: 15px; font-weight: 700; color: #1c211e; }
-  .yd-cp-sheet li span { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
-  .yd-cp-sheet li .ok { background: #e3efe6; color: #225c3a; }
-  .yd-cp-sheet li .dup { background: #f1efe6; color: #6b6b5c; }
-  .yd-cp-sheet li .fail { background: #f8e4df; color: #b4442e; }
-  .yd-cp-sheet button { width: 100%; border: 0; border-radius: 14px; background: #225c3a; color: #ffd640; font-size: 17px; font-weight: 800; padding: 15px; cursor: pointer; }
+  /* 2026-10-07 대표 선택 C안: 창 전체 브랜드 초록(#2A341E 다크 올리브) + 크림 쿠폰 카드 + 라임 버튼 */
+  .yd-cp-dim { position: fixed; inset: 0; background: rgba(21, 27, 22, .55); z-index: 2147483000; display: flex; align-items: flex-end; justify-content: center; }
+  .yd-cp-sheet { width: 100%; max-width: 480px; background: #2a341e; color: #fffdf9; border-radius: 24px 24px 0 0; padding: 14px 22px calc(26px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 30px rgba(0,0,0,.22); font-family: inherit; text-align: center; box-sizing: border-box; }
+  .yd-cp-sheet .yd-cp-grab { display: block; width: 40px; height: 4px; border-radius: 4px; background: rgba(255,255,255,.22); margin: 0 auto 18px; }
+  .yd-cp-sheet .yd-cp-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(199,202,145,.16); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+  .yd-cp-sheet .yd-cp-badge { display: block; font-size: 12.5px; font-weight: 800; color: #c7ca91; letter-spacing: .3px; }
+  .yd-cp-sheet h3 { margin: 6px 0 6px; font-size: 23px; font-weight: 800; color: #fffdf9; line-height: 1.35; letter-spacing: -.5px; word-break: keep-all; }
+  .yd-cp-sheet p { margin: 0 0 20px; font-size: 14px; color: rgba(255,253,249,.7); word-break: keep-all; }
+  .yd-cp-sheet ul { list-style: none; margin: 0 0 16px; padding: 4px 16px; background: #fffdf9; border-radius: 16px; text-align: left; }
+  .yd-cp-sheet li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 15px 0; border-bottom: 1px dashed #d9ddc9; color: #151b16; }
+  .yd-cp-sheet li:last-child { border-bottom: 0; }
+  .yd-cp-sheet li .yd-cp-v { display: block; font-size: 19px; font-weight: 900; color: #2a341e; letter-spacing: -.4px; line-height: 1.3; }
+  .yd-cp-sheet li .yd-cp-m { display: block; font-size: 12.5px; font-weight: 500; color: #5f665f; margin-top: 2px; }
+  .yd-cp-sheet li .yd-cp-tag { display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 5px 10px; white-space: nowrap; }
+  .yd-cp-sheet li .ok { background: #eef0e5; color: #2a341e; }
+  .yd-cp-sheet li .dup { background: #f1f0ea; color: #5f665f; }
+  .yd-cp-sheet li .fail { background: #f8efea; color: #9d4035; }
+  .yd-cp-sheet button { width: 100%; border: 0; border-radius: 14px; background: #c7ca91; color: #2a341e; font-size: 17px; font-weight: 800; padding: 17px; cursor: pointer; letter-spacing: -.2px; }
   /* 홈의 PC 전용 전상품 섹션이 모바일에서도 노출되는 아임웹 가시성 오류 보정 */
   @media (max-width: 991px) {
     #s202406266d537535b781f {

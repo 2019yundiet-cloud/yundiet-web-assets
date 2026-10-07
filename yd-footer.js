@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_173__) {
+  if (window.__YD_FOOTER_V3_174__) {
     return;
   }
-  window.__YD_FOOTER_V3_173__ = true;
+  window.__YD_FOOTER_V3_174__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.173', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.174', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1137,10 +1137,10 @@
      비로그인이면 아임웹 자체 로그인 이동(SITE_COUPON)으로 보냈다가, 돌아오면 같은 주소라 자동으로 다시 받는다.
      묶음 키·쿠폰 코드 정본은 crm-repeat config.mjs의 COUPON_PACKS와 같아야 한다. */
   const CRM_COUPON_PACKS = {
-    r3: { title: '재구매 쿠폰', items: [['9D0501004491A', '3,000원 할인']] },
-    fs: { title: '무료배송 쿠폰', items: [['004E4AFF598FB', '무료배송']] },
-    vip: { title: 'VIP 쿠폰팩', items: [['2953238159E4C', '3,000원 할인 (2번 사용)'], ['CB8D9F3926D31', '무료배송 (1번 사용)']] },
-    vipp: { title: 'VIP+ 쿠폰팩', items: [['9AB104EDD0320', '5,000원 할인 (2번 사용)'], ['A405384E75EE0', '무료배송 (2번 사용)']] }
+    r3: { title: '재구매 쿠폰', items: [['9D0501004491A', '3,000원 할인', '5만원 이상 주문 · 받은 날부터 7일']] },
+    fs: { title: '무료배송 쿠폰', items: [['004E4AFF598FB', '무료배송', '5만원 이상 주문 · 받은 날부터 7일']] },
+    vip: { title: 'VIP 쿠폰팩', items: [['2953238159E4C', '3,000원 할인', '2번 사용 · 5만원 이상 주문'], ['CB8D9F3926D31', '무료배송', '1번 사용 · 5만원 이상 주문']] },
+    vipp: { title: 'VIP+ 쿠폰팩', items: [['9AB104EDD0320', '5,000원 할인', '2번 사용 · 5만원 이상 주문'], ['A405384E75EE0', '무료배송', '2번 사용 · 5만원 이상 주문']] }
   };
 
   function bindCrmCouponPack() {
@@ -1185,12 +1185,21 @@
       dim.className = 'yd-cp-dim';
       dim.setAttribute('data-yd-crm-coupon-pack', key);
       const headline = okCount ? '쿠폰 ' + okCount + '장이 쿠폰함에 들어왔어요' : (dupCount ? '이미 받으신 쿠폰이에요' : '쿠폰을 받지 못했어요');
-      const sub = okCount || dupCount ? '결제 화면에서 쿠폰을 선택하면 바로 할인돼요 (5만원 이상 주문)' : '고객센터(카카오 채널 @윤식단)로 알려 주시면 바로 넣어 드릴게요';
+      const sub = okCount || dupCount ? '결제할 때 쿠폰을 고르면 바로 할인돼요' : '고객센터(카카오 채널 @윤식단)로 알려 주시면 바로 넣어 드릴게요';
+      const svg = function(stroke, width, size, d) {
+        return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="' + stroke + '" stroke-width="' + width + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+      };
+      const CHECK = 'M5 12.5l4.5 4.5L19 7.5';
+      const icon = okCount || dupCount
+        ? svg('#c7ca91', 2, 30, 'M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z')
+        : svg('#c7ca91', 2.2, 30, 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8v5M12 16.5v.01');
       const rows = results.map(function(r) {
-        const tag = r.state === 'ok' ? '<span class="ok">받기 완료</span>' : r.state === 'dup' ? '<span class="dup">이미 받음</span>' : '<span class="fail">실패</span>';
-        return '<li>' + r.label + tag + '</li>';
+        const tag = r.state === 'ok' ? '<span class="yd-cp-tag ok">' + svg('#2a341e', 3.4, 12, CHECK) + '받기 완료</span>'
+          : r.state === 'dup' ? '<span class="yd-cp-tag dup">이미 받음</span>' : '<span class="yd-cp-tag fail">실패</span>';
+        return '<li><div><span class="yd-cp-v">' + r.label + '</span><span class="yd-cp-m">' + r.meta + '</span></div>' + tag + '</li>';
       }).join('');
       dim.innerHTML = '<div class="yd-cp-sheet" role="dialog" aria-modal="true" aria-label="' + pack.title + '">' +
+        '<span class="yd-cp-grab" aria-hidden="true"></span><div class="yd-cp-icon">' + icon + '</div>' +
         '<span class="yd-cp-badge">' + pack.title + '</span><h3>' + headline + '</h3><p>' + sub + '</p><ul>' + rows + '</ul>' +
         '<button type="button" data-yd-cp-close>바로 쇼핑하기</button></div>';
       dim.addEventListener('click', function(e) {
@@ -1206,7 +1215,7 @@
         if (res && res.need_login) { goLogin(item[0]); return; }
         const msg = String((res && res.message) || '');
         const state = res && res.success ? 'ok' : (/이미|발급받|다운로드 받/.test(msg) ? 'dup' : 'fail');
-        results.push({ code: item[0], label: item[1], state: state, message: msg });
+        results.push({ code: item[0], label: item[1], meta: item[2] || '', state: state, message: msg });
       }
       stripParam();
       render(results);
@@ -8539,7 +8548,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.173] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.174] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
