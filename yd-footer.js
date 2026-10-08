@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_174__) {
+  if (window.__YD_FOOTER_V3_175__) {
     return;
   }
-  window.__YD_FOOTER_V3_174__ = true;
+  window.__YD_FOOTER_V3_175__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.174', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.175', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2745,7 +2745,8 @@
     }
 
     /* 사이즈 스킴(단백밥): S / L / 프리미엄 / 밥도감 분류 — 밥도감에도 함박이 있으므로 밥도감을 먼저 본다 */
-    var premiumPattern = /함박|쌈장|불고기|제육|훈제오리/;
+    /* 돈다리살 고추장맛(단백밥 신메뉴)도 저당 한식 탭 (2026-10-08 대표 지시) */
+    var premiumPattern = /함박|쌈장|불고기|제육|훈제오리|돈다리살/;
     var categoryOf = function(name) {
       if (tab4On && /밥도감/.test(name)) return 'B';
       if (premiumPattern.test(name)) return 'P';
@@ -2880,6 +2881,7 @@
       if (/직화\s*제육|제육\s*볶음/.test(clean)) return '매콤한 저당 제육 양념을 부드러운 목전지에 입히고 은은한 직화 풍미를 더한 단백질 25g 도시락';
       if (/불고기/.test(clean)) return '달콤짭짤한 저당 불고기 양념을 부드러운 목전지에 입혀 촉촉한 단짠 풍미를 살린 단백질 25g 도시락';
       if (/훈제\s*오리/.test(clean)) return '은은한 훈연 향의 오리고기를 한 번 삶아 담백하고 부드럽게 완성한 단백질 29g 도시락';
+      if (/돈다리살/.test(clean)) return '매콤한 고추장 양념에 담백한 돼지 다리살을 구워 담은 신메뉴 도시락';
       if (/함박/.test(clean) && hasSeparateSauce(name)) return '그릴드함박+저당소스가 별도 제공됩니다.';
       if (/함박/.test(clean)) return '지방이 적은 돼지 뒷다리살로 빚어 담백한 고기 맛과 부드러운 식감을 살린 단백질 32g 도시락';
       if (/오리지널/.test(clean)) return '단백질50g 당1g의 식단 정석 닭가슴살 도시락';
@@ -8548,7 +8550,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.174] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.175] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
