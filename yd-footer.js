@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_180__) {
+  if (window.__YD_FOOTER_V3_181__) {
     return;
   }
-  window.__YD_FOOTER_V3_180__ = true;
+  window.__YD_FOOTER_V3_181__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.180', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.181', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -8550,7 +8550,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.180] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.181] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
@@ -8744,7 +8744,7 @@
         return '<tr><td>' + esc(k.replace('-', '.')) + '</td><td>' + m[k].n + '건</td><td>' + won(fee) + '</td><td>−' + won(t[0] + t[1]) + '</td><td><b>' + won(net) + '</b></td><td>' +
           (p ? '<span class="st ok">지급 완료</span><small>' + esc(p.paid_at) + ' 지급</small>' : '<span class="st no">미지급</span><small>' + (nx.getMonth() + 1) + '/15 지급 예정</small>') + '</td></tr>';
       }).join('');
-      return '<div class="yd-pp-kpi" style="margin-bottom:10px"><div><small>정산 완료 (실지급)</small><b>' + won(tp) + '</b></div><div><small>미정산 (예정)</small><b>' + won(tu) + '</b></div><div><small>합계</small><b>' + won(tp + tu) + '</b></div></div>' +
+      return '<div class="yd-pp-kpi" style="margin-bottom:10px"><div><small>지급 완료</small><b>' + won(tp) + '</b></div><div><small>미지급 (지급 예정)</small><b>' + won(tu) + '</b></div><div><small>총 수수료 (실지급 기준)</small><b>' + won(tp + tu) + '</b></div></div>' +
         '<div style="overflow-x:auto"><table class="yd-pp-mt"><tr><th>월</th><th>인정</th><th>수수료</th><th>원천징수</th><th>실지급</th><th>지급 상태</th></tr>' + rows + '</table></div>' +
         '<p style="font-size:12px;color:#6b6f60">원천징수 3.3% = 소득세 3% + 지방소득세 0.3% (각 10원 미만 절사). 미지급 금액은 취소·반품이 생기면 바뀔 수 있어요.</p>';
     }
