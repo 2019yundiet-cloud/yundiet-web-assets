@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_179__) {
+  if (window.__YD_FOOTER_V3_180__) {
     return;
   }
-  window.__YD_FOOTER_V3_179__ = true;
+  window.__YD_FOOTER_V3_180__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.179', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.180', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -8550,7 +8550,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.179] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.180] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
@@ -8653,6 +8653,7 @@
         '.yd-pp-link{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #e6e2d6;border-radius:12px;padding:8px;margin-bottom:8px}.yd-pp-link img{width:44px;height:44px;border-radius:8px;object-fit:cover}.yd-pp-link span{flex:1;font-size:13px;font-weight:700;min-width:0}.yd-pp-link button{background:#2a341e;color:#fff;border:0;border-radius:8px;padding:9px 12px;font-size:13px;cursor:pointer;flex:none}' +
         '.yd-pp table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:13px}.yd-pp td,.yd-pp th{padding:10px 8px;border-bottom:1px solid #eee;text-align:left}' +
         '.yd-pp-day{background:#fff;border:1px solid #e6e2d6;border-radius:12px;margin-bottom:8px;overflow:hidden}.yd-pp-day summary{display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr;gap:6px;align-items:center;padding:13px 14px;cursor:pointer;font-size:13px;list-style:none}.yd-pp-day summary::-webkit-details-marker{display:none}.yd-pp-day summary .fee{font-weight:800;color:#2a341e;text-align:right}.yd-pp-day[open] summary{background:#f1efe6}.yd-pp-od{display:flex;justify-content:space-between;gap:10px;padding:11px 14px;border-top:1px solid #eee;font-size:13px}.yd-pp-od p{margin:3px 0 0;line-height:1.4}.yd-pp-od small{color:#6b6f60;font-size:11px}.yd-pp-od .r{text-align:right;flex:none;display:flex;flex-direction:column;gap:2px;align-items:flex-end}.yd-pp .st{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#eee;color:#555}.yd-pp .st.ok{background:#e6f07a;color:#2a341e}.yd-pp-mt td small{display:block;font-size:11px;color:#6b6f60;margin-top:2px}.yd-pp-mt{min-width:520px}' +
+        '.yd-pp .st.no{background:#fde2dd;color:#b3261e}.yd-pp .st.big{font-size:13px;padding:5px 12px}.yd-pp-mtab{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.yd-pp-mtab button{border:1px solid #d8d4c8;background:#fff;border-radius:18px;padding:7px 14px;font-size:13px;cursor:pointer}.yd-pp-mtab button.on{background:#2a341e;color:#e6f07a;border-color:#2a341e;font-weight:700}.yd-pp-mc{background:#fff;border:1px solid #e6e2d6;border-radius:14px;padding:14px;margin-bottom:10px}.yd-pp-mc .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.yd-pp-mc .g{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.yd-pp-mc .g small{display:block;font-size:11px;color:#6b6f60}.yd-pp-mc .g b{font-size:15px}@media(max-width:520px){.yd-pp-mc .g{grid-template-columns:repeat(2,1fr)}}' +
         '.yd-pp-mp{position:fixed;right:16px;bottom:88px;z-index:9999;background:#2a341e;color:#e6f07a;border-radius:22px;padding:11px 16px;font-size:14px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.2);text-decoration:none}';
       document.head.appendChild(s);
     }
@@ -8741,11 +8742,11 @@
         var nx = new Date(Number(k.slice(0, 4)), Number(k.slice(5, 7)), 15);
         if (p) tp += net; else tu += net;
         return '<tr><td>' + esc(k.replace('-', '.')) + '</td><td>' + m[k].n + '건</td><td>' + won(fee) + '</td><td>−' + won(t[0] + t[1]) + '</td><td><b>' + won(net) + '</b></td><td>' +
-          (p ? '<span class="st ok">정산 완료</span><small>' + esc(p.paid_at) + '</small>' : '<span class="st">미정산</span><small>' + (nx.getMonth() + 1) + '/15 지급 예정</small>') + '</td></tr>';
+          (p ? '<span class="st ok">지급 완료</span><small>' + esc(p.paid_at) + ' 지급</small>' : '<span class="st no">미지급</span><small>' + (nx.getMonth() + 1) + '/15 지급 예정</small>') + '</td></tr>';
       }).join('');
       return '<div class="yd-pp-kpi" style="margin-bottom:10px"><div><small>정산 완료 (실지급)</small><b>' + won(tp) + '</b></div><div><small>미정산 (예정)</small><b>' + won(tu) + '</b></div><div><small>합계</small><b>' + won(tp + tu) + '</b></div></div>' +
-        '<div style="overflow-x:auto"><table class="yd-pp-mt"><tr><th>월</th><th>인정</th><th>수수료</th><th>원천징수</th><th>실지급</th><th>상태</th></tr>' + rows + '</table></div>' +
-        '<p style="font-size:12px;color:#6b6f60">원천징수 3.3% = 소득세 3% + 지방소득세 0.3% (각 10원 미만 절사). 미정산 금액은 취소·반품이 생기면 바뀔 수 있어요.</p>';
+        '<div style="overflow-x:auto"><table class="yd-pp-mt"><tr><th>월</th><th>인정</th><th>수수료</th><th>원천징수</th><th>실지급</th><th>지급 상태</th></tr>' + rows + '</table></div>' +
+        '<p style="font-size:12px;color:#6b6f60">원천징수 3.3% = 소득세 3% + 지방소득세 0.3% (각 10원 미만 절사). 미지급 금액은 취소·반품이 생기면 바뀔 수 있어요.</p>';
     }
     function openCenter(token) {
       var el = shell('<span class="yd-pp-tag">파트너 센터</span><h1>불러오는 중…</h1>');
@@ -8763,10 +8764,33 @@
             return '<div class="yd-pp-link"><img src="' + p[3] + '" alt=""><span>' + esc(p[1]) + '</span><button type="button" data-u="' + esc(u) + '">링크 복사</button></div>';
           }).join('') +
           '<p style="font-size:12px;color:#6b6f60">다른 상품도 주소 끝에 <b>&amp;ref=' + esc(d.ref) + '</b>를 붙이면 내 실적으로 잡혀요.</p>' +
-          '<h2>주문 내역 (일자별)</h2>' + ordersHtml(d.orders) +
-          '<h2>월별 정산</h2>' + monthsHtml(d.orders, d.payouts || []) +
+          '<h2>월별 정산 내역</h2>' + monthsHtml(d.orders, d.payouts || []) +
+          '<h2>월별 상세 보기</h2><div class="yd-pp-mtab"></div><div class="yd-pp-mcard"></div><div class="yd-pp-olist"></div>' +
           '<h2>참여 조건</h2><div class="yd-pp-terms"><ol>' + TERMS.map(function(t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol></div>';
-        Array.prototype.forEach.call(box.querySelectorAll('button[data-u]'), function(b) {
+        (function() {
+            var pays = {}; (d.payouts || []).forEach(function(p) { pays[p.month] = p; });
+            var months = {}; d.orders.forEach(function(o) { if (o.date) months[String(o.date).slice(0, 7)] = 1; }); Object.keys(pays).forEach(function(k) { months[k] = 1; });
+            var keys = Object.keys(months).sort().reverse(), tab = box.querySelector('.yd-pp-mtab'), card = box.querySelector('.yd-pp-mcard'), list = box.querySelector('.yd-pp-olist');
+            function show(k) {
+              Array.prototype.forEach.call(tab.children, function(b) { b.classList.toggle('on', b.getAttribute('data-m') === k); });
+              var L = d.orders.filter(function(o) { return k === 'all' || String(o.date || '').slice(0, 7) === k; });
+              if (k === 'all') { card.innerHTML = ''; } else {
+                var ok = L.filter(function(o) { return o.status === '인정'; }), p = pays[k];
+                var fee = p ? p.fee : ok.reduce(function(s, o) { return s + Number(o.fee); }, 0), t = p ? [p.income_tax, p.local_tax] : wh(fee), net = p ? p.net : fee - t[0] - t[1];
+                var nx = new Date(Number(k.slice(0, 4)), Number(k.slice(5, 7)), 15);
+                card.innerHTML = '<div class="yd-pp-mc"><div class="hd"><b>' + k.replace('-', '년 ') + '월 정산</b>' +
+                  (p ? '<span class="st ok big">지급 완료 · ' + esc(p.paid_at) + '</span>' : '<span class="st no big">미지급 · ' + (nx.getMonth() + 1) + '월 15일 지급 예정</span>') + '</div>' +
+                  '<div class="g"><div><small>인정 주문</small><b>' + ok.length + '건</b></div><div><small>수수료</small><b>' + won(fee) + '</b></div><div><small>원천징수 3.3%</small><b>−' + won(t[0] + t[1]) + '</b></div><div><small>' + (p ? '지급액' : '지급 예정액') + '</small><b>' + won(net) + '</b></div></div></div>';
+              }
+              list.innerHTML = ordersHtml(L);
+            }
+            tab.innerHTML = '<button type="button" data-m="all">전체</button>' + keys.map(function(k) {
+              return '<button type="button" data-m="' + k + '">' + Number(k.slice(5, 7)) + '월' + (pays[k] ? ' ✓' : '') + '</button>';
+            }).join('');
+            Array.prototype.forEach.call(tab.children, function(b) { b.onclick = function() { show(b.getAttribute('data-m')); }; });
+            show(keys[0] || 'all');
+          })();
+          Array.prototype.forEach.call(box.querySelectorAll('button[data-u]'), function(b) {
           b.onclick = function() {
             var u = b.getAttribute('data-u');
             (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(function() { b.textContent = '복사됨 ✓'; }, function() { prompt('링크를 복사하세요', u); });
