@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_177__) {
+  if (window.__YD_FOOTER_V3_178__) {
     return;
   }
-  window.__YD_FOOTER_V3_177__ = true;
+  window.__YD_FOOTER_V3_178__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.177', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.178', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -8550,7 +8550,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.177] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.178] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
@@ -8645,8 +8645,8 @@
         '.yd-pp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}@media(min-width:600px){.yd-pp-grid{grid-template-columns:repeat(3,1fr)}}' +
         '.yd-pp-card{background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e6e2d6;display:flex;flex-direction:column}.yd-pp-card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:#eee}' +
         '.yd-pp-card div{padding:10px}.yd-pp-card strong{display:block;font-size:14px;line-height:1.35}.yd-pp-card small{color:#6b6f60;font-size:12px}.yd-pp-card a{color:#2a341e;font-size:12px;font-weight:700;margin-top:6px;display:inline-block}' +
-        '.yd-pp-f label{display:block;font-size:13px;font-weight:700;margin:14px 0 6px}.yd-pp-f input,.yd-pp-f select,.yd-pp-f textarea{width:100%;box-sizing:border-box;border:1px solid #d8d4c8;border-radius:10px;padding:12px;font-size:16px;background:#fff}' +
-        '.yd-pp-f .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.yd-pp-ck{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid #e6e2d6;border-radius:10px;padding:12px;margin-top:10px;font-size:13px;line-height:1.5}.yd-pp-ck input{width:20px;height:20px;flex:none;margin-top:1px}' +
+        '.yd-pp-f{background:#fff;border:1px solid #e6e2d6;border-radius:16px;padding:6px 18px 20px}.yd-pp-sec{font-size:15px;font-weight:800;color:#2a341e;margin:22px 0 2px;padding-top:16px;border-top:1px solid #eee}.yd-pp-f>.yd-pp-sec:first-child{border-top:0;padding-top:4px}.yd-pp-f label{display:block!important;float:none!important;width:auto!important;text-align:left!important;font-size:13px;font-weight:700;margin:14px 0 6px!important;padding:0!important}.yd-pp-f input,.yd-pp-f select,.yd-pp-f textarea{display:block!important;float:none!important;margin:0!important;height:auto!important;width:100%!important;box-sizing:border-box;border:1px solid #d8d4c8;border-radius:10px;padding:12px;font-size:16px;background:#fff}' +
+        '.yd-pp-f .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.yd-pp-f label.yd-pp-ck{display:flex!important;gap:10px;align-items:flex-start;background:#fff;border:1px solid #e6e2d6;border-radius:10px;padding:12px;margin-top:10px;font-size:13px;line-height:1.5}.yd-pp-f .yd-pp-ck input{width:20px!important;height:20px!important;flex:none;margin:1px 0 0!important;display:inline-block!important}' +
         '.yd-pp-btn{display:block;width:100%;background:#2a341e;color:#fff;border:0;border-radius:12px;padding:16px;font-size:16px;font-weight:700;margin-top:18px;cursor:pointer}.yd-pp-btn[disabled]{opacity:.5}' +
         '.yd-pp-terms{background:#fff;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.6;border:1px solid #e6e2d6}.yd-pp-terms li{margin:6px 0}' +
         '.yd-pp-msg{margin-top:12px;font-size:14px;font-weight:700}.yd-pp-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.yd-pp-kpi div{background:#fff;border-radius:12px;padding:12px;border:1px solid #e6e2d6}.yd-pp-kpi b{display:block;font-size:18px;margin-top:4px}.yd-pp-kpi small{font-size:12px;color:#6b6f60}' +
@@ -8681,16 +8681,20 @@
         '<h2>판매할 수 있는 제품 (자사몰 정상 판매가)</h2>' + lineupHtml() +
         '<h2>참여 조건</h2><div class="yd-pp-terms"><ol>' + TERMS.map(function(t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol></div>' +
         '<h2>참여 신청</h2><form class="yd-pp-f" novalidate>' +
-        '<div class="row"><div><label>이름</label><input name="name" autocomplete="name" required></div><div><label>인스타그램 아이디</label><input name="instagram" placeholder="@아이디" required></div></div>' +
-        '<div class="row"><div><label>연락처</label><input name="phone" inputmode="tel" placeholder="010-0000-0000" required></div><div><label>이메일(선택)</label><input name="email" type="email"></div></div>' +
-        '<label>체험 제품 (1개)</label><select name="sample_product" required><option value="">선택해 주세요</option>' + LINEUP.map(function(p) { return '<option>' + esc(p[1]) + '</option>'; }).join('') + '</select>' +
+        '<div class="yd-pp-sec">신청자 정보</div><label>이름</label><input name="name" autocomplete="name" required>' +
+        '<label>인스타그램 아이디</label><input name="instagram" placeholder="@아이디" required>' +
+        '<label>연락처</label><input name="phone" inputmode="tel" placeholder="010-0000-0000" required>' +
+        '<label>이메일 (선택)</label><input name="email" type="email">' +
+        '<div class="yd-pp-sec">체험 제품 · 배송</div><label>체험 제품 (1개)</label><select name="sample_product" required><option value="">선택해 주세요</option>' + LINEUP.map(function(p) { return '<option>' + esc(p[1]) + '</option>'; }).join('') + '</select>' +
         '<label>원하는 맛·옵션(선택)</label><input name="sample_option" placeholder="예: 닭가슴살 데리야끼">' +
-        '<label>받는 분 / 연락처 (신청자와 같으면 비워두세요)</label><div class="row"><input name="ship_name" placeholder="받는 분"><input name="ship_phone" inputmode="tel" placeholder="연락처"></div>' +
+        '<label>받는 분 (신청자와 같으면 비워두세요)</label><input name="ship_name" placeholder="받는 분 이름">' +
+        '<label>받는 분 연락처 (같으면 비워두세요)</label><input name="ship_phone" inputmode="tel" placeholder="010-0000-0000">' +
         '<label>배송지 주소</label><input name="ship_address" placeholder="도로명 주소 + 상세 주소" required>' +
-        '<label>수수료 받을 계좌</label><div class="row"><input name="bank" placeholder="은행" required><input name="account_holder" placeholder="예금주(본인)"></div>' +
-        '<input name="account_no" inputmode="numeric" placeholder="계좌번호" style="margin-top:10px" required>' +
+        '<div class="yd-pp-sec">수수료 받을 계좌</div><label>은행</label><input name="bank" placeholder="예: 국민은행" required>' +
+        '<label>예금주 (본인 명의)</label><input name="account_holder" placeholder="비워두면 신청자 이름">' +
+        '<label>계좌번호</label><input name="account_no" inputmode="numeric" placeholder="숫자만 입력" required>' +
         '<label>주민등록번호 (사업소득 원천징수 신고용)</label><input name="rrn" inputmode="numeric" placeholder="000000-0000000" autocomplete="off" required>' +
-        '<label class="yd-pp-ck"><input type="checkbox" name="agree_terms"><span>위 <b>참여 조건</b>을 읽고 동의합니다.</span></label>' +
+        '<div class="yd-pp-sec">동의</div><label class="yd-pp-ck"><input type="checkbox" name="agree_terms"><span>위 <b>참여 조건</b>을 읽고 동의합니다.</span></label>' +
         '<label class="yd-pp-ck"><input type="checkbox" name="agree_sample_charge"><span>체험 제품을 받고 <b>30일 안에 콘텐츠를 올리지 않으면 제품 정상 판매가가 청구</b>되는 것에 동의합니다.</span></label>' +
         '<label class="yd-pp-ck"><input type="checkbox" name="agree_privacy"><span><b>개인정보 수집·이용 동의(필수)</b> — ' + esc(PRIVACY) + '</span></label>' +
         '<button class="yd-pp-btn" type="submit">신청하기</button><div class="yd-pp-msg" role="status"></div></form>');
