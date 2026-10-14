@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_176__) {
+  if (window.__YD_FOOTER_V3_177__) {
     return;
   }
-  window.__YD_FOOTER_V3_176__ = true;
+  window.__YD_FOOTER_V3_177__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.176', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.177', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -8550,7 +8550,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.176] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.177] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
@@ -8594,5 +8594,162 @@
         if (res.ok || res.status === 409) { try { localStorage.setItem(sent, '1'); } catch (e) {} }
       }).catch(function() {});
     })();
+  })();
+
+  /* ═══ 판매 파트너 프로그램 화면 (2026-10-14) ═══
+     ?yd_partner=1  → 라인업 + 참여 신청서 (aff_apply RPC: 계좌·주민번호는 DB에서 암호화)
+     ?yd_pc=<토큰>   → 파트너 센터(내 링크·실적). 토큰은 이 기기에 저장 → 마이페이지에 '파트너 센터' 버튼
+     정본·운영: vs:code/partner-links (pl.py) */
+  (function() {
+    var RPC = 'https://isusogwxthvmdpowerrr.supabase.co/rest/v1/rpc/';
+    var PK = 'sb_publishable_DQqqpLkR1ukvix09KIwpNA_3qajlEe-';
+    var SITE = 'https://yundiet.imweb.me';
+    var LINEUP = [
+      [672, '단백밥 10종 골라담기', '단백질 50g 저당 도시락', 'https://cdn.imweb.me/thumbnail/20260930/7030a7a9b8176.png'],
+      [1262, '밥도감 12종 골라담기', '한식 도시락', 'https://cdn.imweb.me/thumbnail/20260927/d859322a0b20d.jpg'],
+      [675, '단백밥 SET', '단백밥 세트 구성', 'https://cdn.imweb.me/thumbnail/20260930/75cb800e9e7e1.png'],
+      [1198, '닭가슴살 곡물볶음밥 골라담기', '밸런시 · 단백질 26g', 'https://cdn.imweb.me/thumbnail/20260930/cdd9780ab486b.png'],
+      [1232, '닭가슴살 곡물볶음밥 SET', '밸런시 세트', 'https://cdn.imweb.me/thumbnail/20260930/f7648428140a9.png'],
+      [1125, '한돈스테이크 150g', '순수단백 · 단백질 23g', 'https://cdn.imweb.me/thumbnail/20260930/9d6b23a86d8c9.png'],
+      [1242, '스팀 슬라이스 닭가슴살', '순수단백 · 단백질 34g', 'https://cdn.imweb.me/thumbnail/20260930/1fc104dedacc5.png'],
+      [1243, '국내산 닭가슴살 150g', '순수단백 · 단백질 36g', 'https://cdn.imweb.me/thumbnail/20260804/acc32dd9da8cd.jpg'],
+      [1214, '단백 직화 불고기 10팩', '순수단백 · 단백질 16g', 'https://cdn.imweb.me/thumbnail/20260930/a0221f37aea04.png'],
+      [1233, '단백 제육 고추장맛 10팩', '순수단백 · 당류 3g', 'https://cdn.imweb.me/thumbnail/20260930/14d5d4bd1c5c1.png'],
+      [1246, '돈다리살 고추장맛', '단백질 19g', 'https://cdn.imweb.me/thumbnail/20260930/377cf15609739.png'],
+      [650, '발아통밀 통밀빵 3종', '당류 1g', 'https://cdn.imweb.me/thumbnail/20260930/270741ed1909c.png']
+    ];
+    var TERMS = [
+      '수수료: 내 전용 링크로 들어온 고객이 7일 안에 결제하면, (결제금액 − 배송비)의 10%를 드립니다. 여러 링크를 거친 경우 마지막 링크 기준입니다.',
+      '할인 없음: 고객은 자사몰 정상 판매가로 구매합니다.',
+      '정산: 매월 1일~말일 실적을 다음 달 15일에 계좌이체로 지급합니다. 사업소득 3.3%(소득세 3%·지방소득세 0.3%)를 원천징수합니다. 취소·환불된 주문은 제외됩니다.',
+      '체험 제품: 정상 판매 상품 중 1개를 1회 무료로 보내드립니다. 받은 날로부터 30일 안에 전용 링크를 넣은 콘텐츠(릴스 또는 피드) 1건을 올려주세요.',
+      '미게시 시 실비 청구: 30일 안에 콘텐츠가 올라오지 않으면 받은 체험 제품의 정상 판매가를 청구하며, 안내받은 계좌로 입금해 주셔야 합니다.',
+      '다른 기기에서 구매하거나 링크 없이 들어온 주문은 실적으로 잡히지 않을 수 있습니다.'
+    ];
+    var PRIVACY = '수집 항목: 이름·인스타그램 아이디·연락처·이메일·은행·예금주·계좌번호·주민등록번호·배송지. 목적: 파트너 등록, 체험 제품 배송, 수수료 지급, 사업소득 원천징수 신고(소득세법 제145조·제164조). 보관: 계좌·주민등록번호는 암호화 저장하며, 세법상 보관 기간(5년) 경과 후 파기합니다. 동의하지 않으면 참여할 수 없습니다.';
+    function q(name) { try { return new URLSearchParams(location.search).get(name); } catch (e) { return null; } }
+    function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function won(n) { return (Number(n) || 0).toLocaleString('ko-KR') + '원'; }
+    function rpc(fn, body) {
+      return fetch(RPC + fn, { method: 'POST', headers: { apikey: PK, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function(r) { return r.json().then(function(j) { if (!r.ok) throw new Error(j && j.message || 'error'); return j; }); });
+    }
+    function css() {
+      if (document.getElementById('yd-pp-css')) return;
+      var s = document.createElement('style'); s.id = 'yd-pp-css';
+      s.textContent = '.yd-pp{position:fixed;inset:0;z-index:2147483000;background:#f6f4ee;overflow-y:auto;font-family:Pretendard,-apple-system,sans-serif;color:#1d2416;-webkit-overflow-scrolling:touch}' +
+        '.yd-pp-in{max-width:720px;margin:0 auto;padding:28px 16px 80px}.yd-pp h1{font-size:24px;line-height:1.35;margin:6px 0 10px}.yd-pp h2{font-size:18px;margin:32px 0 12px}' +
+        '.yd-pp-x{position:fixed;top:12px;right:12px;z-index:2;background:#fff;border:1px solid #d8d4c8;border-radius:20px;padding:6px 14px;font-size:14px;cursor:pointer}' +
+        '.yd-pp-tag{display:inline-block;background:#2a341e;color:#e6f07a;font-size:12px;font-weight:700;padding:4px 10px;border-radius:12px}' +
+        '.yd-pp-hero{background:#2a341e;color:#fff;border-radius:18px;padding:20px;margin-top:14px}.yd-pp-hero b{color:#e6f07a}.yd-pp-hero li{margin:6px 0;font-size:15px;line-height:1.5}' +
+        '.yd-pp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}@media(min-width:600px){.yd-pp-grid{grid-template-columns:repeat(3,1fr)}}' +
+        '.yd-pp-card{background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e6e2d6;display:flex;flex-direction:column}.yd-pp-card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:#eee}' +
+        '.yd-pp-card div{padding:10px}.yd-pp-card strong{display:block;font-size:14px;line-height:1.35}.yd-pp-card small{color:#6b6f60;font-size:12px}.yd-pp-card a{color:#2a341e;font-size:12px;font-weight:700;margin-top:6px;display:inline-block}' +
+        '.yd-pp-f label{display:block;font-size:13px;font-weight:700;margin:14px 0 6px}.yd-pp-f input,.yd-pp-f select,.yd-pp-f textarea{width:100%;box-sizing:border-box;border:1px solid #d8d4c8;border-radius:10px;padding:12px;font-size:16px;background:#fff}' +
+        '.yd-pp-f .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.yd-pp-ck{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid #e6e2d6;border-radius:10px;padding:12px;margin-top:10px;font-size:13px;line-height:1.5}.yd-pp-ck input{width:20px;height:20px;flex:none;margin-top:1px}' +
+        '.yd-pp-btn{display:block;width:100%;background:#2a341e;color:#fff;border:0;border-radius:12px;padding:16px;font-size:16px;font-weight:700;margin-top:18px;cursor:pointer}.yd-pp-btn[disabled]{opacity:.5}' +
+        '.yd-pp-terms{background:#fff;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.6;border:1px solid #e6e2d6}.yd-pp-terms li{margin:6px 0}' +
+        '.yd-pp-msg{margin-top:12px;font-size:14px;font-weight:700}.yd-pp-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.yd-pp-kpi div{background:#fff;border-radius:12px;padding:12px;border:1px solid #e6e2d6}.yd-pp-kpi b{display:block;font-size:18px;margin-top:4px}.yd-pp-kpi small{font-size:12px;color:#6b6f60}' +
+        '.yd-pp-link{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #e6e2d6;border-radius:12px;padding:8px;margin-bottom:8px}.yd-pp-link img{width:44px;height:44px;border-radius:8px;object-fit:cover}.yd-pp-link span{flex:1;font-size:13px;font-weight:700;min-width:0}.yd-pp-link button{background:#2a341e;color:#fff;border:0;border-radius:8px;padding:9px 12px;font-size:13px;cursor:pointer;flex:none}' +
+        '.yd-pp table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:13px}.yd-pp td,.yd-pp th{padding:10px 8px;border-bottom:1px solid #eee;text-align:left}' +
+        '.yd-pp-mp{position:fixed;right:16px;bottom:88px;z-index:9999;background:#2a341e;color:#e6f07a;border-radius:22px;padding:11px 16px;font-size:14px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.2);text-decoration:none}';
+      document.head.appendChild(s);
+    }
+    function shell(html) {
+      css();
+      var el = document.createElement('div'); el.className = 'yd-pp';
+      el.innerHTML = '<button class="yd-pp-x" type="button">닫기 ✕</button><div class="yd-pp-in">' + html + '</div>';
+      el.querySelector('.yd-pp-x').onclick = function() { el.remove(); document.documentElement.style.overflow = ''; };
+      document.documentElement.style.overflow = 'hidden';
+      document.body.appendChild(el);
+      return el;
+    }
+    function lineupHtml(withLink) {
+      return '<div class="yd-pp-grid">' + LINEUP.map(function(p) {
+        return '<div class="yd-pp-card"><img loading="lazy" src="' + p[3] + '" alt=""><div><strong>' + esc(p[1]) + '</strong><small>' + esc(p[2]) + '</small><br>' +
+          '<a href="' + SITE + '/shop_view/?idx=' + p[0] + '" target="_blank" rel="noopener">상품 보기 ›</a></div></div>';
+      }).join('') + '</div>';
+    }
+    function openApply() {
+      var el = shell(
+        '<span class="yd-pp-tag">윤식단 판매 파트너</span>' +
+        '<h1>내 링크로 팔리면,<br>결제금액의 10%를 드려요</h1>' +
+        '<div class="yd-pp-hero"><ul>' +
+        '<li>전용 링크로 판매되면 <b>(결제금액 − 배송비)의 10%</b> 수수료</li>' +
+        '<li>체험 제품 <b>1개 무료</b> 배송 — 아래 라인업에서 고르세요</li>' +
+        '<li>매월 정산 · 계좌이체 · 실적은 파트너 센터에서 언제든 확인</li></ul></div>' +
+        '<h2>판매할 수 있는 제품 (자사몰 정상 판매가)</h2>' + lineupHtml() +
+        '<h2>참여 조건</h2><div class="yd-pp-terms"><ol>' + TERMS.map(function(t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol></div>' +
+        '<h2>참여 신청</h2><form class="yd-pp-f" novalidate>' +
+        '<div class="row"><div><label>이름</label><input name="name" autocomplete="name" required></div><div><label>인스타그램 아이디</label><input name="instagram" placeholder="@아이디" required></div></div>' +
+        '<div class="row"><div><label>연락처</label><input name="phone" inputmode="tel" placeholder="010-0000-0000" required></div><div><label>이메일(선택)</label><input name="email" type="email"></div></div>' +
+        '<label>체험 제품 (1개)</label><select name="sample_product" required><option value="">선택해 주세요</option>' + LINEUP.map(function(p) { return '<option>' + esc(p[1]) + '</option>'; }).join('') + '</select>' +
+        '<label>원하는 맛·옵션(선택)</label><input name="sample_option" placeholder="예: 닭가슴살 데리야끼">' +
+        '<label>받는 분 / 연락처 (신청자와 같으면 비워두세요)</label><div class="row"><input name="ship_name" placeholder="받는 분"><input name="ship_phone" inputmode="tel" placeholder="연락처"></div>' +
+        '<label>배송지 주소</label><input name="ship_address" placeholder="도로명 주소 + 상세 주소" required>' +
+        '<label>수수료 받을 계좌</label><div class="row"><input name="bank" placeholder="은행" required><input name="account_holder" placeholder="예금주(본인)"></div>' +
+        '<input name="account_no" inputmode="numeric" placeholder="계좌번호" style="margin-top:10px" required>' +
+        '<label>주민등록번호 (사업소득 원천징수 신고용)</label><input name="rrn" inputmode="numeric" placeholder="000000-0000000" autocomplete="off" required>' +
+        '<label class="yd-pp-ck"><input type="checkbox" name="agree_terms"><span>위 <b>참여 조건</b>을 읽고 동의합니다.</span></label>' +
+        '<label class="yd-pp-ck"><input type="checkbox" name="agree_sample_charge"><span>체험 제품을 받고 <b>30일 안에 콘텐츠를 올리지 않으면 제품 정상 판매가가 청구</b>되는 것에 동의합니다.</span></label>' +
+        '<label class="yd-pp-ck"><input type="checkbox" name="agree_privacy"><span><b>개인정보 수집·이용 동의(필수)</b> — ' + esc(PRIVACY) + '</span></label>' +
+        '<button class="yd-pp-btn" type="submit">신청하기</button><div class="yd-pp-msg" role="status"></div></form>');
+      var f = el.querySelector('form'), msg = el.querySelector('.yd-pp-msg');
+      f.onsubmit = function(ev) {
+        ev.preventDefault();
+        var d = {}; Array.prototype.forEach.call(f.elements, function(x) { if (x.name) d[x.name] = x.type === 'checkbox' ? x.checked : x.value.trim(); });
+        var need = ['name', 'instagram', 'phone', 'sample_product', 'ship_address', 'bank', 'account_no', 'rrn'];
+        for (var i = 0; i < need.length; i++) if (!d[need[i]]) { msg.textContent = '빈 칸을 채워주세요.'; f.elements[need[i]].focus(); return; }
+        if (!/^\d{6}-?\d{7}$/.test(d.rrn)) { msg.textContent = '주민등록번호 형식을 확인해 주세요.'; return; }
+        if (!(d.agree_terms && d.agree_sample_charge && d.agree_privacy)) { msg.textContent = '필수 동의 3개에 모두 체크해 주세요.'; return; }
+        var b = f.querySelector('button'); b.disabled = true; msg.textContent = '보내는 중…';
+        rpc('aff_apply', { p: d }).then(function() {
+          f.innerHTML = '<div class="yd-pp-hero"><b>신청이 접수됐어요!</b><p style="margin:8px 0 0;line-height:1.6">확인 후 인스타그램 DM으로 전용 판매 링크와 파트너 센터 주소를 보내드릴게요. 체험 제품도 함께 출고해 드립니다.</p></div>';
+        }).catch(function() { b.disabled = false; msg.textContent = '접수에 실패했어요. 잠시 후 다시 시도하거나 DM으로 알려주세요.'; });
+      };
+    }
+    function openCenter(token) {
+      var el = shell('<span class="yd-pp-tag">파트너 센터</span><h1>불러오는 중…</h1>');
+      var box = el.querySelector('.yd-pp-in');
+      rpc('aff_center', { p_token: token }).then(function(d) {
+        var ok = d.orders.filter(function(o) { return o.status === '인정'; });
+        var fee = ok.reduce(function(s, o) { return s + Number(o.fee); }, 0);
+        var month = new Date().toISOString().slice(0, 7);
+        var feeM = ok.filter(function(o) { return String(o.date || '').slice(0, 7) === month; }).reduce(function(s, o) { return s + Number(o.fee); }, 0);
+        box.innerHTML = '<span class="yd-pp-tag">파트너 센터</span><h1>' + esc(d.name) + '님, 반가워요</h1>' +
+          '<div class="yd-pp-kpi"><div><small>인정 주문</small><b>' + ok.length + '건</b></div><div><small>이번 달 수수료</small><b>' + won(feeM) + '</b></div><div><small>누적 수수료</small><b>' + won(fee) + '</b></div></div>' +
+          '<p style="font-size:12px;color:#6b6f60;margin:8px 0 0">하루 1회 갱신 · 마지막 갱신 ' + esc((d.synced_at || '-').slice(0, 16).replace('T', ' ')) + (d.pending ? ' · 확인 대기 ' + d.pending + '건' : '') + ' · 원천징수 3.3% 전 금액 · 매월 15일 지급</p>' +
+          '<h2>내 판매 링크</h2>' + LINEUP.map(function(p) {
+            var u = SITE + '/shop_view/?idx=' + p[0] + '&ref=' + d.ref;
+            return '<div class="yd-pp-link"><img src="' + p[3] + '" alt=""><span>' + esc(p[1]) + '</span><button type="button" data-u="' + esc(u) + '">링크 복사</button></div>';
+          }).join('') +
+          '<p style="font-size:12px;color:#6b6f60">다른 상품도 주소 끝에 <b>&amp;ref=' + esc(d.ref) + '</b>를 붙이면 내 실적으로 잡혀요.</p>' +
+          '<h2>주문 내역</h2>' + (d.orders.length ? '<table><tr><th>주문일</th><th>기준금액</th><th>상태</th><th>수수료</th></tr>' + d.orders.map(function(o) {
+            return '<tr><td>' + esc(o.date || '-') + '</td><td>' + won(o.amount) + '</td><td>' + esc(o.status) + '</td><td>' + won(o.fee) + '</td></tr>';
+          }).join('') + '</table>' : '<p>아직 주문이 없어요. 링크를 공유해 보세요!</p>') +
+          '<h2>참여 조건</h2><div class="yd-pp-terms"><ol>' + TERMS.map(function(t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol></div>';
+        Array.prototype.forEach.call(box.querySelectorAll('button[data-u]'), function(b) {
+          b.onclick = function() {
+            var u = b.getAttribute('data-u');
+            (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(function() { b.textContent = '복사됨 ✓'; }, function() { prompt('링크를 복사하세요', u); });
+          };
+        });
+      }).catch(function() {
+        box.innerHTML = '<span class="yd-pp-tag">파트너 센터</span><h1>주소를 확인할 수 없어요</h1><p>DM으로 받은 파트너 센터 주소로 다시 들어와 주세요.</p>';
+        try { localStorage.removeItem('yd_pc'); } catch (e) {}
+      });
+    }
+    function boot() {
+      var pc = q('yd_pc');
+      if (pc && /^[0-9a-f]{20,64}$/.test(pc)) { try { localStorage.setItem('yd_pc', pc); } catch (e) {} openCenter(pc); return; }
+      if (q('yd_partner')) { openApply(); return; }
+      var saved = null; try { saved = localStorage.getItem('yd_pc'); } catch (e) {}
+      if (saved && /\/shop_mypage/.test(location.pathname)) {
+        css(); var a = document.createElement('a'); a.href = '#'; a.className = 'yd-pp-mp'; a.textContent = '파트너 센터 ›';
+        a.onclick = function(ev) { ev.preventDefault(); openCenter(saved); };
+        document.body.appendChild(a);
+      }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   })();
 })();
