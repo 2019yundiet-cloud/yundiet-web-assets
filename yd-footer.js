@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_175__) {
+  if (window.__YD_FOOTER_V3_176__) {
     return;
   }
-  window.__YD_FOOTER_V3_175__ = true;
+  window.__YD_FOOTER_V3_176__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.175', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.176', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -8550,9 +8550,49 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.175] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.176] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
   });
+
+  /* ═══ 파트너 수수료 링크(?ref=) 파일럿 — 2026-10-14 대표 결정: 할인 없음·링크 전용·수수료 10% ═══
+     1) 어느 페이지든 ?ref=<파트너ID> 로 들어오면 7일간 기억(마지막 클릭 기준)
+     2) 결제완료 페이지에서 주문번호 + 파트너ID 를 Supabase aff_attributions 에 1회 기록(공개 키는 쓰기 전용)
+     정산 계산은 vs:code/partner-links/pl.py report */
+  (function() {
+    var KEY = 'yd_aff_ref', DAYS = 7;
+    var API = 'https://isusogwxthvmdpowerrr.supabase.co/rest/v1/aff_attributions';
+    var PK = 'sb_publishable_DQqqpLkR1ukvix09KIwpNA_3qajlEe-';
+    function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
+    try {
+      var r = (new URLSearchParams(location.search).get('ref') || '').toLowerCase();
+      if (/^[a-z0-9_-]{2,32}$/.test(r)) {
+        localStorage.setItem(KEY, JSON.stringify({ ref: r, ts: Date.now(), path: (location.pathname + location.search).slice(0, 300) }));
+      }
+    } catch (e) {}
+    if (!/\/shop_payment_complete/.test(location.pathname)) return;
+    var a = load();
+    if (!a || !a.ref || Date.now() - a.ts > DAYS * 864e5) return;
+    function findOrderNo() {
+      var q = new URLSearchParams(location.search), keys = ['order_no', 'order_code', 'orderNo'];
+      for (var i = 0; i < keys.length; i++) { var v = (q.get(keys[i]) || '').match(/^\d{10,20}$/); if (v) return v[0]; }
+      var t = (document.body && document.body.innerText) || '';
+      var m = t.match(/주문\s*번호[^0-9]{0,20}(\d{10,20})/);
+      return m ? m[1] : null;
+    }
+    var tries = 0;
+    (function tick() {
+      var no = findOrderNo();
+      if (!no) { if (++tries < 20) setTimeout(tick, 500); return; }
+      var sent = 'yd_aff_sent_' + no;
+      try { if (localStorage.getItem(sent)) return; } catch (e) {}
+      fetch(API, { method: 'POST', keepalive: true,
+        headers: { apikey: PK, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ order_no: no, ref: a.ref, landed_at: new Date(a.ts).toISOString(), landing_path: a.path })
+      }).then(function(res) {
+        if (res.ok || res.status === 409) { try { localStorage.setItem(sent, '1'); } catch (e) {} }
+      }).catch(function() {});
+    })();
+  })();
 })();
