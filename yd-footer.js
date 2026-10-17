@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_181__) {
+  if (window.__YD_FOOTER_V3_182__) {
     return;
   }
-  window.__YD_FOOTER_V3_181__ = true;
+  window.__YD_FOOTER_V3_182__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.181', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.182', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -8550,7 +8550,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.181] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.182] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
@@ -8678,7 +8678,7 @@
         '<h1>내 링크로 팔리면,<br>결제금액의 10%를 드려요</h1>' +
         '<div class="yd-pp-hero"><ul>' +
         '<li>전용 링크로 판매되면 <b>(결제금액 − 배송비)의 10%</b> 수수료</li>' +
-        '<li>체험 제품 <b>1개 무료</b> 배송 — 아래 라인업에서 고르세요</li>' +
+        '<li>체험 제품 <b>1개 무료</b> 배송(원하는 분만) — 받으시면 30일 안에 전용 링크 넣은 콘텐츠 1건</li>' +
         '<li>매월 정산 · 계좌이체 · 실적은 파트너 센터에서 언제든 확인</li></ul></div>' +
         '<h2>판매할 수 있는 제품 (자사몰 정상 판매가)</h2>' + lineupHtml() +
         '<h2>참여 조건</h2><div class="yd-pp-terms"><ol>' + TERMS.map(function(t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol></div>' +
@@ -8687,7 +8687,7 @@
         '<label>인스타그램 아이디</label><input name="instagram" placeholder="@아이디" required>' +
         '<label>연락처</label><input name="phone" inputmode="tel" placeholder="010-0000-0000" required>' +
         '<label>이메일 (선택)</label><input name="email" type="email">' +
-        '<div class="yd-pp-sec">체험 제품 · 배송</div><label>체험 제품 (1개)</label><select name="sample_product" required><option value="">선택해 주세요</option>' + LINEUP.map(function(p) { return '<option>' + esc(p[1]) + '</option>'; }).join('') + '</select>' +
+        '<div class="yd-pp-sec">체험 제품 · 배송</div><label>체험 제품 (1개)</label><select name="sample_product" required><option value="">선택해 주세요</option><option value="받지 않음">받지 않음 (링크만 받을게요)</option>' + LINEUP.map(function(p) { return '<option>' + esc(p[1]) + '</option>'; }).join('') + '</select>' +
         '<label>원하는 맛·옵션(선택)</label><input name="sample_option" placeholder="예: 닭가슴살 데리야끼">' +
         '<label>받는 분 (신청자와 같으면 비워두세요)</label><input name="ship_name" placeholder="받는 분 이름">' +
         '<label>받는 분 연락처 (같으면 비워두세요)</label><input name="ship_phone" inputmode="tel" placeholder="010-0000-0000">' +
@@ -8704,13 +8704,14 @@
       f.onsubmit = function(ev) {
         ev.preventDefault();
         var d = {}; Array.prototype.forEach.call(f.elements, function(x) { if (x.name) d[x.name] = x.type === 'checkbox' ? x.checked : x.value.trim(); });
-        var need = ['name', 'instagram', 'phone', 'sample_product', 'ship_address', 'bank', 'account_no', 'rrn'];
+        var noSample = d.sample_product === '받지 않음';
+        var need = ['name', 'instagram', 'phone', 'sample_product', 'bank', 'account_no', 'rrn'].concat(noSample ? [] : ['ship_address']);
         for (var i = 0; i < need.length; i++) if (!d[need[i]]) { msg.textContent = '빈 칸을 채워주세요.'; f.elements[need[i]].focus(); return; }
         if (!/^\d{6}-?\d{7}$/.test(d.rrn)) { msg.textContent = '주민등록번호 형식을 확인해 주세요.'; return; }
-        if (!(d.agree_terms && d.agree_sample_charge && d.agree_privacy)) { msg.textContent = '필수 동의 3개에 모두 체크해 주세요.'; return; }
+        if (!(d.agree_terms && d.agree_privacy && (noSample || d.agree_sample_charge))) { msg.textContent = noSample ? '필수 동의 2개에 체크해 주세요.' : '필수 동의 3개에 모두 체크해 주세요.'; return; }
         var b = f.querySelector('button'); b.disabled = true; msg.textContent = '보내는 중…';
         rpc('aff_apply', { p: d }).then(function() {
-          f.innerHTML = '<div class="yd-pp-hero"><b>신청이 접수됐어요!</b><p style="margin:8px 0 0;line-height:1.6">확인 후 인스타그램 DM으로 전용 판매 링크와 파트너 센터 주소를 보내드릴게요. 체험 제품도 함께 출고해 드립니다.</p></div>';
+          f.innerHTML = '<div class="yd-pp-hero"><b>신청이 접수됐어요!</b><p style="margin:8px 0 0;line-height:1.6">확인 후 인스타그램 DM으로 전용 판매 링크와 파트너 센터 주소를 보내드릴게요. ' + (noSample ? '' : '체험 제품은 매주 월요일에 출고해 드려요.') + '</p></div>';
         }).catch(function() { b.disabled = false; msg.textContent = '접수에 실패했어요. 잠시 후 다시 시도하거나 DM으로 알려주세요.'; });
       };
     }
