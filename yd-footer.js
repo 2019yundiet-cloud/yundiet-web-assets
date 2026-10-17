@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_183__) {
+  if (window.__YD_FOOTER_V3_184__) {
     return;
   }
-  window.__YD_FOOTER_V3_183__ = true;
+  window.__YD_FOOTER_V3_184__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.183', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.184', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -8550,7 +8550,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.183] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.184] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
@@ -8622,8 +8622,8 @@
       '수수료: 내 전용 링크로 들어온 고객이 7일 안에 결제하면, (결제금액 − 배송비)의 10%를 드립니다. 여러 링크를 거친 경우 마지막 링크 기준입니다.',
       '할인 없음: 고객은 자사몰 정상 판매가로 구매합니다.',
       '정산: 매월 1일~말일 실적을 다음 달 15일에 계좌이체로 지급합니다. 사업소득 3.3%(소득세 3%·지방소득세 0.3%)를 원천징수합니다. 취소·환불된 주문은 제외됩니다.',
-      '체험 제품: 정상 판매 상품 중 1개를 1회 무료로 보내드립니다. 받은 날로부터 30일 안에 전용 링크를 넣은 콘텐츠(릴스 또는 피드) 1건을 올려주세요.',
-      '미게시 시 실비 청구: 30일 안에 콘텐츠가 올라오지 않으면 받은 체험 제품의 정상 판매가를 청구하며, 안내받은 계좌로 입금해 주셔야 합니다.',
+      '체험 제품(선택): 정상 판매 상품 중 1개를 1회 무료로 보내드립니다(월요일 출고, 화요일 도착 예정). 받은 날로부터 20일 안에 전용 링크를 넣은 제품 소개 콘텐츠(릴스 또는 피드) 1건을 꼭 올려주세요.',
+      '미게시 시 실비 청구: 20일 안에 콘텐츠가 올라오지 않으면 받은 체험 제품의 정상 판매가를 청구하며, 안내받은 계좌로 입금해 주셔야 합니다.',
       '다른 기기에서 구매하거나 링크 없이 들어온 주문은 실적으로 잡히지 않을 수 있습니다.'
     ];
     var PRIVACY = '수집 항목: 이름·인스타그램 아이디·연락처·이메일·은행·예금주·계좌번호·주민등록번호·배송지. 목적: 파트너 등록, 체험 제품 배송, 수수료 지급, 사업소득 원천징수 신고(소득세법 제145조·제164조). 보관: 계좌·주민등록번호는 암호화 저장하며, 세법상 보관 기간(5년) 경과 후 파기합니다. 동의하지 않으면 참여할 수 없습니다.';
@@ -8678,7 +8678,7 @@
         '<h1>내 링크로 팔리면,<br>결제금액의 10%를 드려요</h1>' +
         '<div class="yd-pp-hero"><ul>' +
         '<li>전용 링크로 판매되면 <b>(결제금액 − 배송비)의 10%</b> 수수료</li>' +
-        '<li>체험 제품 <b>1개 무료</b> 배송(원하는 분만) — 받으시면 30일 안에 전용 링크 넣은 콘텐츠 1건</li>' +
+        '<li>체험 제품 <b>1개 무료</b> 배송(원하는 분만, 월요일 출고·화요일 도착) — 받으시면 20일 안에 전용 링크 넣은 콘텐츠 1건 필수</li>' +
         '<li>매월 정산 · 계좌이체 · 실적은 파트너 센터에서 언제든 확인</li></ul></div>' +
         '<h2>판매할 수 있는 제품 (자사몰 정상 판매가)</h2>' + lineupHtml() +
         '<h2>참여 조건</h2><div class="yd-pp-terms"><ol>' + TERMS.map(function(t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol></div>' +
@@ -8697,7 +8697,7 @@
         '<label>계좌번호</label><input name="account_no" inputmode="numeric" placeholder="숫자만 입력" required>' +
         '<label>주민등록번호 (사업소득 원천징수 신고용)</label><input name="rrn" inputmode="numeric" placeholder="000000-0000000" autocomplete="off" required>' +
         '<div class="yd-pp-sec">동의</div><label class="yd-pp-ck"><input type="checkbox" name="agree_terms"><span>위 <b>참여 조건</b>을 읽고 동의합니다.</span></label>' +
-        '<label class="yd-pp-ck"><input type="checkbox" name="agree_sample_charge"><span>체험 제품을 받고 <b>30일 안에 콘텐츠를 올리지 않으면 제품 정상 판매가가 청구</b>되는 것에 동의합니다.</span></label>' +
+        '<label class="yd-pp-ck"><input type="checkbox" name="agree_sample_charge"><span>체험 제품을 받고 <b>20일 안에 콘텐츠를 올리지 않으면 제품 정상 판매가가 청구</b>되는 것에 동의합니다.</span></label>' +
         '<label class="yd-pp-ck"><input type="checkbox" name="agree_privacy"><span><b>개인정보 수집·이용 동의(필수)</b> — ' + esc(PRIVACY) + '</span></label>' +
         '<button class="yd-pp-btn" type="submit">신청하기</button><div class="yd-pp-msg" role="status"></div></form>');
       var f = el.querySelector('form'), msg = el.querySelector('.yd-pp-msg');
@@ -8711,7 +8711,7 @@
         if (!(d.agree_terms && d.agree_privacy && (noSample || d.agree_sample_charge))) { msg.textContent = noSample ? '필수 동의 2개에 체크해 주세요.' : '필수 동의 3개에 모두 체크해 주세요.'; return; }
         var b = f.querySelector('button'); b.disabled = true; msg.textContent = '보내는 중…';
         rpc('aff_apply', { p: d }).then(function() {
-          f.innerHTML = '<div class="yd-pp-hero"><b>신청이 접수됐어요!</b><p style="margin:8px 0 0;line-height:1.6">확인 후 인스타그램 DM으로 전용 판매 링크와 파트너 센터 주소를 보내드릴게요. ' + (noSample ? '' : '체험 제품은 1회 무료로 가까운 월요일에 출고되고, 받으신 날부터 30일 안에 전용 링크를 넣은 제품 소개 콘텐츠 1건을 꼭 제작해 주셔야 해요.') + '</p></div>';
+          f.innerHTML = '<div class="yd-pp-hero"><b>신청이 접수됐어요!</b><p style="margin:8px 0 0;line-height:1.6">확인 후 인스타그램 DM으로 전용 판매 링크와 파트너 센터 주소를 보내드릴게요. ' + (noSample ? '' : '체험 제품은 1회 무료로 가까운 월요일에 출고되어 화요일 도착 예정이고, 받으신 날부터 20일 안에 전용 링크를 넣은 제품 소개 콘텐츠 1건을 꼭 제작해 주셔야 해요. 20일 안에 올라오지 않으면 받으신 제품의 정상 판매가가 청구돼요.') + '</p></div>';
         }).catch(function() { b.disabled = false; msg.textContent = '접수에 실패했어요. 잠시 후 다시 시도하거나 DM으로 알려주세요.'; });
       };
     }
