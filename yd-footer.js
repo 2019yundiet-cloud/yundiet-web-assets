@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_182__) {
+  if (window.__YD_FOOTER_V3_183__) {
     return;
   }
-  window.__YD_FOOTER_V3_182__ = true;
+  window.__YD_FOOTER_V3_183__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.182', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.183', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -8550,7 +8550,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.182] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.183] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
@@ -8711,7 +8711,7 @@
         if (!(d.agree_terms && d.agree_privacy && (noSample || d.agree_sample_charge))) { msg.textContent = noSample ? '필수 동의 2개에 체크해 주세요.' : '필수 동의 3개에 모두 체크해 주세요.'; return; }
         var b = f.querySelector('button'); b.disabled = true; msg.textContent = '보내는 중…';
         rpc('aff_apply', { p: d }).then(function() {
-          f.innerHTML = '<div class="yd-pp-hero"><b>신청이 접수됐어요!</b><p style="margin:8px 0 0;line-height:1.6">확인 후 인스타그램 DM으로 전용 판매 링크와 파트너 센터 주소를 보내드릴게요. ' + (noSample ? '' : '체험 제품은 매주 월요일에 출고해 드려요.') + '</p></div>';
+          f.innerHTML = '<div class="yd-pp-hero"><b>신청이 접수됐어요!</b><p style="margin:8px 0 0;line-height:1.6">확인 후 인스타그램 DM으로 전용 판매 링크와 파트너 센터 주소를 보내드릴게요. ' + (noSample ? '' : '체험 제품은 1회 무료로 가까운 월요일에 출고되고, 받으신 날부터 30일 안에 전용 링크를 넣은 제품 소개 콘텐츠 1건을 꼭 제작해 주셔야 해요.') + '</p></div>';
         }).catch(function() { b.disabled = false; msg.textContent = '접수에 실패했어요. 잠시 후 다시 시도하거나 DM으로 알려주세요.'; });
       };
     }
