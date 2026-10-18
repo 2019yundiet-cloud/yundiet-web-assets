@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_184__) {
+  if (window.__YD_FOOTER_V3_185__) {
     return;
   }
-  window.__YD_FOOTER_V3_184__ = true;
+  window.__YD_FOOTER_V3_185__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.184', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.185', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -1139,13 +1139,65 @@
   const CRM_COUPON_PACKS = {
     r3: { title: '재구매 쿠폰', items: [['9D0501004491A', '3,000원 할인', '5만원 이상 주문 · 받은 날부터 7일']] },
     fs: { title: '무료배송 쿠폰', items: [['004E4AFF598FB', '무료배송', '5만원 이상 주문 · 받은 날부터 7일']] },
-    vip: { title: 'VIP 쿠폰팩', items: [['2953238159E4C', '3,000원 할인', '2번 사용 · 5만원 이상 주문'], ['CB8D9F3926D31', '무료배송', '1번 사용 · 5만원 이상 주문']] },
-    vipp: { title: 'VIP+ 쿠폰팩', items: [['9AB104EDD0320', '5,000원 할인', '2번 사용 · 5만원 이상 주문'], ['A405384E75EE0', '무료배송', '2번 사용 · 5만원 이상 주문']] }
+    vip: { title: 'VIP 쿠폰팩', items: [['2953238159E4C', '3,000원 할인 2회', '5만원 이상 주문 · 받은 날부터 30일'], ['CB8D9F3926D31', '무료배송 1회', '5만원 이상 주문 · 받은 날부터 30일']] },
+    vipp: { title: 'VIP+ 쿠폰팩', items: [['9AB104EDD0320', '5,000원 할인 2회', '5만원 이상 주문 · 받은 날부터 30일'], ['A405384E75EE0', '무료배송 2회', '5만원 이상 주문 · 받은 날부터 30일']] }
   };
+
+  /* ═══ 재구매 문자 쿠폰 발급 안내창 (?yd_cpi=키, 2026-10-18) ═══
+     쿠폰함 선발급(crm-repeat COUPON_PREISSUE) 손님의 문자 링크용. 엔진이 문자 보내기 전에 아임웹 API로 쿠폰을
+     이미 넣어 두었으므로 여기서는 받기 요청을 하지 않고 안내만 한다 → 로그인 없이 바로 뜬다.
+     [쿠폰함 확인하기] 로그인돼 있으면 쿠폰함, 아니면 로그인 후 쿠폰함으로 / [바로 쇼핑하기] 창만 닫기. */
+  function showCrmCouponInfo(key) {
+    const pack = CRM_COUPON_PACKS[key];
+    if (!pack) { ydMark('crmCouponPack', false, '알 수 없는 쿠폰 묶음(안내): ' + key); return; }
+    if (window.__ydCrmCouponPackRunning) return;
+    window.__ydCrmCouponPackRunning = true;
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('yd_cpi');
+      window.history.replaceState(window.history.state, '', url.pathname + (url.search ? url.search : '') + url.hash);
+    } catch (err) {}
+    const svgIcon = '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#c7ca91" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>';
+    const check = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2a341e" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    const rows = pack.items.map(function(item) {
+      return '<li><div><span class="yd-cp-v">' + item[1] + '</span><span class="yd-cp-m">' + (item[2] || '') + '</span></div><span class="yd-cp-tag ok">' + check + '발급 완료</span></li>';
+    }).join('');
+    const dim = document.createElement('div');
+    dim.className = 'yd-cp-dim';
+    dim.setAttribute('data-yd-crm-coupon-info', key);
+    dim.innerHTML = '<div class="yd-cp-sheet" role="dialog" aria-modal="true" aria-label="' + pack.title + '">' +
+      '<span class="yd-cp-grab" aria-hidden="true"></span><div class="yd-cp-icon">' + svgIcon + '</div>' +
+      '<span class="yd-cp-badge">' + pack.title + '</span><h3>쿠폰이 발급되었어요</h3>' +
+      '<p>이미 쿠폰함에 들어 있어요. 결제할 때 고르면 바로 할인돼요.</p><ul>' + rows + '</ul>' +
+      '<button type="button" data-yd-cp-box>쿠폰함 확인하기</button>' +
+      '<button type="button" class="yd-cp-sub" data-yd-cp-close>바로 쇼핑하기</button></div>';
+    dim.addEventListener('click', function(e) {
+      const t = e.target;
+      if (t.closest && t.closest('[data-yd-cp-box]')) {
+        ydGaEvent('yd_crm_coupon_info', { pack: key, action: 'coupon_box' });
+        const box = window.location.origin + '/shop_mypage/?m2=coupon';
+        window.location.href = isGuestUser() ? '/login?back_url=' + encodeURIComponent(btoa(box)) : box;
+        return;
+      }
+      if (t === dim || (t.closest && t.closest('[data-yd-cp-close]'))) {
+        ydGaEvent('yd_crm_coupon_info', { pack: key, action: 'shop' });
+        dim.remove();
+      }
+    });
+    document.body.appendChild(dim);
+    ydGaEvent('yd_crm_coupon_info', { pack: key, action: 'view' });
+    ydMark('crmCouponPack', true, key + ': 안내창(선발급)');
+  }
 
   function bindCrmCouponPack() {
     let key = '';
-    try { key = new URLSearchParams(window.location.search).get('yd_cp') || ''; } catch (err) {}
+    let infoKey = '';
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      key = sp.get('yd_cp') || '';
+      infoKey = sp.get('yd_cpi') || '';
+    } catch (err) {}
+    if (!key && infoKey) { showCrmCouponInfo(infoKey); return; }
     if (!key) { ydMark('crmCouponPack', true, '대상 아님(yd_cp 없음)'); return; }
     const pack = CRM_COUPON_PACKS[key];
     if (!pack) { ydMark('crmCouponPack', false, '알 수 없는 쿠폰 묶음: ' + key); return; }
@@ -8550,7 +8602,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.184] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.185] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

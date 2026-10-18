@@ -18,6 +18,7 @@
   .yd-cp-sheet li .dup { background: #f1f0ea; color: #5f665f; }
   .yd-cp-sheet li .fail { background: #f8efea; color: #9d4035; }
   .yd-cp-sheet button { width: 100%; border: 0; border-radius: 14px; background: #c7ca91; color: #2a341e; font-size: 17px; font-weight: 800; padding: 17px; cursor: pointer; letter-spacing: -.2px; }
+  .yd-cp-sheet button.yd-cp-sub { margin-top: 8px; background: transparent; color: #fffdf9; border: 1px solid rgba(255,253,249,.28); font-weight: 700; }
   /* 홈의 PC 전용 전상품 섹션이 모바일에서도 노출되는 아임웹 가시성 오류 보정 */
   @media (max-width: 991px) {
     #s202406266d537535b781f {
