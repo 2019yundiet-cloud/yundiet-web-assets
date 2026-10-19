@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_185__) {
+  if (window.__YD_FOOTER_V3_186__) {
     return;
   }
-  window.__YD_FOOTER_V3_185__ = true;
+  window.__YD_FOOTER_V3_186__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.185', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.186', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -3256,7 +3256,9 @@
           if (!availableSizes.length) availableSizes = ['L'];
           /* 1263(급찐급빠 광고 전용 랜딩): 페이지·광고가 '420g 10종'이라 첫 탭을 L로 연다(S 1종 탭으로 열리면 메뉴가 안 보이는 문제) */
           if (activeTab === null && flowIdx === '1263' && availableSizes.indexOf('L') > -1) activeTab = 'L';
-          /* 밥도감이 있으면(672·1264) 메뉴가 가장 많은 밥도감 탭으로 연다 — S·L은 1종씩이라 첫 화면이 비어 보인다 */
+          /* 밥도감+단백밥 상품(672·1264·1265·1266)은 단백질 50g 탭으로 연다 (2026-10-19 대표 지시: 단백밥 상품인데 밥도감이 먼저 보이면 안 됨 → 50g 기본) */
+          if (activeTab === null && availableSizes.indexOf('L') > -1 && availableSizes.indexOf('B') > -1) activeTab = 'L';
+          /* 밥도감만 있는 상품(1262)은 밥도감 탭 */
           if (activeTab === null && availableSizes.indexOf('B') > -1) activeTab = 'B';
           /* 새 옵션창: 밥도감이 없으면 메뉴가 많은 50g 탭을 먼저 연다(1218은 38g 탭이 메뉴 1개라 첫 화면이 비어 보였다) */
           if (activeTab === null && tab4On && availableSizes.indexOf('L') > -1) activeTab = 'L';
@@ -8602,7 +8604,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.185] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.186] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
