@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_188__) {
+  if (window.__YD_FOOTER_V3_189__) {
     return;
   }
-  window.__YD_FOOTER_V3_188__ = true;
+  window.__YD_FOOTER_V3_189__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.188', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.189', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -3128,16 +3128,31 @@
        구성 문구는 675 상세 '단백밥 세트구성 안내'·'신제품 밥도감 세트' 이미지 기준. 옵션명 번호가 바뀌어도 맞게 이름으로 찾는다 */
     var SET_KIND = { mix: '닭가슴살 + 저당 한식', L: '닭가슴살 도시락', P: '저당 한식 도시락', B: '맛있는 도시락 [밥도감]' };
     var SET_DEFS = [
+      /* 2026-10-20 대표 지시: 남는 세트마다 '무엇이 몇 팩' 구성 줄(lines)을 넣어 설명. 닭가슴살은 오리지널 도시락 + 저당소스를 따로 넣어 주는 구성
+         (네이버 세트 안내 10/19와 같은 기준). 밥도감 12종·제육+불고기 20팩 옵션은 10/20 숨김 — 정의는 다시 판매할 때를 위해 남김 */
       { re: /올인원.*랜덤/, kind: 'mix', packs: 12, title: '올인원 12팩', badge: '처음이라면 추천',
-        desc: '닭가슴살 6팩 + 저당 한식 4종(훈제오리·함박·제육·불고기) 1팩씩 + 랜덤 2팩', sub: '저당소스 5종 포함' },
+        desc: '닭가슴살 6팩 + 저당 한식 4종 1팩씩 + 랜덤 2팩',
+        lines: [['닭가슴살 6팩', '오리지널 6팩 + 저당소스 5종 1개씩(데리야끼·블랙알리오·양념치킨·볼케이노·바베큐)'],
+                ['저당 한식 4팩', '훈제오리·그릴드 함박·직화 제육·단짠 불고기 1팩씩'],
+                ['랜덤 2팩', '단백밥 2팩 (메뉴는 랜덤)']] },
       { re: /밥도감/, kind: 'B', packs: 12, title: '밥도감 12종 세트', badge: '신제품', isNew: true,
         desc: '양념치킨·카레·찜닭·짜장덮밥, 함박 4종, 짜장면·파스타 4종을 1팩씩', sub: '전 메뉴 12가지를 한 번씩' },
       { re: /올인원.*2\s*세트/, kind: 'mix', packs: 20, title: '올인원 20팩',
-        desc: '닭가슴살 12팩 + 저당 한식 4종 2팩씩', sub: '저당소스 5종 2개씩(10개) 포함' },
+        desc: '올인원 10종을 2팩씩 (랜덤 없이 정확히 20팩)',
+        lines: [['닭가슴살 12팩', '오리지널 12팩 + 저당소스 5종 2개씩(10개)'],
+                ['저당 한식 8팩', '훈제오리·그릴드 함박·직화 제육·단짠 불고기 2팩씩']] },
       { re: /닭가슴살\s*6\s*종/, kind: 'L', packs: 18, title: '닭가슴살 18팩',
-        desc: '단백질 50g 닭가슴살 도시락 18팩', sub: '저당소스 5종 3개씩(15개) 포함' },
+        desc: '단백질 50g 닭가슴살 도시락 18팩',
+        lines: [['닭가슴살 18팩', '오리지널 18팩 + 저당소스 5종 3개씩(15개)'],
+                ['이런 분께', '소스 맛을 바꿔 가며 닭가슴살만 드시고 싶은 분']] },
       { re: /오리지널\s*단백밥/, kind: 'L', packs: 20, title: '오리지널 20팩',
-        desc: '단백질 50g 닭가슴살 도시락 20팩', sub: '소스 없이 담백하게' },
+        desc: '단백질 50g 닭가슴살 도시락 20팩',
+        lines: [['닭가슴살 20팩', '오리지널(L) 20팩 · 소스 없음'],
+                ['이런 분께', '소스 없이 담백하게 드시고 싶은 분']] },
+      { re: /프리미엄\s*5\s*종/, kind: 'P', packs: 20, title: '저당 한식 20팩',
+        desc: '저당 한식 5종을 4팩씩',
+        lines: [['저당 한식 20팩', '훈제오리·그릴드 함박·직화 제육·단짠 불고기·돈다리살 고추장맛 4팩씩'],
+                ['소스', '양념된 메뉴라 따로 넣지 않아요']] },
       { re: /프리미엄\s*4\s*종/, kind: 'P', packs: 20, title: '저당 한식 20팩',
         desc: '훈제오리·그릴드함박·직화 제육·단짠 불고기 5팩씩', sub: '소스 미제공' },
       { re: /제육.*불고기/, kind: 'P', packs: 20, title: '제육·불고기 20팩',
@@ -3177,6 +3192,7 @@
             '<strong class="yd-bs-set-title">' + escT(info.title) + '</strong>' +
             (info.desc ? '<span class="yd-bs-set-desc">' + escT(info.desc) + '</span>' : '') +
             (info.sub ? '<span class="yd-bs-set-sub">' + escT(info.sub) + '</span>' : '') +
+            (info.lines ? '<span class="yd-bs-set-lines">' + info.lines.map(function(l) { return '<span class="yd-bs-set-line"><b>' + escT(l[0]) + '</b>' + escT(l[1]) + '</span>'; }).join('') + '</span>' : '') +
             '<span class="yd-bs-set-price"><b>' + (base > 0 ? money(r.price) : priceLabel(r.price)) + '</b>' + ship + '</span>' +
           '</button>' +
           '<span class="yd-bs-set-side">' + (info.packs ? '<span class="yd-bs-set-packs" aria-hidden="true">' + info.packs + '<small>팩</small></span>' : '<span></span>') +
@@ -8633,7 +8649,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.188] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.189] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
