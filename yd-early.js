@@ -1,4 +1,4 @@
-/* 윤식단 상세 본문 선행 렌더 — v9 2026-10-02 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
+/* 윤식단 상세 본문 선행 렌더 — v10 2026-10-19 (아임웹 Header Code 칸의 로더가 CDN yd-early.js로 불러온다)
    문제: 아임웹은 상세 본문을 <template id="prodDetailMobile">에 담아 두고, 동기 스크립트 90여 개를 모두 받은 뒤
          HTML 맨 끝의 SITE_SHOP_DETAIL.initDetail()에서야 본문 칸에 끼워 넣는다(이미지 치수 HEAD 조회까지 끝낸 뒤).
          휴대폰 4G 실측으로 본문 첫 이미지가 8~9초에야 뜨고, 그동안 광고로 들어와 스크롤한 사람은 빈 칸을 본다.
@@ -15,10 +15,11 @@
     if (/[?&]yd_early=0/.test(location.search)) return;
     if (!window.fetch || !window.MutationObserver || !window.Promise || !window.URL || !('content' in document.createElement('template'))) return;
 
-    var st = window.__ydEarlyDetail = { v: 9, t0: Math.round(performance.now()) };
+    var st = window.__ydEarlyDetail = { v: 10, t0: Math.round(performance.now()) };
     var UP_HOST = 'cdn.imweb.me', OPT_HOST = 'cdn-optimized.imweb.me', UP_PATH = '/upload/';
     var SRCSET_W = [1536, 1280, 1080, 828, 768, 640, 576, 368];
     var PROBE_TIMEOUT = 4000;
+    var MOUNT_CAP = /[?&]yd_mcap=(\d+)/.test(location.search) ? Number(RegExp.$1) : 500;  // 본문 붙이기 최대 대기(ms) — 끝까지 기다리기(v9) = ?yd_mcap=99999
     /* 본문 이미지 화면 밀도 상한(0=끔·아임웹과 동일 sizes=100vw). 2면 3배 밀도 폰에서도 2배 밀도 해상도(390폭→828px)를 고른다.
        푸터 bindDetailImageWarm도 2배 상한으로 아래쪽 이미지를 미리 받으므로 주소가 일치한다. 실측(1260): 본문 첫 이미지 4.3→3.6초, 용량 약 절반, 화면상 차이 거의 없음 */
     var DPR_CAP = 2;
@@ -91,6 +92,7 @@
         try { src = new URL(raw, location.href); } catch (e) { return resolve('bad-url'); }
         if (src.host !== UP_HOST || src.pathname.indexOf(UP_PATH) !== 0) {
           img.classList.add('loaded'); img.removeAttribute('height');
+          img.setAttribute('data-yd-conv', '1');
           return resolve('not-cdn');
         }
         var probe = optUrl(src.href, 100);
@@ -133,6 +135,8 @@
             img.removeAttribute('width'); img.removeAttribute('height'); img.removeAttribute('sizes'); img.removeAttribute('srcset'); img.removeAttribute('loading');
           }, { once: true });
           img.addEventListener('load', function () { img.classList.add('loaded'); }, { once: true });
+          img.setAttribute('data-yd-conv', '1');
+          img.removeAttribute('data-yd-wait');
           resolve(meta ? 'ok' : 'no-meta');
         }
       });
@@ -237,7 +241,7 @@
     function render(tpl, box) {
       var frag = tpl.content.cloneNode(true);
       var kf = document.createElement('style');
-      kf.innerHTML = '@keyframes lazyload {0% {opacity: 0;} 50% {opacity: 0.1;} 100% {opacity: 0;}}';
+      kf.innerHTML = '@keyframes lazyload {0% {opacity: 0;} 50% {opacity: 0.1;} 100% {opacity: 0;}} img[data-yd-wait]{visibility:hidden;}';
       frag.insertBefore(kf, frag.firstChild);
       st.videos = deferVideos(frag);
       var imgs = frag.querySelectorAll('img');
@@ -247,12 +251,31 @@
       for (var k = 0; k < imgs.length; k++) st.files[fileOf(imgs[k].getAttribute('src'))] = 1;
       var jobs = [];
       for (var i = 0; i < imgs.length; i++) jobs.push(convertImg(imgs[i]));
+      var mounted = false;
+      function go(why) {
+        if (mounted) return;
+        mounted = true;
+        st.mountBy = why;
+        if (hasContent(box)) { st.skip = 'imweb-first'; return; }
+        /* v10: 치수 조회가 아직 안 끝난 사진은 원본(수 MB) 요청이 나가지 않게 주소를 잠시 떼어 두고 숨긴다 — 조회가 끝나면 convertImg가 주소를 넣는다 */
+        var waiting = 0;
+        for (var j = 0; j < imgs.length; j++) {
+          if (imgs[j].getAttribute('data-yd-conv')) continue;
+          imgs[j].setAttribute('data-yd-wait', '1');
+          imgs[j].removeAttribute('src');
+          waiting++;
+        }
+        st.mountWaiting = waiting;
+        mount(frag, box);
+      }
       Promise.all(jobs).then(function (res) {
         st.probed = Math.round(performance.now());
         st.probeFail = res.filter(function (r) { return r !== 'ok'; }).length;
-        if (hasContent(box)) { st.skip = 'imweb-first'; return; }
-        mount(frag, box);
+        go('all-probed');
       });
+      /* v10(2026-10-19): 사진 수십 장의 치수 조회를 다 기다리지 않는다 — 본문이 붙기 전엔 페이지가 탭 줄에서 끝나 스크롤이 안 내려간다(대표 제보).
+         첫 화면 아래 본문은 아직 안 보이므로 늦게 끝난 사진은 크기가 나중에 잡혀도 화면이 튀지 않는다. */
+      setTimeout(function () { go('cap-' + MOUNT_CAP); }, MOUNT_CAP);
     }
 
     /* 최상위 노드 구성 서명 — 치수 조회 성공 여부에 따라 달라지는 <style>은 빼고 비교 */
@@ -321,19 +344,23 @@
    처리: 광고 랜딩·주력 상품(v9부터 675·1198·1232·1125·1214·1233·650 추가)에서는 같은 모양·같은 자리의 버튼 줄을 화면이 처음 그려질 때부터 보여 준다.
          진짜 버튼 줄이 생기면 그 순간 치운다(같은 자리라 바뀌는 것이 안 보임).
          그 전에 누르면 '메뉴를 불러오고 있어요' 창을 띄우고, 준비되는 즉시 진짜 버튼을 대신 눌러 준다(리뷰보기도 같은 방식).
-   안전: 휴대폰 폭·/shop_view/·아래 상품만·팝업(iframe) 제외. 옵션 플로우가 안 뜨는 경우(네이티브 복원·30초 초과)엔 흔적 없이 치운다.
+   안전: 휴대폰 폭·/shop_view/만. 옵션 플로우가 안 뜨는 경우(네이티브 복원·30초 초과)엔 흔적 없이 치운다.
+   v10(2026-10-19 대표 "옵션 보기가 늦게 나와 그 전엔 스크롤도 안 내려간다"): ① 목록에서 상품을 누르면 열리는 팝업(iframe) 안에서도 띄운다
+         (팝업은 이 버튼이 없어 캐시 있는 손님도 6.8~7.5초, 첫 방문 10.5~11.3초 동안 버튼이 없었다 — 바로 이동은 1.2초)
+         ② 15개 상품 → 모든 상세(옵션 없는 상품은 푸터가 네이티브로 돌리는 순간 치운다).
    끄기: URL ?yd_dock=0 (또는 ?yd_early=0) / 상태 window.__ydEarlyDock */
 (function () {
   try {
     if (window.__ydEarlyDock) return;
-    if (window.top !== window) return;
     if (!/^\/shop_view\/?$/.test(location.pathname)) return;
     if (/[?&](yd_dock|yd_early)=0(?:&|$)/.test(location.search)) return;
     var m = location.search.match(/[?&]idx=(\d+)/);
-    var IDS = { '672': 1, '1218': 1, '1260': 1, '1262': 1, '1263': 1, '1264': 1, '1265': 1, '1266': 1,  // 광고 랜딩(옵션 플로우 확인된 상품만)
-      '675': 1, '1198': 1, '1232': 1, '1125': 1, '1214': 1, '1233': 1, '650': 1 };  // v9(2026-10-02) 주력 상품 — 라이브에서 '리뷰보기·옵션 보기' 줄 확인
-    if (!m || !IDS[m[1]]) return;
-    var ds = window.__ydEarlyDock = { v: 1, t0: Math.round(performance.now()) };
+    if (!m) return;
+    var inFrame = window.top !== window;
+    if (inFrame) {  // 우리 상품 팝업(#yd-custom-modal)의 iframe일 때만 — 다른 곳에 끼워 넣은 화면은 건드리지 않는다
+      try { var fe = window.frameElement; if (!fe || !fe.closest || !fe.closest('#yd-custom-modal')) return; } catch (e) { return; }
+    }
+    var ds = window.__ydEarlyDock = { v: 2, t0: Math.round(performance.now()), frame: inFrame };
     var dock = null, wait = null, pending = null, timer = 0, built = false;
     function now() { return Math.round(performance.now()); }
 
@@ -432,7 +459,7 @@
 
     if (!tryBuild()) {
       var mo = new MutationObserver(function () { if (tryBuild()) mo.disconnect(); });
-      mo.observe(document.documentElement, { childList: true });
+      mo.observe(document.documentElement || document, { childList: true, subtree: !document.documentElement });  // 문서 맨 처음(html 전)에 실행돼도 동작
       document.addEventListener('DOMContentLoaded', function () { if (tryBuild()) mo.disconnect(); });
     }
   } catch (err) {

@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_186__) {
+  if (window.__YD_FOOTER_V3_187__) {
     return;
   }
-  window.__YD_FOOTER_V3_186__ = true;
+  window.__YD_FOOTER_V3_187__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.186', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.187', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -409,6 +409,31 @@
 
   function isWholesalePage() {
     return location.pathname.replace(/\/+$/, '').toLowerCase() === '/wholesale';
+  }
+
+  /* 상품 목록 진열 순서 보정 (2026-10-20 대표 지시) — 아임웹 새 관리자에는 진열 순서를 바꾸는 기능이 없고
+     새로 진열한 상품이 목록 맨 앞에 붙는다(전체 상품 공통 순서). 단백밥(672·675)이 맨 앞, 밥도감(1262)은 그 바로 뒤(3번째).
+     같은 목록 안에서 기준 상품(675, 없으면 672) 바로 뒤로만 옮긴다. 끄기 ?yd_order=0 */
+  const LIST_ORDER_AFTER = { '1262': ['675', '672'] };
+  function listCardIdx(card) {
+    try { return String(JSON.parse(card.getAttribute('data-product-properties') || '{}').idx || ''); } catch (err) { return ''; }
+  }
+  function applyListOrder() {
+    if (new URLSearchParams(location.search).get('yd_order') === '0') { ydMark('listOrder', true, 'off(?yd_order=0)'); return; }
+    let moved = 0;
+    Object.keys(LIST_ORDER_AFTER).forEach(function(idx) {
+      qsa('.shop-item._shop_item').forEach(function(card) {
+        if (listCardIdx(card) !== idx || !card.parentElement) return;
+        const sibs = Array.prototype.slice.call(card.parentElement.children);
+        let anchor = null;
+        LIST_ORDER_AFTER[idx].some(function(a) {
+          anchor = sibs.find(function(s) { return s !== card && listCardIdx(s) === a; }) || null;
+          return !!anchor;
+        });
+        if (anchor && anchor.nextElementSibling !== card) { anchor.after(card); moved++; }
+      });
+    });
+    ydMark('listOrder', true, 'moved=' + moved);
   }
 
   function applyWholesalePageFixes() {
@@ -2681,7 +2706,9 @@
       var hasReq = function(re) { return reqNames.some(function(n) { return re.test(n); }); };
       /* 밥도감+단백밥 혼합 상품(672·1264, 옵션명 '[01 밥도감] …'·'[13 단백밥] …')도 도시락 종류 탭으로 그린다 (2026-10-01 대표 지시) */
       /* 단품 골라담기 옵션명은 '[01 밥도감] …'·'[13 단백밥] …'처럼 번호가 붙는다 — 세트 상품(675 '7. [신제품/12팩] 밥도감 전메뉴')이 걸리지 않게 번호 꼴로만 본다 */
-      var mixedLines = tab4On && hasReq(/^\[\s*\d+\s*밥도감\s*\]/) && hasReq(/^\[\s*\d+\s*단백밥\s*\]/);
+      /* 2026-10-20 밥도감 분리: 672는 밥도감 옵션을 빼고 '[13 단백밥] …' 번호 옵션만 남았다 → 번호 붙은 단백밥 옵션만 있어도 같은 탭 화면으로 그린다
+         (안 그러면 예전 줄 목록·'+700원' 추가금 표시로 돌아간다) */
+      var mixedLines = tab4On && hasReq(/^\[\s*\d+\s*단백밥\s*\]/);
       /* 밥도감만 있는 상품(1262): 탭 1개라 탭 줄은 숨기고 메뉴 설명·실제 가격만 새 방식으로 */
       var bapdogamOnly = tab4On && !mixedLines && reqNames.length > 0 && hasReq(/^\[\s*\d+\s*밥도감\s*\]/) &&
         reqNames.every(function(n) { return /밥도감/.test(n) || isNoticeOption(n); });
@@ -8596,6 +8623,8 @@
     bindProfileModalHeight();
     bindReviewModalHeight();
     bindDiscountDisplay();
+    applyListOrder();
+    ensureObserver('listOrder', applyListOrder);
     if (isWholesalePage()) {
       applyWholesalePageFixes();
       ensureObserver('wholesalePageFixes', applyWholesalePageFixes);
@@ -8604,7 +8633,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.186] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.187] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
