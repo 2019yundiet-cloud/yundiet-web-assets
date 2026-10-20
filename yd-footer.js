@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_187__) {
+  if (window.__YD_FOOTER_V3_188__) {
     return;
   }
-  window.__YD_FOOTER_V3_187__ = true;
+  window.__YD_FOOTER_V3_188__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -58,7 +58,7 @@
   })();
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.187', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.188', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -8633,7 +8633,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.187] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.188] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
@@ -8844,7 +8844,7 @@
           '<div class="yd-pp-kpi"><div><small>인정 주문</small><b>' + ok.length + '건</b></div><div><small>이번 달 수수료</small><b>' + won(feeM) + '</b></div><div><small>누적 수수료</small><b>' + won(fee) + '</b></div></div>' +
           '<p style="font-size:12px;color:#6b6f60;margin:8px 0 0">하루 1회 갱신 · 마지막 갱신 ' + esc((d.synced_at || '-').slice(0, 16).replace('T', ' ')) + (d.pending ? ' · 확인 대기 ' + d.pending + '건' : '') + ' · 원천징수 3.3% 전 금액 · 매월 15일 지급</p>' +
           '<h2>내 판매 링크</h2>' + LINEUP.map(function(p) {
-            var u = SITE + '/shop_view/?idx=' + p[0] + '&ref=' + d.ref;
+            var u = 'https://www.yundiet.com/shop_view/' + p[0] + '?idx=' + p[0] + '&ref=' + d.ref;  // 10/20: 메타가 읽는 도메인 + 상품별 경로(인스타 '제품 추가' 오표시 수리)
             return '<div class="yd-pp-link"><img src="' + p[3] + '" alt=""><span>' + esc(p[1]) + '</span><button type="button" data-u="' + esc(u) + '">링크 복사</button></div>';
           }).join('') +
           '<p style="font-size:12px;color:#6b6f60">다른 상품도 주소 끝에 <b>&amp;ref=' + esc(d.ref) + '</b>를 붙이면 내 실적으로 잡혀요.</p>' +
