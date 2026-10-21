@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_193__) {
+  if (window.__YD_FOOTER_V3_194__) {
     return;
   }
-  window.__YD_FOOTER_V3_193__ = true;
+  window.__YD_FOOTER_V3_194__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -134,7 +134,7 @@
   }
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.193', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.194', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -3282,31 +3282,32 @@
     var SET_KIND = { mix: '닭가슴살 + 저당 한식', L: '닭가슴살 도시락', P: '저당 한식 도시락', B: '맛있는 도시락 [밥도감]' };
     var SET_DEFS = [
       /* 2026-10-20 대표 지시: 남는 세트마다 '무엇이 몇 팩' 구성 줄(lines)을 넣어 설명. 닭가슴살은 오리지널 도시락 + 저당소스를 따로 넣어 주는 구성
-         (네이버 세트 안내 10/19와 같은 기준). 밥도감 12종·제육+불고기 20팩 옵션은 10/20 숨김 — 정의는 다시 판매할 때를 위해 남김 */
-      { re: /올인원.*랜덤/, kind: 'mix', packs: 12, title: '올인원 12팩', badge: '처음이라면 추천',
-        desc: '닭가슴살 6팩 + 저당 한식 4종 1팩씩 + 랜덤 2팩',
+         (네이버 세트 안내 10/19와 같은 기준). 밥도감 12종·제육+불고기 20팩 옵션은 10/20 숨김 — 정의는 다시 판매할 때를 위해 남김
+         2026-10-21 대표 지시: 옵션 이름을 '[팩 수] 무엇이 · 몇 개씩'(네이버와 같은 틀)으로 바꿈 → 옛 이름·새 이름 둘 다 찾고, 카드 제목도 새 이름에 맞춤 */
+      { re: /올인원.*랜덤|전메뉴\s*10\s*가지.*랜덤/, kind: 'mix', packs: 12, title: '전메뉴 10가지 + 랜덤 2팩', badge: '처음이라면 추천',
+        desc: '닭가슴살 6가지·저당 한식 4가지를 1팩씩 + 랜덤 2팩',
         lines: [['닭가슴살 6팩', '오리지널 6팩 + 저당소스 5종 1개씩(데리야끼·블랙알리오·양념치킨·볼케이노·바베큐)'],
                 ['저당 한식 4팩', '훈제오리·그릴드 함박·직화 제육·단짠 불고기 1팩씩'],
                 ['랜덤 2팩', '단백밥 2팩 (메뉴는 랜덤)']] },
       { re: /밥도감/, kind: 'B', packs: 12, title: '밥도감 12종 세트', badge: '신제품', isNew: true,
         desc: '양념치킨·카레·찜닭·짜장덮밥, 함박 4종, 짜장면·파스타 4종을 1팩씩', sub: '전 메뉴 12가지를 한 번씩' },
-      { re: /올인원.*2\s*세트/, kind: 'mix', packs: 20, title: '올인원 20팩',
-        desc: '올인원 10종을 2팩씩 (랜덤 없이 정확히 20팩)',
+      { re: /올인원.*2\s*세트|전메뉴\s*10\s*가지\s*2\s*팩씩/, kind: 'mix', packs: 20, title: '전메뉴 10가지 2팩씩',
+        desc: '전메뉴 10가지를 2팩씩 (랜덤 없이 정확히 20팩)',
         lines: [['닭가슴살 12팩', '오리지널 12팩 + 저당소스 5종 2개씩(10개)'],
                 ['저당 한식 8팩', '훈제오리·그릴드 함박·직화 제육·단짠 불고기 2팩씩']] },
-      { re: /닭가슴살\s*6\s*종/, kind: 'L', packs: 18, title: '닭가슴살 18팩',
+      { re: /닭가슴살\s*6\s*(?:종|가지)/, kind: 'L', packs: 18, title: '닭가슴살 6가지 3팩씩',
         desc: '단백질 50g 닭가슴살 도시락 18팩',
         lines: [['닭가슴살 18팩', '오리지널 18팩 + 저당소스 5종 3개씩(15개)'],
                 ['이런 분께', '소스 맛을 바꿔 가며 닭가슴살만 드시고 싶은 분']] },
-      { re: /오리지널\s*단백밥/, kind: 'L', packs: 20, title: '오리지널 20팩',
+      { re: /오리지널\s*단백밥|오리지널\s*만/, kind: 'L', packs: 20, title: '기본맛 오리지널만',
         desc: '단백질 50g 닭가슴살 도시락 20팩',
         lines: [['닭가슴살 20팩', '오리지널(L) 20팩 · 소스 없음'],
                 ['이런 분께', '소스 없이 담백하게 드시고 싶은 분']] },
-      { re: /프리미엄\s*5\s*종/, kind: 'P', packs: 20, title: '저당 한식 20팩',
-        desc: '저당 한식 5종을 4팩씩',
+      { re: /프리미엄\s*5\s*종|한식\s*5\s*가지/, kind: 'P', packs: 20, title: '저당 한식 5가지 4팩씩',
+        desc: '저당 한식 5가지를 4팩씩',
         lines: [['저당 한식 20팩', '훈제오리·그릴드 함박·직화 제육·단짠 불고기·돈다리살 고추장맛 4팩씩'],
                 ['소스', '양념된 메뉴라 따로 넣지 않아요']] },
-      { re: /프리미엄\s*4\s*종/, kind: 'P', packs: 20, title: '저당 한식 20팩',
+      { re: /프리미엄\s*4\s*종|한식\s*4\s*가지/, kind: 'P', packs: 20, title: '저당 한식 4가지 5팩씩',
         desc: '훈제오리·그릴드함박·직화 제육·단짠 불고기 5팩씩', sub: '소스 미제공' },
       { re: /제육.*불고기/, kind: 'P', packs: 20, title: '제육·불고기 20팩',
         desc: '직화 제육볶음 10팩 + 단짠 불고기 10팩', sub: '소스 미제공' }
@@ -9560,7 +9561,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.193] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.194] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
