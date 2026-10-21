@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_192__) {
+  if (window.__YD_FOOTER_V3_193__) {
     return;
   }
-  window.__YD_FOOTER_V3_192__ = true;
+  window.__YD_FOOTER_V3_193__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -57,8 +57,84 @@
     }
   })();
 
+  /* 단백밥·밥도감 최소 주문 (2026-10-21 대표 결정, v3.193 — 10/20 '합산 6팩'을 대체)
+     대표 원문: "순수단백 제육 7팩 + 단백밥 1팩 22,920원 → 이런 경우 주문이 가능해야 함. 단백밥에는 밥도감 이외의 상품을 담으면 무조건 주문 가능하게끔."
+     - 선택된 줄에 단백밥·밥도감이 아닌 상품(순수단백·볶음밥·반찬·세트 등)이 하나라도 있으면 → 금액과 상관없이 주문 가능.
+       통밀빵(650, 따로 배송)과 아이스팩은 '다른 상품'으로 안 센다.
+     - 단백밥·밥도감만 있으면 → 할인 뒤 금액 합(통밀빵·아이스팩 제외) ≥ 기준 금액일 때만 주문 가능.
+       기준 금액 = min(UNIT_PRICE, 그 자리 단백밥·밥도감 최저 1팩) × 6 — 지금 5,190 × 6 = 31,140원, 광고 랜딩 특가(1260 4,990원) 6팩은 29,940원.
+       장바구니는 단백밥·밥도감 줄의 할인 뒤 1팩 값(total_unit_price), 옵션창은 그 상품 카드 최저가로 본다 → 단백밥·밥도감 6팩이면 늘 통과.
+     - 단백밥·밥도감 줄 판별: 상품 번호(ids — 672·1262·광고 랜딩) 또는 필수 옵션 이름이 골라담기 메뉴 꼴('[13 단백밥] …'·'[01 밥도감] …'·'[L] …'·'[S] …').
+       메뉴 낱말(제육·불고기…)로는 보지 않는다 — 순수단백 '단백 직화불고기 10팩' 같은 묶음이 단백밥으로 잘못 잡히면 '다른 상품'이 사라진다.
+     - 아임웹 관리자 최소 구매 수량은 상품 하나 단위라 이 규칙을 못 지키고, 사이트 전체 최소 주문 금액 설정도 없어 코드로 지킨다.
+       관리자 최소 구매 수량이 걸린 상품(지금 1260·1218·1263·1265·1266 = 6)은 아임웹이 담기를 거절하므로 옵션창도 그 수를 따로 요구한다(0으로 바꾸면 이 규칙만 본다).
+     - 개편 화면(yundiet-mall-mockups-20261009/site-v2-live/static/mall2.js isGrpItem·otherAmt·grpShort·서랍 gMin·gShort·dwarn)과 같은 기준.
+       mall2.js는 최저가를 카탈로그에서 자동으로 읽고, 푸터는 아래 UNIT_PRICE 하나로 둔다 — 672 최저가가 바뀌면 이 값을 같이 고친다
+       (tools/verify/group-min-check.js가 672 옵션창 최저가와 대조).
+     끄기: ?yd_groupmin=0 (검증·긴급 확인용) */
+  const GROUP_MIN = {
+    /* 단백밥 골라담기(672·광고 랜딩 1260·1218·1263·1264·1265·1266) + 밥도감(1262) — 그 밖의 단백밥 상품은 옵션 이름 꼴로 잡는다 */
+    ids: { 672: 1, 1218: 1, 1260: 1, 1262: 1, 1263: 1, 1264: 1, 1265: 1, 1266: 1 },
+    menuName: /^\s*\[\s*(?:\d+\s*(?:단백밥|밥도감)|[LS])\s*\]/,
+    min: 6,
+    UNIT_PRICE: 5190,
+    sepShip: { 650: 1 },
+    name: '단백밥·밥도감'
+  };
+  function groupMinOff() { return /[?&]yd_groupmin=0(?:&|$)/.test(location.search); }
+  /* 기준 금액: low = 그 자리 단백밥·밥도감 최저 1팩 값(모르면 0) */
+  function groupMinAmount(low) {
+    const unit = low > 0 ? Math.min(GROUP_MIN.UNIT_PRICE, low) : GROUP_MIN.UNIT_PRICE;
+    return unit * GROUP_MIN.min;
+  }
+  function groupMinWon(n) { return (Number(n) || 0).toLocaleString('ko-KR') + '원'; }
+  function groupMinIce(o) { return /아이스팩/.test(((o && o.value_name_list) || []).join(' ')); }
+  function groupMinReqOpt(o) { return !!o && o.required !== false && o.type !== 'optional' && !groupMinIce(o); }
+  function groupMinIsItem(it) {
+    const pi = Number(it && it.product && it.product.prod_idx) || 0;
+    if (GROUP_MIN.ids[pi]) return true;
+    return ((it && it.options) || []).some(function(o) {
+      return groupMinReqOpt(o) && GROUP_MIN.menuName.test(((o.value_name_list || [])[0]) || '');
+    });
+  }
+  /* 장바구니 API(get_cart_content.cm) 항목으로 판정. 선택(selected) 해제된 줄은 뺀다.
+     반환: hasGroup(단백밥·밥도감 줄 있음) · packs(합산 팩, 표시용) · all(통밀빵·아이스팩 뺀 할인 뒤 금액 합) ·
+           other(그중 단백밥·밥도감이 아닌 상품) · low(단백밥·밥도감 최저 1팩 값) */
+  function groupMinTally(items) {
+    const t = { hasGroup: false, packs: 0, all: 0, other: 0, low: 0 };
+    (items || []).forEach(function(it) {
+      if (!it || it.selected === false) return;
+      const pi = Number(it.product && it.product.prod_idx) || 0;
+      const opts = Array.isArray(it.options) ? it.options : [];
+      const grp = groupMinIsItem(it);
+      if (grp) {
+        t.hasGroup = true;
+        opts.forEach(function(o) {
+          if (!groupMinReqOpt(o)) return;
+          const n = Number(o.count) || 0;
+          t.packs += n;
+          const unit = Number(o.total_unit_price) || (n ? (Number(o.total_price) || 0) / n : 0);
+          if (unit > 0 && (!t.low || unit < t.low)) t.low = unit;
+        });
+      }
+      if (GROUP_MIN.sepShip[pi]) return;
+      const ice = opts.reduce(function(sum, o) { return sum + (groupMinIce(o) ? Number(o.total_price) || 0 : 0); }, 0);
+      const v = Math.max(0, (Number(it.price && it.price.total_price) || 0) - ice);
+      t.all += v;
+      if (!grp) t.other += v;
+    });
+    return t;
+  }
+  /* 판정: ok면 주문 가능. byOther = 다른 상품이 있어 금액과 상관없이 통과, need = 기준 금액, short = 모자란 금액 */
+  function groupMinJudge(t) {
+    const need = groupMinAmount(t.low);
+    const byOther = t.hasGroup && t.other > 0;
+    const short = t.hasGroup && !byOther ? Math.max(0, need - t.all) : 0;
+    return { ok: !short, short: short, need: need, byOther: byOther, hasGroup: t.hasGroup, packs: t.packs, all: t.all, other: t.other };
+  }
+
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.192', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.193', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2580,6 +2656,8 @@
      커스텀 옵션 플로우가 아직 뜨지 않은 초기/복구 상태에서도 네이티브 옵션에 동일하게 적용한다. */
   function bindFreeShipOptionCouponNote() {
     if (!isProductDetailPage()) return;
+    /* 1271 식단 세트는 쿠폰 없이 상품 배송비(8만 원 이상 무료)로 무료배송 — 쿠폰 안내를 붙이지 않는다 (2026-10-21) */
+    if (/[?&]idx=1271(?:&|$)/.test(location.search)) return;
     function patch() {
       qsa('#prod_options a[onclick*="selectRequireOption"], #prod_options a[onclick*="selectOptionalOption"]').forEach(function(anchor) {
         var name = ((anchor.querySelector('.margin-bottom-lg') || anchor).textContent || '').replace(/\s+/g, ' ').trim();
@@ -2747,12 +2825,37 @@
           ? '자유롭게 섞어 총 ' + min + '개 이상 선택할 수 있습니다.'
           : '메뉴·수량·세트 구성을 자유롭게 선택할 수 있습니다.')
       };
+      /* v3.193 단백밥·밥도감 최소 주문 = 금액(2026-10-21 대표 결정): GROUP_MIN.ids 상품은 장바구니 금액 + 지금 고른 금액이 기준 금액 이상이면 담을 수 있다.
+         담을 수 있는지는 groupNeed(s)가 정한다 — cfg.min은 화면 배치(담은 상품 카드 등)에만 쓴다.
+         위 설명 줄은 두지 않는다(10/21 대표: 버튼 글자 'N원 더 골라주세요'와 아래 합계 줄로만 안내) */
+      if (GROUP_MIN.ids[flowIdx] && !groupMinOff()) {
+        cfg.group = true;
+        /* 제목은 휴대폰 폭에서 잘리지 않게 짧게 */
+        cfg.headline = '도시락 메뉴를 골라주세요.';
+        cfg.lead = '';
+        loadGroupNativeMin();
+      }
       if (fam.theme) root.classList.add(fam.theme);
       root.setAttribute('aria-label', cfg.title + ' 옵션 선택');
     }
 
     var ADDON_LABEL = /소스|아이스팩|알룰로스|추가/;
     var MAIN_LABEL = /골라담기|단품|세트|SET|구성|선택하기/i;
+
+    /* v3.191 옵션 이름의 '무료배송' 꼬리표 — 구성 금액(판매가 + 옵션가)이 9만 원 미만이면 옵션창에서 숨긴다(2026-10-20 대표 결정:
+       반찬 '[3세트 무료배송]'도 9만 원 미만이면 배송비가 붙는다). '[3세트 무료배송]'→'[3세트]', '[10%할인+무료배송]'→'[10%할인]'.
+       표시용만 — data 속성·네이티브 클릭은 원본 이름. 개편 화면 mall2.js 구성 고르기(o.price < FREE_SHIP)와 같은 기준 */
+    var optionPriceByName = new Map();
+    function freeShipTagShown(name) {
+      var str = String(name);
+      if (!/무료배송/.test(str)) return str;
+      var diff = optionPriceByName.get(str);
+      if (productBasePrice() + (Number(diff) || 0) >= CONFIG.FREE_SHIP_THRESHOLD) return str;
+      return normalizeT(str.replace(/\s*([\[(])([^\])]*?)\s*\+?\s*무료\s*배송\s*([\])])/g, function(a, open, x, close) {
+        x = x.replace(/[+\s]+$/, '');
+        return x ? ' ' + open + x + close : '';
+      }));
+    }
 
     /* 네이티브 옵션 카탈로그: 그룹(필수/선택, 주상품/추가상품)과 항목·가격 */
     function buildCatalog() {
@@ -2772,6 +2875,7 @@
           if (!n || isNoticeOption(n) || seen.has(n)) return;
           seen.add(n);
           items.push([n, priceFromAnchor(a), unitLabelFromAnchor(a)]);
+          optionPriceByName.set(n, priceFromAnchor(a));
         });
         if (!items.length) return;
         var isAddon = ADDON_LABEL.test(label);
@@ -2922,10 +3026,53 @@
           var sum = (j && j.data && j.data.cart_price_summary) || {};
           cartSubtotal = Math.max(0, (Number(sum.product_price) || 0) - (Number(sum.total_discount_price) || 0));
           cartSubtotalReady = true;
+          var cartItems = j && j.data && j.data.cart && j.data.cart.items;
+          groupCart = Array.isArray(cartItems) ? groupMinTally(cartItems) : null;
         })
-        .catch(function() { cartSubtotalReady = false; })
+        .catch(function() { cartSubtotalReady = false; groupCart = null; })
         .then(function() { cartSubtotalLoading = false; scheduleRender(false); });
     }
+    /* v3.193 금액 기준 최소 주문: 지금 옵션창에서 담을 수 있는지.
+       기준 금액 = min(UNIT_PRICE, 이 상품 카드 최저가, 장바구니 단백밥·밥도감 최저 1팩) × 6
+       금액 = 장바구니(선택된 줄, 통밀빵·아이스팩 제외) + 지금 고른 금액(아이스팩 제외).
+       장바구니를 아직 못 읽었거나 실패하면 장바구니는 0원으로 본다(보수적) — 장바구니 페이지가 한 번 더 막는다.
+       관리자 최소 구매 수량(groupNativeMin, 1260·1218·1263 = 6)이 걸려 있으면 이 상품만으로 그 수도 채워야 한다(아임웹이 담기를 거절하므로) */
+    var groupCart = null, groupNativeMin = null, groupNativeMinAsked = false;
+    function loadGroupNativeMin() {
+      if (groupNativeMinAsked || !/^\d+$/.test(flowIdx)) return;
+      groupNativeMinAsked = true;
+      fetch('/ajax/oms/OMS_get_product.cm?prod_idx=' + flowIdx, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' } })
+        .then(function(r) { if (!r.ok) throw new Error('prod'); return r.json(); })
+        .then(function(j) { groupNativeMin = Number(j && j.data && j.data.minimum_purchase_quantity) || 0; })
+        .catch(function() { groupNativeMin = 0; })
+        .then(function() { scheduleRender(false); });
+    }
+    function groupPageLow(s) {
+      var base = productBasePrice(), low = 0;
+      if (!(base > 0)) return 0;
+      s.cat.groups.forEach(function(g) {
+        if (!g.main || g.kind !== 'Require') return;
+        g.items.forEach(function(it) { var v = base + (Number(it[1]) || 0); if (v > 0 && (!low || v < low)) low = v; });
+      });
+      return low;
+    }
+    function groupNeed(s) {
+      var low = groupPageLow(s), cartLow = groupCart ? groupCart.low : 0;
+      if (cartLow > 0 && (!low || cartLow < low)) low = cartLow;
+      var need = groupMinAmount(low);
+      var ice = s.opt.reduce(function(sum, x) { return sum + (/아이스팩/.test(x.label) ? numberFrom(x.priceText) : 0); }, 0);
+      var inCart = groupCart ? groupCart.all : 0;
+      var amt = inCart + Math.max(0, s.totalValue - ice);
+      var minL = groupNativeMin > 1 ? groupNativeMin : 0;
+      var shortL = minL ? Math.max(0, minL - s.reqQty) : 0;
+      /* 장바구니에 단백밥·밥도감이 아닌 상품이 있으면 금액과 상관없이 담을 수 있다(10/21 대표 2차) */
+      var byOther = !!(groupCart && groupCart.other > 0);
+      var shortWon = byOther ? 0 : Math.max(0, need - amt);
+      return { ready: !!groupCart, need: need, amt: amt, inCart: inCart, byOther: byOther, shortWon: shortWon, minL: minL, shortL: shortL,
+               ok: s.reqQty > 0 && !shortWon && !shortL };
+    }
+    /* 1·3단계에서 다음으로/담기가 되는지 */
+    function stepQtyOk(s) { return cfg.group ? groupNeed(s).ok : s.reqQty >= cfg.min; }
 
     /* 순수단백은 '선택 후 금액 반영' 문구 미표기 (소유자 지시 2026-07-21) */
     /* 공동구매 상품은 차액 대신 실제 결제가를 표기 (본품가 + 옵션 차액) */
@@ -3117,13 +3264,14 @@
         var description = danbaekbapMenuDescription(name, category);
         var shownPrice = base > 0 ? money(base + (price || 0)) : priceLabel(price);
         var sauceAdd = tab4On && (category === 'S' || category === 'L') && /오리지널/.test(name) && !hasSeparateSauce(name) ? saucePanel(s) : '';
-        var couponNote = /무료배송/.test(name) ? '<span class="yd-bs-free-ship-coupon">[쿠폰 받기 후 적용]</span>' : '';
+        var shownName = freeShipTagShown(name);
+        var couponNote = /무료배송/.test(shownName) && !/[?&]idx=1271(?:&|$)/.test(location.search) ? '<span class="yd-bs-free-ship-coupon">[쿠폰 받기 후 적용]</span>' : '';
         var found = s.req.find(function(x) { return x.label === name; });
         var q = found ? found.qty : 0, pending = pendingNames.has(name) || (!q && toggled.has(name));
         if (!found && pendingQty.has(name)) q = pendingQty.get(name);
         return '<div class="yd-bs-menu-card ' + ((q || pending) ? 'is-selected ' : '') + (pending ? 'is-pending' : '') + '" aria-busy="' + pending + '">' +
           (tag ? '<span class="yd-bs-line-tag" aria-hidden="true">' + tag + '</span>' : '') +
-          '<button class="yd-bs-menu-main" data-pick="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-menu-name' + copyFitClass(name) + '">' + escT(name) + '</span>' + (description ? '<span class="yd-bs-menu-description">' + escT(description) + '</span>' : '') + '<span class="yd-bs-menu-meta"><span class="yd-bs-menu-price">' + shownPrice + '</span>' + couponNote + (unit ? '<span class="yd-bs-unit-badge">' + escT(unit) + '</span>' : '') + (!description && hasSeparateSauce(name) ? '<span class="yd-bs-menu-note">· 소스는 별도 제공됩니다</span>' : '') + '</span></button>' +
+          '<button class="yd-bs-menu-main" data-pick="' + escT(name) + '" aria-pressed="' + Boolean(q || pending) + '"><span class="yd-bs-menu-name' + copyFitClass(shownName) + '">' + escT(shownName) + '</span>' + (description ? '<span class="yd-bs-menu-description">' + escT(description) + '</span>' : '') + '<span class="yd-bs-menu-meta"><span class="yd-bs-menu-price">' + shownPrice + '</span>' + couponNote + (unit ? '<span class="yd-bs-unit-badge">' + escT(unit) + '</span>' : '') + (!description && hasSeparateSauce(name) ? '<span class="yd-bs-menu-note">· 소스는 별도 제공됩니다</span>' : '') + '</span></button>' +
           (q ? '<span class="yd-bs-qty-mini"><button data-minus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 줄이기">−</button><strong aria-live="polite">' + q + '</strong><button data-plus="' + escT(name) + '" aria-label="' + escT(name) + ' 수량 늘리기">＋</button></span>' : '<button class="yd-bs-menu-plus" data-pick="' + escT(name) + '" aria-label="' + escT(name) + ' 추가">＋</button>') + '</div>' + sauceAdd;
       }).join('') + '</div>';
     }
@@ -3218,9 +3366,20 @@
       };
       return section(small, '처음 드셔 보신다면') + section(big, '넉넉하게 · 무료배송');
     }
+    /* v3.193 담을 때 보이는 금액 안내(2026-10-21 대표): 항상 보이는 아래 합계 줄('31,140원까지 N원 더')과 막힌 버튼 글자('N원 더 골라주세요')로만.
+       위 안내 상자·장바구니 상시 안내는 대표 판단으로 뺐다(버튼이 자동으로 알려 주니 불필요) */
     function minNotice(s) {
       if (cfg.scheme === 'set') {
         return '<div class="yd-bs-min ' + (s.reqQty >= 1 ? 'is-ok' : '') + '" aria-live="polite">' + (s.reqQty >= 1 ? '세트 선택 완료 · 총 ' + s.reqQty + '세트' : '세트를 1개 이상 골라 주세요.') + '</div>';
+      }
+      if (cfg.group) {
+        var g = groupNeed(s);
+        var cartNote = g.inCart ? '(장바구니 ' + groupMinWon(g.inCart) + ' 포함)' : '';
+        return '<div class="yd-bs-min ' + (g.ok ? 'is-ok' : '') + '" aria-live="polite">' + (g.ok
+          ? (g.byOther ? '장바구니의 다른 상품과 함께라 금액과 상관없이 주문할 수 있어요.' : '주문할 수 있어요. 총 ' + groupMinWon(g.amt) + cartNote)
+          : g.shortL ? '이 상품은 ' + g.minL + '개부터 담을 수 있어요 · 현재 ' + s.reqQty + '개, ' + g.shortL + '개 더'
+          : !s.reqQty ? (g.byOther ? '메뉴를 1개 이상 골라 주세요.' : GROUP_MIN.name + '만 담으면 ' + groupMinWon(g.need) + ' 이상부터 주문돼요. 순수단백·볶음밥·반찬·세트 같은 다른 상품과 함께면 금액과 상관없어요.')
+          : '현재 ' + groupMinWon(g.amt) + cartNote + ' · ' + groupMinWon(g.shortWon) + ' 더 골라 주세요(' + GROUP_MIN.name + '만 담으면 ' + groupMinWon(g.need) + '부터, 다른 상품과 함께면 금액 상관없음).') + '</div>';
       }
       if (cfg.min > 1) {
         return '<div class="yd-bs-min ' + (s.reqQty >= cfg.min ? 'is-ok' : '') + '" aria-live="polite">' + (s.reqQty >= cfg.min ? '최소 수량을 충족했습니다. 총 ' + s.reqQty + '개' : '현재 ' + s.reqQty + '개 · ' + (cfg.min - s.reqQty) + '개 더 선택해 주세요.') + '</div>';
@@ -3244,7 +3403,7 @@
     /* 필수 선택(세트) 행 표시 이름 — 세트 화면은 카드와 같은 짧은 이름(예: '밥도감 12종 세트') */
     function reqShownLabel(label) { return cfg.scheme === 'set' ? setInfo(label).title : cleanShownLabel(label); }
     /* 표시용 라벨 정리(장식문자 제거) — data 속성은 반드시 원본 유지 */
-    function cleanShownLabel(label) { return normalizeT(String(label).replace(/[\u25A0-\u25FF\u2600-\u27BF\uFE0F\uD800-\uDFFF]/g, ' ')); }
+    function cleanShownLabel(label) { return normalizeT(freeShipTagShown(label).replace(/[\u25A0-\u25FF\u2600-\u27BF\uFE0F\uD800-\uDFFF]/g, ' ')); }
     /* 3단계 확인 행 — 수량 조절·삭제 포함 (1·2단계 담은상품 카드에서도 재사용).
        shownLabel: 표시용 라벨(장식 정리본) — data 속성은 반드시 원본 x.label 유지 */
     function reviewRowHtml(x, catText, shownLabel) {
@@ -3287,7 +3446,7 @@
     function stepContent(s) {
       var stepNames = ['옵션 선택', '추가상품', '최종확인'];
       var progress = '<div class="yd-bs-progress" role="tablist" aria-label="옵션 선택 진행 단계">' + [1, 2, 3].map(function(n) {
-        var reachable = n <= step || s.reqQty >= cfg.min;
+        var reachable = n <= step || stepQtyOk(s);
         return '<button type="button" data-step="' + n + '" role="tab" aria-selected="' + (n === step) + '" ' + (reachable ? '' : 'disabled') + ' class="' + (n <= step ? 'is-active ' : '') + (n === step ? 'is-current' : '') + '"><i></i><em>' + n + ' ' + stepNames[n - 1] + '</em></button>';
       }).join('') + '</div>';
       var html = '';
@@ -3345,7 +3504,7 @@
             body = groupTabs(s, mains, pendingLabels) + (group ? menuCards(group.items, s, '') : '<div class="yd-bs-empty">옵션을 불러오는 중입니다…</div>');
           }
         }
-        html = '<div class="yd-bs-step yd-bs-step-1"><div class="yd-bs-step-meta"><span class="yd-bs-badge">필수 선택</span><span class="yd-bs-step-count">STEP 1 / 3</span></div><h3>' + escT(cfg.headline) + '</h3><p class="yd-bs-lead">' + escT(cfg.lead) + '</p>' + body + minNotice(s) + pickedCard(s) + '</div>';
+        html = '<div class="yd-bs-step yd-bs-step-1"><div class="yd-bs-step-meta"><span class="yd-bs-badge">필수 선택</span><span class="yd-bs-step-count">STEP 1 / 3</span></div><h3>' + escT(cfg.headline) + '</h3>' + (cfg.group ? '' : '<p class="yd-bs-lead">' + escT(cfg.lead) + '</p>') + body + minNotice(s) + pickedCard(s) + '</div>';
       }
       if (step === 2) html = '<div class="yd-bs-step yd-bs-step-2"><div class="yd-bs-step-meta"><span class="yd-bs-badge">선택 사항</span><span class="yd-bs-step-count">STEP 2 / 3</span></div><h3>이 상품도 추천해요</h3><p class="yd-bs-lead">필요한 상품은 + 버튼으로 수량을 늘릴 수 있으며 선택하지 않아도 다음으로 넘어갈 수 있습니다.</p>' + addonsHtml(s) + pickedCard(s) + '</div>';
       if (step === 3) html = '<div class="yd-bs-step yd-bs-step-3"><div class="yd-bs-step-meta"><span class="yd-bs-badge">최종 확인</span><span class="yd-bs-step-count">STEP 3 / 3</span></div><h3>선택한 상품을 확인해 주세요.</h3><p class="yd-bs-lead">장바구니에 담기기 전 메뉴와 수량, 추가상품을 마지막으로 확인하고 수정할 수 있습니다.</p>' + reviewHtml(s) + '</div>';
@@ -3361,7 +3520,14 @@
       var detail = cartSubtotalReady ? '장바구니 ' + money(cartSubtotal) + ' + 현재 선택 ' + money(s.totalValue) : '현재 선택 ' + money(s.totalValue);
       return '<aside class="yd-bs-shipping ' + (remaining === 0 && cartSubtotalReady ? 'is-complete' : '') + '" aria-label="무료배송 진행 상황"><div class="yd-bs-shipping-head"><span>9만원 이상 무료배송</span><strong aria-live="polite">' + status + '</strong></div><div class="yd-bs-shipping-track" role="progressbar" aria-valuemin="0" aria-valuemax="' + CONFIG.FREE_SHIP_THRESHOLD + '" aria-valuenow="' + Math.min(CONFIG.FREE_SHIP_THRESHOLD, estimated) + '"><div class="yd-bs-shipping-fill" style="width:' + percent + '%"></div><span class="yd-bs-shipping-percent" style="left:' + marker + '%">' + percent + '%</span></div><div class="yd-bs-shipping-meta"><span>장바구니 상품 기준</span><span>' + detail + '</span></div></aside>';
     }
-    var canNext = function(s) { return (step === 1 || step === 3) ? s.reqQty >= cfg.min : true; };
+    /* 아래 합계 줄 앞머리: '31,140원까지 N원 더' 또는 '6개부터 · N개 더' */
+    function groupFootNeed(s) {
+      var g = groupNeed(s);
+      if (g.shortL) return '<b class="yd-bs-gm-need">' + g.minL + '개부터 · ' + g.shortL + '개 더</b> · ';
+      if (g.shortWon) return '<b class="yd-bs-gm-need">' + groupMinWon(g.need) + '까지 ' + groupMinWon(g.shortWon) + ' 더</b> · ';
+      return '';
+    }
+    var canNext = function(s) { return (step === 1 || step === 3) ? stepQtyOk(s) : true; };
     /* 비회원 판별: 시트가 iframe에서 떠도 부모 문서의 헤더 마커(.member-info.guest)로 확인.
        판별 실패 시 false(=기존 회원용 라벨/동작 유지)로 안전하게 떨어진다 */
     var payIsGuest = function() {
@@ -3376,7 +3542,15 @@
       if (payIsGuest()) return busy ? '카카오 로그인으로 이동 중…' : '3초 회원가입쿠폰';
       return busy ? '결제로 이동 중…' : '바로 결제하기';
     };
-    var primaryLabel = function() { return step === 3 ? payButtonLabel(false) : '다음으로'; };
+    var primaryLabel = function(s) {
+      if (step === 3) return payButtonLabel(false);
+      /* 금액 미달이면 막힌 버튼에 '얼마 더'를 바로 적는다(관리자 최소 수량이 남았으면 '몇 개 더') */
+      if (cfg.group && step === 1 && s && !canNext(s)) {
+        var g = groupNeed(s);
+        return !s.reqQty ? '메뉴를 골라주세요' : g.shortL ? g.shortL + '개 더 골라주세요' : groupMinWon(g.shortWon) + ' 더 골라주세요';
+      }
+      return '다음으로';
+    };
     var cartChoice = function() {
       return cartPopup ? '<div class="yd-bs-cart-result" role="dialog" aria-modal="true" aria-label="장바구니 담기 완료"><div class="yd-bs-cart-result-card"><span class="yd-bs-cart-result-badge">장바구니 담기 완료</span><h3>선택한 상품을 장바구니에 담았습니다.</h3><p>장바구니에서 주문을 확인하거나 다른 상품을 계속 둘러보세요.</p><div class="yd-bs-cart-result-actions"><a class="yd-bs-cart-pay" href="/shop_cart">결제하기</a><a class="yd-bs-cart-continue" href="/best">계속 쇼핑하기</a></div></div></div>' : '';
     };
@@ -3388,7 +3562,7 @@
       var sheetOpen = root.classList.contains('is-open');
       root.classList.toggle('is-top', cartPopup);
       var dockHtml = '<div class="yd-bs-dock"><button class="yd-bs-review-btn" type="button">리뷰보기</button><button class="yd-bs-open"><span>옵션 보기</span></button></div>';
-      root.innerHTML = dockHtml + '<button class="yd-bs-backdrop" aria-label="옵션 창 닫기"></button><section class="yd-bs-sheet" role="dialog" aria-modal="true" aria-hidden="' + (sheetOpen ? 'false' : 'true') + '" aria-label="상품 옵션 선택"><div class="yd-bs-grab"></div><header class="yd-bs-head"><div class="yd-bs-head-text"><span class="yd-bs-mode">' + escT(cfg.title) + '</span><h2>상품 옵션 선택</h2></div><button class="yd-bs-close" aria-label="옵션 창 닫기">닫기</button></header><div class="yd-bs-scroll">' + (sheetOpen ? shippingGauge(s) : '') + stepContent(s) + '</div><footer class="yd-bs-foot">' + '<div class="yd-bs-total" aria-live="polite"><span>' + escT(cfg.unit) + ' ' + s.reqQty + '개 · 추가상품 ' + s.optQty + '개</span><strong>' + escT(s.total) + '</strong></div>' + (step === 3 ? '<div class="yd-bs-step3-backrow"><button class="yd-bs-back yd-bs-back-mini" ' + (addingCart ? 'disabled' : '') + '>뒤로가기</button></div>' + (payIsGuest() ? '<div class="yd-bs-actions"><button class="yd-bs-primary yd-bs-cart-add yd-bs-solo" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart ? '담는 중…' : '장바구니 담기') + '</button></div>' : '<div class="yd-bs-actions"><button class="yd-bs-primary" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + payButtonLabel(addingCart && afterAddMode === 'pay') + '</button><button class="yd-bs-back yd-bs-cart-add" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode !== 'pay' ? '담는 중…' : '장바구니 담기') + '</button></div>') : '<div class="yd-bs-actions"><button class="yd-bs-back">이전으로 돌아가기</button><button class="yd-bs-primary" ' + (canNext(s) ? '' : 'disabled') + '>' + primaryLabel() + '</button></div>') + '</footer></section>' + cartChoice();
+      root.innerHTML = dockHtml + '<button class="yd-bs-backdrop" aria-label="옵션 창 닫기"></button><section class="yd-bs-sheet" role="dialog" aria-modal="true" aria-hidden="' + (sheetOpen ? 'false' : 'true') + '" aria-label="상품 옵션 선택"><div class="yd-bs-grab"></div><header class="yd-bs-head"><div class="yd-bs-head-text"><span class="yd-bs-mode">' + escT(cfg.title) + '</span><h2>상품 옵션 선택</h2></div><button class="yd-bs-close" aria-label="옵션 창 닫기">닫기</button></header><div class="yd-bs-scroll">' + (sheetOpen ? shippingGauge(s) : '') + stepContent(s) + '</div><footer class="yd-bs-foot">' + '<div class="yd-bs-total" aria-live="polite"><span>' + (cfg.group && !canNext(s) && step !== 2 ? groupFootNeed(s) : '') + escT(cfg.unit) + ' ' + s.reqQty + '개 · 추가상품 ' + s.optQty + '개</span><strong>' + escT(s.total) + '</strong></div>' + (step === 3 ? '<div class="yd-bs-step3-backrow"><button class="yd-bs-back yd-bs-back-mini" ' + (addingCart ? 'disabled' : '') + '>뒤로가기</button></div>' + (payIsGuest() ? '<div class="yd-bs-actions"><button class="yd-bs-primary yd-bs-cart-add yd-bs-solo" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart ? '담는 중…' : '장바구니 담기') + '</button></div>' : '<div class="yd-bs-actions"><button class="yd-bs-primary" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + payButtonLabel(addingCart && afterAddMode === 'pay') + '</button><button class="yd-bs-back yd-bs-cart-add" ' + (canNext(s) && !addingCart ? '' : 'disabled') + '>' + (addingCart && afterAddMode !== 'pay' ? '담는 중…' : '장바구니 담기') + '</button></div>') : '<div class="yd-bs-actions"><button class="yd-bs-back">이전으로 돌아가기</button><button class="yd-bs-primary" ' + (canNext(s) ? '' : 'disabled') + '>' + primaryLabel(s) + '</button></div>') + '</footer></section>' + cartChoice();
       root.classList.toggle('is-cart-result', cartPopup);
       var scroll = root.querySelector('.yd-bs-scroll');
       if (scroll) scroll.scrollTop = previousScroll;
@@ -3696,6 +3870,134 @@
       ydMark('cartDetailRowsHidden', hidden > 0, '숨김 행 ' + hidden + '개');
     }
 
+    /* 단백밥·밥도감 최소 주문 = 금액 (2026-10-21 대표 결정, v3.193 — v3.191 합산 6팩 대체) — 장바구니 API의 선택된 줄로 판정해 주문 버튼을 막는다.
+       판정을 모르면(API 실패·아직 못 읽음) 막지 않는다. 장바구니 화면이 바뀌면(체크·수량·삭제) 다시 읽고, 8초마다도 다시 읽는다.
+       주문 버튼을 누르는 순간 화면이 마지막 판정 뒤에 바뀌었으면 한 번 다시 읽은 뒤 통과/차단한다. */
+    let groupGate = null;
+    let groupGateSig = '';
+    let groupGateAt = 0;
+    let groupGateLoading = null;
+    function groupCartSignature() {
+      const cart = qs('fo-shopping-cart');
+      if (!cart) return '';
+      const text = cart.textContent || '';
+      const checks = qsa('input[type="checkbox"]', cart).map(function(c) { return c.checked ? '1' : '0'; }).join('');
+      return text.length + ':' + checks + ':' + (text.match(/[0-9][0-9,]*원/g) || []).join('|').slice(0, 600);
+    }
+    function loadGroupGate() {
+      if (groupMinOff()) { groupGate = null; return Promise.resolve(null); }
+      if (groupGateLoading) return groupGateLoading;
+      const sig = groupCartSignature();
+      groupGateLoading = fetch(CONFIG.CART_API, { credentials: 'same-origin', cache: 'no-store' })
+        .then(function(r) { if (!r.ok) throw new Error('cart'); return r.json(); })
+        .then(function(j) {
+          const items = j && j.data && j.data.cart && j.data.cart.items;
+          if (!Array.isArray(items)) throw new Error('cart-shape');
+          groupGate = groupMinJudge(groupMinTally(items));
+          groupGateSig = sig;
+          groupGateAt = Date.now();
+          return groupGate;
+        })
+        .catch(function() { groupGate = null; groupGateSig = ''; groupGateAt = Date.now(); return null; })
+        .then(function(v) { groupGateLoading = null; applyGroupGate(); return v; });
+      return groupGateLoading;
+    }
+    function refreshGroupGate() {
+      if (groupGateLoading) return;
+      const sig = groupCartSignature();
+      if (sig !== groupGateSig || Date.now() - groupGateAt > 8000) loadGroupGate();
+    }
+    function groupGateBlocked() { return !!(groupGate && !groupGate.ok); }
+    function groupGateMessageHtml() {
+      const g = groupGate || { need: groupMinAmount(0), short: 0, all: 0 };
+      /* 2026-10-21 대표 3차: 개편 화면이 골라 담으면 바로 장바구니에 넣으므로(금액이 모자라도 담김), 장바구니 페이지가 마지막 관문 —
+         모자라면 주문 버튼 위에 안내 줄을 계속 띄운다(개편 서랍 mall2.js dwarn과 같은 문구). 주문 버튼은 흐리게·누르면 막힘 */
+      return '<b>' + GROUP_MIN.name + '만 담으면 ' + groupMinWon(g.need) + ' 이상부터 주문돼요</b> · 지금 ' + groupMinWon(g.all) + ', ' + groupMinWon(g.short) + ' 더 <a href="/shop_view/?idx=672">더 고르기</a>' +
+        '<br><small>순수단백·볶음밥·반찬·세트 같은 다른 상품을 함께 담으면 금액과 상관없이 주문돼요(통밀빵 제외)</small>';
+    }
+    let groupNotePulse = 0;
+    /* 안내 줄 띄우기·자리 맞추기 — 값이 바뀔 때만 쓴다(공유 감시자 무한 반복 방지). pulse = 주문 버튼을 눌렀을 때 잠깐 강조 */
+    function showGroupNote(pulse) {
+      let note = qs('#yd-group-min-note');
+      if (!note) {
+        note = document.createElement('div');
+        note.id = 'yd-group-min-note';
+        note.setAttribute('role', 'status');
+        note.hidden = true;
+        document.body.appendChild(note);
+      }
+      const html = groupGateMessageHtml();
+      if (note.getAttribute('data-msg') !== html) { note.innerHTML = html; note.setAttribute('data-msg', html); }
+      /* 하단 고정 주문 영역(비회원 이중 바 / 회원 고정 버튼) 바로 위에 */
+      let h = 0;
+      const bar = qs('#yd-guest-orderbar');
+      /* 고정(fixed) 요소는 offsetParent가 늘 null이라 실제 높이로 판단한다 */
+      if (bar) h = bar.getBoundingClientRect().height;
+      qsa('[data-yd-fixed-btn="1"]').forEach(function(w) { if (w.style.display !== 'none') h = Math.max(h, w.getBoundingClientRect().height); });
+      const bottom = Math.round(h) + 'px';
+      if (note.style.bottom !== bottom) note.style.bottom = bottom;
+      if (note.hidden) note.hidden = false;
+      if (pulse) {
+        note.classList.add('is-pulse');
+        window.clearTimeout(groupNotePulse);
+        groupNotePulse = window.setTimeout(function() { note.classList.remove('is-pulse'); }, 1200);
+      }
+    }
+    function showGroupToast() { showGroupNote(true); }
+    function isCartOrderTrigger(el) {
+      const btn = el && el.closest ? el.closest('button, a') : null;
+      if (!btn || btn.closest('#yd-guest-orderbar') || btn.closest('#yd-group-min-note')) return null;
+      /* 회원 화면엔 '선물하기'(주문서로 가는 또 하나의 길)도 있다 */
+      return /^(주문하기|선물하기)/.test((btn.textContent || '').trim()) ? btn : null;
+    }
+    let groupGateRetry = false;
+    document.addEventListener('click', function(e) {
+      const barBtn = e.target && e.target.closest ? e.target.closest('#yd-guest-orderbar button') : null;
+      const btn = barBtn || isCartOrderTrigger(e.target);
+      if (!btn || groupMinOff()) return;
+      if (groupGateRetry) { groupGateRetry = false; return; }
+      const unsynced = !!groupGate && groupCartSignature() !== groupGateSig;
+      if (!groupGateBlocked() && !unsynced) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (unsynced) {
+        loadGroupGate().then(function() {
+          if (!groupGateBlocked()) { groupGateRetry = true; btn.click(); }
+          else { ydTrace('단백밥·밥도감 금액 미달 — 주문 버튼 차단(' + (groupGate ? groupGate.all + '/' + groupGate.need : '?') + '원)'); showGroupToast(); }
+        });
+        return;
+      }
+      ydTrace('단백밥·밥도감 금액 미달 — 주문 버튼 차단(' + groupGate.all + '/' + groupGate.need + '원)');
+      showGroupToast();
+    }, true);
+    function applyGroupGate() {
+      const blocked = groupGateBlocked() && !groupMinOff();
+      qsa('button, a').forEach(function(btn) {
+        if (!isCartOrderTrigger(btn)) return;
+        const want = blocked ? '0.45' : '';
+        if (btn.style.opacity !== want) btn.style.opacity = want;
+        /* 값이 바뀔 때만 쓴다(공유 감시자 무한 반복 방지) */
+        if (blocked && btn.getAttribute('aria-disabled') !== 'true') btn.setAttribute('aria-disabled', 'true');
+        else if (!blocked && btn.hasAttribute('aria-disabled')) btn.removeAttribute('aria-disabled');
+      });
+      /* 비회원 이중 바: 두 버튼을 흐리게(누르면 위 클릭 차단이 짧은 알림을 띄운다). 상시 안내 줄은 두지 않는다(10/21 대표) */
+      const bar = qs('#yd-guest-orderbar');
+      if (bar) {
+        if (bar.classList.contains('is-group-blocked') !== blocked) bar.classList.toggle('is-group-blocked', blocked);
+        qsa('button', bar).forEach(function(b) {
+          if (blocked && b.getAttribute('aria-disabled') !== 'true') b.setAttribute('aria-disabled', 'true');
+          else if (!blocked && b.hasAttribute('aria-disabled')) b.removeAttribute('aria-disabled');
+        });
+      }
+      const toast = qs('#yd-group-min-note');
+      if (blocked) showGroupNote(false);
+      else if (toast && !toast.hidden) toast.hidden = true;
+      ydMark('cartGroupMin', true, groupMinOff() ? '꺼짐(?yd_groupmin=0)' : !groupGate ? '판정 대기·모름(막지 않음)' :
+        !groupGate.hasGroup ? '해당 없음(단백밥·밥도감 없음)' :
+        groupGate.byOther ? '통과(다른 상품 ' + groupGate.other + '원 함께): 금액 ' + groupGate.all + '·' + groupGate.packs + '팩' :
+        (blocked ? '차단: ' : '통과: ') + '금액 ' + groupGate.all + '/' + groupGate.need + '·' + groupGate.packs + '팩');
+    }
+
     /* 88번은 아임웹의 1인당 구매수량 제한으로 비회원 주문이 거절된다.
        선택된 상품만 검사하며, 가격·구매제한·네이티브 주문 검증은 변경하지 않는다. */
     function selectedDiscountNeedsLogin() {
@@ -3998,7 +4300,9 @@
 
     function run() {
       hideItemDetailRows();
+      refreshGroupGate();
       applyOrderButton();
+      applyGroupGate();
       polishCartControls();
       tryReorderCheckout();
       tryAutoPay();
@@ -9256,7 +9560,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.192] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.193] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);

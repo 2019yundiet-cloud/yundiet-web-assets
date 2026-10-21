@@ -2600,6 +2600,16 @@ body.yd-bs-cart-choice-active #shop_detail_add_cart_alarm{display:none!important
 #yd-guest-orderbar button { border: 0; border-radius: 12px; font-weight: 800; font-size: 15px; padding: 14px 8px; cursor: pointer; }
 #yd-guest-orderbar .yd-gob-join { flex: 1.55; background: #FEE500; color: #191919; }
 #yd-guest-orderbar .yd-gob-guest { flex: 1; background: #fff; color: #555; border: 1px solid #D9D4C7; }
+/* v3.193 단백밥·밥도감 금액 미달(최저가×6, 10/21): 장바구니 주문 버튼은 흐리게 + 버튼 위 안내 줄(#yd-group-min-note, 모자랄 때 계속·누르면 잠깐 강조, 10/21 대표 3차) */
+#yd-guest-orderbar.is-group-blocked button { opacity: 0.45; }
+#yd-group-min-note { background: #FFF4E5; color: #7A3E00; font-size: 13px; line-height: 1.5; }
+#yd-group-min-note a { color: #7A3E00; font-weight: 700; text-decoration: underline; white-space: nowrap; }
+#yd-bs-root .yd-bs-gm-need { color: #B4472A; font-weight: 800; }
+#yd-group-min-note { position: fixed; left: 0; right: 0; z-index: 10001; padding: 8px 16px; border-top: 1px solid #F5C58A; box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06); }
+#yd-group-min-note[hidden] { display: none; }
+#yd-group-min-note small { font-size: 12px; color: #8A5A2B; }
+#yd-group-min-note.is-pulse { background: #FFE3BF; }
+
 
 /* ═══ 모바일 하단 탭바 「쇼핑」→「데이터 관리」 패치 ═══
    하단 탭바는 이미지맵 위젯(아이콘·라벨이 이미지에 구워짐) + 투명 앵커 5개.
