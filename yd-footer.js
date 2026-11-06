@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_198__) {
+  if (window.__YD_FOOTER_V3_199__) {
     return;
   }
-  window.__YD_FOOTER_V3_198__ = true;
+  window.__YD_FOOTER_V3_199__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -134,7 +134,7 @@
   }
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.198', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.199', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -456,7 +456,7 @@
   }
 
   /* 공동구매 전용 상품: 배송 템플릿이 무료배송이라 9만원 진행바가 오해를 부른다 (알약빌더 공구 1261, 2026-09-27) */
-  const GROUPBUY_FREE_SHIP_IDS = new Set(['1261', '1275']);
+  const GROUPBUY_FREE_SHIP_IDS = new Set(['1261']);
   function isPureProteinNoShipGaugeProduct() {
     return isProductDetailPage() && (PURE_PROTEIN_NO_SHIP_GAUGE_IDS.has(currentProductIdx()) || GROUPBUY_FREE_SHIP_IDS.has(currentProductIdx()));
   }
@@ -2737,11 +2737,11 @@
                 title: '굿머슬 공동구매',
                 headline: '세트를 선택해 주세요.',
                 lead: '오리지널 L 12팩·20팩 세트 · 20팩 무료배송 · 쿠폰·적립금은 적용되지 않습니다.' },
-      /* 1275 = 1274 복제 채미(YT 채미) 공동구매 단백밥 5가지 맛 12팩·20팩 + 단백밥10·순수단백10 세트 2종(2026-12-03~07). 11/6 대표 결정으로 4세트 전부 무료배송(배송 템플릿 '무료배송') → GROUPBUY_FREE_SHIP_IDS에 넣어 9만원 게이지를 숨긴다. 상품명에 '순수단백·돈다리살'이 있어 순수단백 계열로 잡히므로 단위 글자는 '세트'로 */
+      /* 1275 = 1274 복제 채미(YT 채미) 공동구매 단백밥 5가지 맛 12팩·20팩 + 단백밥10·순수단백10 세트 2종(2026-12-03~07). 배송은 10/28 약속대로 12팩만 3,900원·나머지 무료 = 1275 전용 배송 템플릿(3,900원·7만원 이상 무료)이라 GROUPBUY_FREE_SHIP_IDS에는 넣지 않는다(아임웹 기본 무료배송 안내가 7만원 기준으로 보임, v3.198 전 세트 무료는 대표 정정으로 되돌림). 상품명에 '순수단백·돈다리살'이 있어 순수단백 계열로 잡히므로 단위 글자는 '세트'로 */
       '1275': { min: 1, unit: '세트',
                 title: '채미 공동구매',
                 headline: '세트를 선택해 주세요.',
-                lead: '단백밥 5가지 맛 12팩·20팩 · 단백밥+순수단백 20팩 · 전 세트 무료배송 · 쿠폰·적립금은 적용되지 않습니다.' },
+                lead: '단백밥 5가지 맛 12팩·20팩 · 단백밥+순수단백 20팩 · 12팩만 배송비 3,900원 · 쿠폰·적립금은 적용되지 않습니다.' },
       '1111': { min: 6, scheme: 'size', categories: ['S'],
                 title: '윤식단 단백밥 S',
                 headline: '단백밥 S 메뉴를 6개 이상 골라주세요.',
@@ -9571,7 +9571,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.198] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.199] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
