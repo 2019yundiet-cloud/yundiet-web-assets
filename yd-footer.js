@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_201__) {
+  if (window.__YD_FOOTER_V3_202__) {
     return;
   }
-  window.__YD_FOOTER_V3_201__ = true;
+  window.__YD_FOOTER_V3_202__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -134,7 +134,7 @@
   }
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.201', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.202', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -9581,7 +9581,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.201] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.202] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
@@ -9649,11 +9649,27 @@
       [1246, '돈다리살 고추장맛', '단백질 19g', 'https://cdn.imweb.me/thumbnail/20260930/377cf15609739.png'],
       [650, '발아통밀 통밀빵 3종', '당류 1g', 'https://cdn.imweb.me/thumbnail/20260930/270741ed1909c.png']
     ];
+    /* 체험 제품 메뉴 (2026-11-11 대표 결정: 체험 제품은 정상가 4만 원 이하 구성만) — 정본 vs:code/partner-links/trial_menu.json
+       (python3 trial_menu.py footer-js 로 생성, 가격은 자사몰 화면 표시 판매가). n=상품명 k=pick(맛·팩 수 골라담기)|fixed(정해진 구성) i=[[이름,판매가]] */
+    var TRIAL_CAP = 40000;
+    var TRIAL_MENU = /*TM:BEGIN*/[{"n":"단백밥 10종 골라담기","k":"pick","i":[["오리지널",5490],["직화 제육볶음",6490],["단짠 불고기",6490],["훈제오리",6490],["그릴드함박",6490],["오리지널 S사이즈",5190],["돈다리살 고추장맛",6490]]},{"n":"밥도감 12종 골라담기","k":"pick","i":[["옛날 양념치킨",5290],["카레라이스",5290],["간장찜닭",5290],["짜장덮밥",5290],["매콤 불갈비맛 함박",5490],["숯불 데리야끼 함박",5490],["매콤 떡볶이맛 함박",5490],["로제 함박",5490],["중화짜장면",5390],["치즈 토마토 파스타",5590],["알리오올리오 파스타",5590],["까르보나라 파스타",5690]]},{"n":"닭가슴살 곡물볶음밥 골라담기","k":"fixed","i":[["마살라 핫 커리 (총 4팩)",13900],["사천풍 마라 (총 4팩)",13400],["시그니처 (총 4팩)",13400],["리얼 토마토 (총 4팩)",13900]]},{"n":"닭가슴살 곡물볶음밥 SET","k":"fixed","i":[["마라1+토마토1+커리1 (총 12팩)",39900],["시그니처1+토마토1+커리1 (총 12팩)",39900]]},{"n":"한돈스테이크 150g","k":"fixed","i":[["1 Set (7개)",21000]]},{"n":"스팀 슬라이스 닭가슴살","k":"fixed","i":[["스팀 닭가슴살 100g 1 Set (10개)",18000],["스팀 닭가슴살 150g 1 Set (7개)",18000]]},{"n":"국내산 닭가슴살 150g","k":"fixed","i":[["14팩",36000]]},{"n":"단백 직화 불고기 10팩","k":"fixed","i":[["단백 직화불고기 10팩",23000]]},{"n":"단백 제육 고추장맛 10팩","k":"fixed","i":[["단백제육 고추장맛 10팩",23000]]},{"n":"돈다리살 고추장맛","k":"fixed","i":[["1세트 7팩 (15% 할인)",17850],["2세트 14팩 (20% 할인)",33600]]},{"n":"발아통밀 통밀빵 3종","k":"fixed","i":[["통밀식빵 1봉지(530g)",6900],["통밀모닝빵 1봉지(560g)",6900],["통밀카카오빵 1봉지(2개입)",3900],["통밀식빵 1+1",13400],["통밀모닝빵 1+1",13400],["통밀카카오빵 1+1+1",9400],["통밀식빵1+통밀모닝빵1+통밀카카오빵",15400]]}]/*TM:END*/;
+    function tmFind(n) { for (var i = 0; i < TRIAL_MENU.length; i++) if (TRIAL_MENU[i].n === n) return TRIAL_MENU[i]; return null; }
+    function tmValue(name, opt) {  // 저장될 옵션 글 → 정상가 합계 (서버 aff_trial_value와 같은 규칙). 못 읽으면 null
+      var p = tmFind(name), i, j; if (!p || !opt) return null;
+      if (p.k === 'fixed') { for (i = 0; i < p.i.length; i++) if (p.i[i][0] === opt) return p.i[i][1]; return null; }
+      var tot = 0, packs = 0, parts = opt.split(' · ');
+      for (i = 0; i < parts.length; i++) {
+        var m = /^(.+?)×(\d{1,2})$/.exec(parts[i]), u = null; if (!m) return null;
+        for (j = 0; j < p.i.length; j++) if (p.i[j][0] === m[1]) u = p.i[j][1];
+        if (u === null) return null; tot += u * Number(m[2]); packs += Number(m[2]);
+      }
+      return packs ? tot : null;
+    }
     var TERMS = [
       '수수료: 내 전용 링크로 들어온 고객이 7일 안에 결제하면, (결제금액 − 배송비)의 10%를 드립니다. 여러 링크를 거친 경우 마지막 링크 기준입니다.',
       '할인 없음: 고객은 자사몰 정상 판매가로 구매합니다.',
       '정산: 매월 1일~말일 실적을 다음 달 15일에 계좌이체로 지급합니다. 사업소득 3.3%(소득세 3%·지방소득세 0.3%)를 원천징수합니다. 취소·환불된 주문은 제외됩니다.',
-      '체험 제품(선택): 정상 판매 상품 중 1개를 1회 무료로 보내드립니다(월요일 출고, 화요일 도착 예정). 받은 날로부터 20일 안에 전용 링크를 넣은 제품 소개 콘텐츠(릴스 또는 피드) 1건을 꼭 올려주세요.',
+      '체험 제품(선택): 정상가 4만 원 이하로 구성된 목록에서 1회 무료로 보내드립니다(월요일 출고, 화요일 도착 예정). 제품을 받으시면 받은 날로부터 20일 안에 전용 링크를 넣은 제품 소개 콘텐츠(릴스 또는 피드) 1건을 꼭 올려주세요.',
       '미게시 시 실비 청구: 20일 안에 콘텐츠가 올라오지 않으면 받은 체험 제품의 정상 판매가를 청구하며, 안내받은 계좌로 입금해 주셔야 합니다.',
       '다른 기기에서 구매하거나 링크 없이 들어온 주문은 실적으로 잡히지 않을 수 있습니다.'
     ];
@@ -9685,6 +9701,12 @@
         '.yd-pp table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:13px}.yd-pp td,.yd-pp th{padding:10px 8px;border-bottom:1px solid #eee;text-align:left}' +
         '.yd-pp-day{background:#fff;border:1px solid #e6e2d6;border-radius:12px;margin-bottom:8px;overflow:hidden}.yd-pp-day summary{display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr;gap:6px;align-items:center;padding:13px 14px;cursor:pointer;font-size:13px;list-style:none}.yd-pp-day summary::-webkit-details-marker{display:none}.yd-pp-day summary .fee{font-weight:800;color:#2a341e;text-align:right}.yd-pp-day[open] summary{background:#f1efe6}.yd-pp-od{display:flex;justify-content:space-between;gap:10px;padding:11px 14px;border-top:1px solid #eee;font-size:13px}.yd-pp-od p{margin:3px 0 0;line-height:1.4}.yd-pp-od small{color:#6b6f60;font-size:11px}.yd-pp-od .r{text-align:right;flex:none;display:flex;flex-direction:column;gap:2px;align-items:flex-end}.yd-pp .st{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#eee;color:#555}.yd-pp .st.ok{background:#e6f07a;color:#2a341e}.yd-pp-mt td small{display:block;font-size:11px;color:#6b6f60;margin-top:2px}.yd-pp-mt{min-width:520px}' +
         '.yd-pp .st.no{background:#fde2dd;color:#b3261e}.yd-pp .st.big{font-size:13px;padding:5px 12px}.yd-pp-mtab{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.yd-pp-mtab button{border:1px solid #d8d4c8;background:#fff;border-radius:18px;padding:7px 14px;font-size:13px;cursor:pointer}.yd-pp-mtab button.on{background:#2a341e;color:#e6f07a;border-color:#2a341e;font-weight:700}.yd-pp-mc{background:#fff;border:1px solid #e6e2d6;border-radius:14px;padding:14px;margin-bottom:10px}.yd-pp-mc .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.yd-pp-mc .g{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.yd-pp-mc .g small{display:block;font-size:11px;color:#6b6f60}.yd-pp-mc .g b{font-size:15px}@media(max-width:520px){.yd-pp-mc .g{grid-template-columns:repeat(2,1fr)}}' +
+        '.yd-pp-note{font-size:13px;line-height:1.5;color:#2a341e;background:#f1efe6;border-radius:10px;padding:10px 12px;margin:10px 0 0}.yd-pp-tm{margin:0}' +
+        '.yd-pp-tmone{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#f6f4ee;border:1px solid #e6e2d6;border-radius:10px;padding:12px;margin-top:10px;font-size:14px}.yd-pp-tmone span{font-size:13px;color:#6b6f60;flex:none}' +
+        '.yd-pp-f label.yd-pp-tmr{align-items:center}.yd-pp-f .yd-pp-tmr small{color:#6b6f60;font-size:12px}' +
+        '.yd-pp-tmrow{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #eee;font-size:14px}.yd-pp-tmrow .nm{flex:1;min-width:0;line-height:1.35}.yd-pp-tmrow .nm small{display:block;color:#6b6f60;font-size:12px}' +
+        '.yd-pp-tmrow button{width:40px;height:40px;border-radius:20px;border:1px solid #d8d4c8;background:#fff;font-size:20px;line-height:1;cursor:pointer;flex:none;padding:0}.yd-pp-tmrow button[disabled]{opacity:.35;cursor:default}.yd-pp-tmrow .q{width:26px;text-align:center;font-weight:700;flex:none}' +
+        '.yd-pp-tmsum{position:sticky;bottom:10px;z-index:1;box-shadow:0 2px 10px rgba(0,0,0,.25);margin-top:12px;background:#2a341e;color:#fff;border-radius:10px;padding:12px;font-size:14px;line-height:1.5}.yd-pp-tmsum b{color:#e6f07a}.yd-pp-tmsum small{display:block;color:#cfd6bd;font-size:12px}' +
         '.yd-pp-mp{position:fixed;right:16px;bottom:88px;z-index:9999;background:#2a341e;color:#e6f07a;border-radius:22px;padding:11px 16px;font-size:14px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.2);text-decoration:none}';
       document.head.appendChild(s);
     }
@@ -9703,13 +9725,45 @@
           '<a href="' + SITE + '/shop_view/?idx=' + p[0] + '" target="_blank" rel="noopener">상품 보기 ›</a></div></div>';
       }).join('') + '</div>';
     }
+    function tmRender(box, hid, name) {  // 체험 제품을 고르면 그 아래에 구성(고정) 또는 맛·팩 수(골라담기) 선택 화면을 그린다
+      hid.value = ''; var p = tmFind(name);
+      if (!p) { box.innerHTML = ''; return; }
+      if (p.k === 'fixed') {
+        if (p.i.length === 1) { hid.value = p.i[0][0]; box.innerHTML = '<div class="yd-pp-tmone"><b>' + esc(p.i[0][0]) + '</b><span>정상가 ' + won(p.i[0][1]) + '</span></div>'; return; }
+        box.innerHTML = '<label>구성 선택 (정상가 4만 원 이하만 보여요)</label>' + p.i.map(function(it, k) {
+          return '<label class="yd-pp-ck yd-pp-tmr"><input type="radio" name="tm_fixed" value="' + k + '"><span><b>' + esc(it[0]) + '</b><br><small>정상가 ' + won(it[1]) + '</small></span></label>';
+        }).join('');
+        Array.prototype.forEach.call(box.querySelectorAll('input[type=radio]'), function(r) { r.onchange = function() { hid.value = p.i[Number(r.value)][0]; }; });
+        return;
+      }
+      var qty = p.i.map(function() { return 0; });
+      box.innerHTML = '<label>맛·팩 수 고르기 (합계 정상가 ' + won(TRIAL_CAP) + ' 이하)</label>' + p.i.map(function(it, k) {
+        return '<div class="yd-pp-tmrow"><div class="nm">' + esc(it[0]) + '<small>팩당 ' + won(it[1]) + '</small></div><button type="button" data-k="' + k + '" data-d="-1" aria-label="빼기">−</button><span class="q">0</span><button type="button" data-k="' + k + '" data-d="1" aria-label="더하기">+</button></div>';
+      }).join('') + '<div class="yd-pp-tmsum"></div>';
+      var sum = box.querySelector('.yd-pp-tmsum'), rows = box.querySelectorAll('.yd-pp-tmrow');
+      function draw() {
+        var tot = 0, packs = 0, parts = [];
+        qty.forEach(function(n, k) { tot += n * p.i[k][1]; packs += n; if (n) parts.push(p.i[k][0] + '×' + n); });
+        Array.prototype.forEach.call(rows, function(r, k) {
+          r.querySelector('.q').textContent = qty[k];
+          r.querySelector('[data-d="-1"]').disabled = qty[k] <= 0;
+          r.querySelector('[data-d="1"]').disabled = tot + p.i[k][1] > TRIAL_CAP || qty[k] >= 20;
+        });
+        hid.value = packs ? parts.join(' · ') : '';
+        sum.innerHTML = packs ? '선택 <b>' + packs + '팩</b> · 정상가 합계 <b>' + won(tot) + '</b><small>한도 ' + won(TRIAL_CAP) + ' · 남은 금액 ' + won(TRIAL_CAP - tot) + '</small>' : '맛과 팩 수를 골라 주세요 <small>합계 정상가 ' + won(TRIAL_CAP) + ' 이하까지 담을 수 있어요</small>';
+      }
+      Array.prototype.forEach.call(box.querySelectorAll('.yd-pp-tmrow button'), function(b) {
+        b.onclick = function() { var k = Number(b.getAttribute('data-k')), d = Number(b.getAttribute('data-d')); qty[k] = Math.max(0, qty[k] + d); draw(); };
+      });
+      draw();
+    }
     function openApply() {
       var el = shell(
         '<span class="yd-pp-tag">윤식단 판매 파트너</span>' +
         '<h1>내 링크로 팔리면,<br>결제금액의 10%를 드려요</h1>' +
         '<div class="yd-pp-hero"><ul>' +
         '<li>전용 링크로 판매되면 <b>(결제금액 − 배송비)의 10%</b> 수수료</li>' +
-        '<li>체험 제품 <b>1개 무료</b> 배송(원하는 분만, 월요일 출고·화요일 도착) — 받으시면 20일 안에 전용 링크 넣은 콘텐츠 1건 필수</li>' +
+        '<li>체험 제품 <b>정상가 4만 원 이하 1회 무료</b> 배송(원하는 분만, 월요일 출고·화요일 도착) — 받으시면 20일 안에 전용 링크 넣은 콘텐츠 1건 필수</li>' +
         '<li>매월 정산 · 계좌이체 · 실적은 파트너 센터에서 언제든 확인</li></ul></div>' +
         '<h2>판매할 수 있는 제품 (자사몰 정상 판매가)</h2>' + lineupHtml() +
         '<h2>참여 조건</h2><div class="yd-pp-terms"><ol>' + TERMS.map(function(t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol></div>' +
@@ -9718,8 +9772,8 @@
         '<label>인스타그램 아이디</label><input name="instagram" placeholder="@아이디" required>' +
         '<label>연락처</label><input name="phone" inputmode="tel" placeholder="010-0000-0000" required>' +
         '<label>이메일 (선택)</label><input name="email" type="email">' +
-        '<div class="yd-pp-sec">체험 제품 · 배송</div><label>체험 제품 (1개)</label><select name="sample_product" required><option value="">선택해 주세요</option><option value="받지 않음">받지 않음 (링크만 받을게요)</option>' + LINEUP.map(function(p) { return '<option>' + esc(p[1]) + '</option>'; }).join('') + '</select>' +
-        '<label>원하는 맛·옵션(선택)</label><input name="sample_option" placeholder="예: 닭가슴살 데리야끼">' +
+        '<div class="yd-pp-sec">체험 제품 · 배송</div><p class="yd-pp-note">체험 제품은 <b>정상가 합계 4만 원 이하</b> 구성만 고를 수 있어요. 제품을 받으시면 20일 안에 콘텐츠 1건을 올려주셔야 해요.</p><label>체험 제품 (1개)</label><select name="sample_product" required><option value="">선택해 주세요</option><option value="받지 않음">받지 않음 (링크만 받을게요)</option>' + TRIAL_MENU.map(function(p) { return '<option>' + esc(p.n) + '</option>'; }).join('') + '</select>' +
+        '<div class="yd-pp-tm" data-tm></div><input type="hidden" name="sample_option">' +
         '<label>받는 분 (신청자와 같으면 비워두세요)</label><input name="ship_name" placeholder="받는 분 이름">' +
         '<label>받는 분 연락처 (같으면 비워두세요)</label><input name="ship_phone" inputmode="tel" placeholder="010-0000-0000">' +
         '<label>배송지 주소</label><input name="ship_address" placeholder="도로명 주소 + 상세 주소" required>' +
@@ -9732,18 +9786,25 @@
         '<label class="yd-pp-ck"><input type="checkbox" name="agree_privacy"><span><b>개인정보 수집·이용 동의(필수)</b> — ' + esc(PRIVACY) + '</span></label>' +
         '<button class="yd-pp-btn" type="submit">신청하기</button><div class="yd-pp-msg" role="status"></div></form>');
       var f = el.querySelector('form'), msg = el.querySelector('.yd-pp-msg');
+      var tmBox = f.querySelector('[data-tm]'), tmHid = f.elements['sample_option'];
+      f.elements['sample_product'].onchange = function() { tmRender(tmBox, tmHid, this.value); msg.textContent = ''; };
       f.onsubmit = function(ev) {
         ev.preventDefault();
-        var d = {}; Array.prototype.forEach.call(f.elements, function(x) { if (x.name) d[x.name] = x.type === 'checkbox' ? x.checked : x.value.trim(); });
+        var d = {}; Array.prototype.forEach.call(f.elements, function(x) { if (x.name && x.name.indexOf('tm_') !== 0) d[x.name] = x.type === 'checkbox' ? x.checked : x.value.trim(); });
         var noSample = d.sample_product === '받지 않음';
         var need = ['name', 'instagram', 'phone', 'sample_product', 'bank', 'account_no', 'rrn'].concat(noSample ? [] : ['ship_address']);
         for (var i = 0; i < need.length; i++) if (!d[need[i]]) { msg.textContent = '빈 칸을 채워주세요.'; f.elements[need[i]].focus(); return; }
         if (!/^\d{6}-?\d{7}$/.test(d.rrn)) { msg.textContent = '주민등록번호 형식을 확인해 주세요.'; return; }
+        if (!noSample) {
+          var tv = tmValue(d.sample_product, d.sample_option);
+          if (tv === null) { msg.textContent = '체험 구성을 선택해 주세요. (골라담기는 맛과 팩 수를 정해 주세요)'; return; }
+          if (tv > TRIAL_CAP) { msg.textContent = '체험 제품은 정상가 4만 원 이하만 고를 수 있어요.'; return; }
+        }
         if (!(d.agree_terms && d.agree_privacy && (noSample || d.agree_sample_charge))) { msg.textContent = noSample ? '필수 동의 2개에 체크해 주세요.' : '필수 동의 3개에 모두 체크해 주세요.'; return; }
         var b = f.querySelector('button'); b.disabled = true; msg.textContent = '보내는 중…';
         rpc('aff_apply', { p: d }).then(function() {
           f.innerHTML = '<div class="yd-pp-hero"><b>신청이 접수됐어요!</b><p style="margin:8px 0 0;line-height:1.6">확인 후 인스타그램 DM으로 전용 판매 링크와 파트너 센터 주소를 보내드릴게요. ' + (noSample ? '' : '체험 제품은 1회 무료로 가까운 월요일에 출고되어 화요일 도착 예정이고, 받으신 날부터 20일 안에 전용 링크를 넣은 제품 소개 콘텐츠 1건을 꼭 제작해 주셔야 해요. 20일 안에 올라오지 않으면 받으신 제품의 정상 판매가가 청구돼요.') + '</p></div>';
-        }).catch(function() { b.disabled = false; msg.textContent = '접수에 실패했어요. 잠시 후 다시 시도하거나 DM으로 알려주세요.'; });
+        }).catch(function(e) { b.disabled = false; msg.textContent = /trial/.test(String(e && e.message)) ? '체험 구성이 4만 원 한도를 넘거나 목록과 달라요. 체험 제품을 다시 골라 주세요.' : '접수에 실패했어요. 잠시 후 다시 시도하거나 DM으로 알려주세요.'; });
       };
     }
     function wh(fee) { var inc = Math.floor(fee * 3 / 100 / 10) * 10; return [inc, Math.floor(inc / 10 / 10) * 10]; }
