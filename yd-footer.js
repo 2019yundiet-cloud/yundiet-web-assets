@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_203__) {
+  if (window.__YD_FOOTER_V3_204__) {
     return;
   }
-  window.__YD_FOOTER_V3_203__ = true;
+  window.__YD_FOOTER_V3_204__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -134,7 +134,7 @@
   }
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.203', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.204', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -2762,6 +2762,11 @@
                 title: '혼술 502호 공동구매',
                 headline: '세트를 선택해 주세요.',
                 lead: '단백밥 6가지 맛 12팩·밸런시 2종 16팩 · 배송비 3,900원 · 쿠폰·적립금은 적용되지 않습니다.' },
+      /* 1280 = 1276 복제 남태런(YT @남태런·IG @namtae90) 공동구매 단백밥 5가지 맛 12팩 60,720(+배송비 3,900)·20팩 103,400 무료(2026-11-22~26). 12팩은 유료배송이라 GROUPBUY_FREE_SHIP_IDS에는 넣지 않는다(1276과 같은 9만원 템플릿·게이지 유지). 단위 글자는 1276과 같게 '세트'로 */
+      '1280': { min: 1, unit: '세트',
+                title: '남태런 공동구매',
+                headline: '세트를 선택해 주세요.',
+                lead: '단백밥 5가지 맛 12팩·20팩 세트 · 20팩 무료배송 · 쿠폰·적립금은 적용되지 않습니다.' },
       '1111': { min: 6, scheme: 'size', categories: ['S'],
                 title: '윤식단 단백밥 S',
                 headline: '단백밥 S 메뉴를 6개 이상 골라주세요.',
@@ -3106,7 +3111,7 @@
 
     /* 순수단백은 '선택 후 금액 반영' 문구 미표기 (소유자 지시 2026-07-21) */
     /* 공동구매 상품은 차액 대신 실제 결제가를 표기 (본품가 + 옵션 차액) */
-    var ABS_PRICE_BASE = { '1261': 62590, '1269': 65520, '1274': 59400, '1275': 65370, '1276': 60480, '1277': 65880, '1278': 38000, '1279': 62400 };
+    var ABS_PRICE_BASE = { '1261': 62590, '1269': 65520, '1274': 59400, '1275': 65370, '1276': 60480, '1277': 65880, '1278': 38000, '1279': 62400, '1280': 60720 };
     var priceLabel = function(p) { if (ABS_PRICE_BASE[flowIdx]) return money(ABS_PRICE_BASE[flowIdx] + (p || 0)); return p === null ? (cfg.family === 'soonsu' ? '' : '선택 후 금액 반영') : p ? (p > 0 ? '+ ' : '- ') + money(Math.abs(p)) : '추가금 없음'; };
     var saucePattern = /볼케이노|양념치킨|블랙\s*알리오|블랙알리오|데리야끼|바베큐/;
     var hasSeparateSauce = function(name) { return !/\(소스X\)/.test(name) && saucePattern.test(name); };
@@ -9591,7 +9596,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.203] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.204] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
