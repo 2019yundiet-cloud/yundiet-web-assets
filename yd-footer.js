@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_207__) {
+  if (window.__YD_FOOTER_V3_208__) {
     return;
   }
-  window.__YD_FOOTER_V3_207__ = true;
+  window.__YD_FOOTER_V3_208__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -134,7 +134,7 @@
   }
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.207', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.208', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4451,7 +4451,7 @@
     ensureObserver('paymentCompletePatch', patch);
   }
 
-  /* ═══ 주문 완료 화면: 카카오 채널 추가 안내창 (2026-11-16 대표 지시 — 컬리 주문 완료 안내창처럼, 디자인은 B안 '크림 명조') ═══
+  /* ═══ 주문 완료 화면: 카카오 채널 추가 안내창 (2026-11-16 대표 지시 — 컬리 주문 완료 안내창처럼, 디자인은 C안 '배송 길 안내' — 같은 날 B안에서 교체) ═══
      · /shop_payment_complete 에서만, 화면이 뜨고 1.5초 뒤 1회. 같은 주문 화면을 새로고침하면 다시 띄우지 않는다.
      · [카카오 채널 추가하고 받기] = 채널 추가 화면(CONFIG.KAKAO_CHAT_URL) 새 창 → 90일 쉼(사이트에서는 채널 친구 여부를 알 수 없다).
      · '7일간 보지 않기'(기본 체크)를 둔 채 닫으면 7일 쉼. 체크를 풀고 닫으면 다음 주문 때 다시 뜬다.
@@ -4475,18 +4475,10 @@
       } catch (err) {}
     }
 
-    const TITLE = '배송 진행 상황과 혜택 소식,카카오톡으로 받으시겠어요?';
-    /* 제목 명조 글꼴: 제목 글자만 담은 작은 파일 하나만 받는다 */
-    try {
-      if (!qs('link[data-yd-ok-font]')) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.setAttribute('data-yd-ok-font', '1');
-        link.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&display=swap&text=' + encodeURIComponent(TITLE + '一二三');
-        document.head.appendChild(link);
-      }
-    } catch (err) {}
-
+    /* 초록 띠 안내 한 줄.
+       2026-11-16 아임웹 관리자(홍보·마케팅 > 메시지 > 문자·알림톡 설정) 확인: 고객 '발송 안내'·'배송준비' 자동 알림이 꺼져 있다(결제 완료 안내만 켜짐).
+       → 시안 문구 '다음 소식부터는 카카오톡으로 알려드릴게요'는 지금은 사실이 아니라 쓰지 않는다. '발송 안내'를 켜면 SAY_TEXT·설명 문구를 시안대로 되돌려도 된다. */
+    const SAY_TEXT = '채널을 추가하면 카카오톡으로 소식을 받아볼 수 있어요';
     const CHECK_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4.2 4.2 8.8-9.4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     const TALK_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.6c-5.2 0-9.4 3.3-9.4 7.4 0 2.6 1.7 4.9 4.3 6.2l-.9 3.4c-.1.4.3.7.7.5l4.1-2.7c.4 0 .8.1 1.2.1 5.2 0 9.4-3.3 9.4-7.4S17.2 3.6 12 3.6z"/></svg>';
     const X_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
@@ -4508,14 +4500,22 @@
       card.setAttribute('aria-label', '카카오 채널 추가 안내');
       card.innerHTML =
         '<button type="button" class="yd-ok-x" aria-label="닫기">' + X_SVG + '</button>' +
-        '<img class="yd-ok-logo" src="https://cdn.imweb.me/thumbnail/20250523/87954525425e9.png" alt="윤식단" onerror="this.style.display=\'none\'">' +
-        '<div class="yd-ok-ttl">배송 진행 상황과 혜택 소식,<br>카카오톡으로 받으시겠어요?</div>' +
-        '<div class="yd-ok-desc">윤식단 카카오 채널을 추가하면 주문하신 상품 소식과 할인·신제품 소식을 카톡으로 알려드려요.</div>' +
-        '<div class="yd-ok-rule"><span><em>一</em>배송 소식</span><span><em>二</em>할인·쿠폰</span><span><em>三</em>신제품 먼저</span></div>' +
-        '<a class="yd-ok-cta" href="' + CONFIG.KAKAO_CHAT_URL.replace(/^http:/, 'https:') + '" target="_blank" rel="noopener"><span class="yd-ok-kb">' + TALK_SVG + '</span>카카오 채널 추가하고 받기</a>' +
-        '<div class="yd-ok-foot">' +
-          '<button type="button" class="yd-ok-chk yd-ok-checked" role="checkbox" aria-checked="true"><i>' + CHECK_SVG + '</i>7일간 보지 않기</button>' +
+        '<div class="yd-ok-band">' +
+          '<div class="yd-ok-lb">내 주문 배송 안내</div>' +
+          '<div class="yd-ok-steps">' +
+            '<div class="yd-ok-st yd-ok-st-on"><i>' + CHECK_SVG.replace(/"13"/g, '"15"') + '</i><span>주문 완료</span></div>' +
+            '<div class="yd-ok-st"><i></i><span>출고</span></div>' +
+            '<div class="yd-ok-st"><i></i><span>배송 중</span></div>' +
+            '<div class="yd-ok-st"><i></i><span>도착</span></div>' +
+          '</div>' +
+          '<div class="yd-ok-say">' + TALK_SVG.replace(/"16"/g, '"17"') + '<span>' + SAY_TEXT + '</span></div>' +
+        '</div>' +
+        '<div class="yd-ok-body">' +
+          '<div class="yd-ok-ttl">배송 진행 상황과 혜택 소식,<br>카카오톡으로 받으시겠어요?</div>' +
+          '<div class="yd-ok-desc">윤식단 채널을 추가하면 할인·신제품 소식을 카톡으로 받고, 배송 문의도 1:1 채팅으로 바로 할 수 있어요.</div>' +
+          '<a class="yd-ok-cta" href="' + CONFIG.KAKAO_CHAT_URL.replace(/^http:/, 'https:') + '" target="_blank" rel="noopener">' + TALK_SVG.replace(/"16"/g, '"22"') + '카카오 채널 추가하고 받기</a>' +
           '<button type="button" class="yd-ok-later">나중에</button>' +
+          '<button type="button" class="yd-ok-chk yd-ok-checked" role="checkbox" aria-checked="true"><i>' + CHECK_SVG + '</i>7일간 보지 않기</button>' +
         '</div>';
       wrap.appendChild(card);
       document.body.appendChild(dim);
@@ -9742,7 +9742,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.207] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.208] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
