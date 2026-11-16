@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_205__) {
+  if (window.__YD_FOOTER_V3_206__) {
     return;
   }
-  window.__YD_FOOTER_V3_205__ = true;
+  window.__YD_FOOTER_V3_206__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -134,7 +134,7 @@
   }
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.205', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.206', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -4426,6 +4426,128 @@
 
     patch();
     ensureObserver('paymentCompletePatch', patch);
+  }
+
+  /* ═══ 주문 완료 화면: 카카오 채널 추가 안내창 (2026-11-16 대표 지시 — 컬리 주문 완료 안내창처럼, 디자인은 B안 '크림 명조') ═══
+     · /shop_payment_complete 에서만, 화면이 뜨고 1.5초 뒤 1회. 같은 주문 화면을 새로고침하면 다시 띄우지 않는다.
+     · [카카오 채널 추가하고 받기] = 채널 추가 화면(CONFIG.KAKAO_CHAT_URL) 새 창 → 90일 쉼(사이트에서는 채널 친구 여부를 알 수 없다).
+     · '7일간 보지 않기'(기본 체크)를 둔 채 닫으면 7일 쉼. 체크를 풀고 닫으면 다음 주문 때 다시 뜬다.
+     · 기록: yd_pop_view / yd_pop_click / yd_pop_close (popup_id: order_kakao)
+     · 확인용: ?yd_okakao=1 (아무 화면에서나 강제 표시·기록 없음·쉼 무시) / ?yd_okakao=0 (끄기) */
+  function bindOrderKakaoPopup() {
+    if (IS_IFRAME) return;
+    let flag = null;
+    try { flag = new URLSearchParams(location.search).get('yd_okakao'); } catch (err) {}
+    const preview = flag === '1';
+    if (flag === '0') { ydMark('orderKakaoPopup', true, '끄기 스위치(?yd_okakao=0)'); return; }
+    if (!preview && !isPaymentCompletePage()) return;
+
+    const UNTIL_KEY = 'yd_okakao_until';
+    const SEEN_KEY = 'yd_okakao_seen';
+    const orderKey = location.pathname + location.search;
+    if (!preview) {
+      try {
+        if (Number(window.localStorage.getItem(UNTIL_KEY) || 0) > Date.now()) { ydMark('orderKakaoPopup', true, '쉬는 기간 — 표시 안 함'); return; }
+        if (window.sessionStorage.getItem(SEEN_KEY) === orderKey) { ydMark('orderKakaoPopup', true, '이 주문 화면에서 이미 표시함'); return; }
+      } catch (err) {}
+    }
+
+    const TITLE = '배송 진행 상황과 혜택 소식,카카오톡으로 받으시겠어요?';
+    /* 제목 명조 글꼴: 제목 글자만 담은 작은 파일 하나만 받는다 */
+    try {
+      if (!qs('link[data-yd-ok-font]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.setAttribute('data-yd-ok-font', '1');
+        link.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&display=swap&text=' + encodeURIComponent(TITLE + '一二三');
+        document.head.appendChild(link);
+      }
+    } catch (err) {}
+
+    const CHECK_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4.2 4.2 8.8-9.4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const TALK_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.6c-5.2 0-9.4 3.3-9.4 7.4 0 2.6 1.7 4.9 4.3 6.2l-.9 3.4c-.1.4.3.7.7.5l4.1-2.7c.4 0 .8.1 1.2.1 5.2 0 9.4-3.3 9.4-7.4S17.2 3.6 12 3.6z"/></svg>';
+    const X_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+    function setRest(days) {
+      if (preview) return;
+      try { window.localStorage.setItem(UNTIL_KEY, String(Date.now() + days * 864e5)); } catch (err) {}
+    }
+
+    function show() {
+      if (qs('.yd-ok-wrap')) return;
+      const dim = document.createElement('div');
+      dim.className = 'yd-ok-dim';
+      const wrap = document.createElement('div');
+      wrap.className = 'yd-ok-wrap';
+      const card = document.createElement('div');
+      card.className = 'yd-ok-card';
+      card.setAttribute('role', 'dialog');
+      card.setAttribute('aria-label', '카카오 채널 추가 안내');
+      card.innerHTML =
+        '<button type="button" class="yd-ok-x" aria-label="닫기">' + X_SVG + '</button>' +
+        '<img class="yd-ok-logo" src="https://cdn.imweb.me/thumbnail/20250523/87954525425e9.png" alt="윤식단" onerror="this.style.display=\'none\'">' +
+        '<div class="yd-ok-ttl">배송 진행 상황과 혜택 소식,<br>카카오톡으로 받으시겠어요?</div>' +
+        '<div class="yd-ok-desc">윤식단 카카오 채널을 추가하면 주문하신 상품 소식과 할인·신제품 소식을 카톡으로 알려드려요.</div>' +
+        '<div class="yd-ok-rule"><span><em>一</em>배송 소식</span><span><em>二</em>할인·쿠폰</span><span><em>三</em>신제품 먼저</span></div>' +
+        '<a class="yd-ok-cta" href="' + CONFIG.KAKAO_CHAT_URL.replace(/^http:/, 'https:') + '" target="_blank" rel="noopener"><span class="yd-ok-kb">' + TALK_SVG + '</span>카카오 채널 추가하고 받기</a>' +
+        '<div class="yd-ok-foot">' +
+          '<button type="button" class="yd-ok-chk yd-ok-checked" role="checkbox" aria-checked="true"><i>' + CHECK_SVG + '</i>7일간 보지 않기</button>' +
+          '<button type="button" class="yd-ok-later">나중에</button>' +
+        '</div>';
+      wrap.appendChild(card);
+      document.body.appendChild(dim);
+      document.body.appendChild(wrap);
+      requestAnimationFrame(function() {
+        dim.classList.add('yd-ok-on');
+        card.classList.add('yd-ok-on');
+      });
+      if (!preview) {
+        try { window.sessionStorage.setItem(SEEN_KEY, orderKey); } catch (err) {}
+        popTrack('yd_pop_view', 'order_kakao');
+      }
+      ydMark('orderKakaoPopup', true, preview ? '확인용 강제 표시' : '표시함');
+
+      const chk = qs('.yd-ok-chk', card);
+      chk.addEventListener('click', function() {
+        const on = !chk.classList.contains('yd-ok-checked');
+        chk.classList.toggle('yd-ok-checked', on);
+        chk.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+      let closed = false;
+      function close(reason) {
+        if (closed) return;
+        closed = true;
+        const skip7 = chk.classList.contains('yd-ok-checked');
+        if (reason === 'cta') {
+          setRest(90);
+          if (!preview) popTrack('yd_pop_click', 'order_kakao');
+        } else {
+          if (skip7) setRest(7);
+          if (!preview) popTrack('yd_pop_close', 'order_kakao', { close_reason: reason, skip_7days: skip7 ? 1 : 0 });
+        }
+        dim.classList.remove('yd-ok-on');
+        card.classList.remove('yd-ok-on');
+        window.setTimeout(function() {
+          try { dim.remove(); wrap.remove(); } catch (err) {}
+        }, 320);
+      }
+      qs('.yd-ok-x', card).addEventListener('click', function() { close('x'); });
+      qs('.yd-ok-later', card).addEventListener('click', function() { close('later'); });
+      dim.addEventListener('click', function() { close('dim'); });
+      /* 링크 이동(새 창)은 막지 않는다 — 기록과 닫기만 한다 */
+      qs('.yd-ok-cta', card).addEventListener('click', function() { close('cta'); });
+    }
+
+    /* 다른 안내창이 떠 있으면 겹치지 않게 기다린다(3초 간격, 최대 5번) */
+    let tries = 0;
+    (function tryShow() {
+      if (qs('.yd-pop-wrap') || qs('.yd-cp-dim')) {
+        if (++tries <= 5) window.setTimeout(tryShow, 3000);
+        else ydMark('orderKakaoPopup', true, '다른 안내창과 겹쳐 표시 안 함');
+        return;
+      }
+      show();
+    })();
   }
 
   /* ═══ 멤버십 UI 기반 (기본 비활성) ═══
@@ -9580,6 +9702,7 @@
     bindDetailEngagement();
     bindCartUx();
     bindPaymentCompletePatches();
+    window.setTimeout(bindOrderKakaoPopup, 1500);
     bindMembershipFoundation();
     bindMyPageReorder();
     bindCheckoutPatches();
@@ -9596,7 +9719,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.205] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.206] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
