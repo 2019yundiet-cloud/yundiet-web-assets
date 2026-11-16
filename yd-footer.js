@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_206__) {
+  if (window.__YD_FOOTER_V3_207__) {
     return;
   }
-  window.__YD_FOOTER_V3_206__ = true;
+  window.__YD_FOOTER_V3_207__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -134,7 +134,7 @@
   }
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.206', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.207', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -210,6 +210,29 @@
 
   function pageIs(pathPart) {
     return location.pathname.indexOf(pathPart) !== -1;
+  }
+
+  /* 아임웹 옵션 항목 찾기 (2026-11-16 수리).
+     옛 구조: <a class="_requireOption" onclick="SITE_SHOP_DETAIL.selectRequireOption(…)">
+     새 구조(11/16 휴대폰 화면·일부 상품에서 확인): <div class="tabled" onclick="…selectRequireOption(…)"><div class="table-cell"><a class="_requireOption">
+     → 누르는 표식(onclick)이 a에 있든 바깥 div에 있든 옵션 이름·가격이 든 a를 돌려준다. a.click()은 바깥 div까지 올라가 그대로 선택된다.
+     kind: 'Require' | 'Optional' | 없으면 둘 다. prefix: '#prod_options ' 처럼 앞에 붙일 범위(없으면 '') */
+  function ydOptSel(prefix, kind) {
+    var kinds = kind ? [kind] : ['Require', 'Optional'];
+    var out = [];
+    kinds.forEach(function(k) {
+      var at = '[onclick*="select' + k + 'Option"]';
+      out.push((prefix || '') + 'a' + at);
+      out.push((prefix || '') + ':not(a)' + at + ' a');
+    });
+    return out.join(', ');
+  }
+  function ydOptOnclick(a) {
+    if (!a) return '';
+    var own = a.getAttribute('onclick');
+    if (own) return own;
+    var host = a.closest ? a.closest('[onclick*="Option"]') : null;
+    return host ? (host.getAttribute('onclick') || '') : '';
   }
 
   function onReady(fn) {
@@ -2659,7 +2682,7 @@
     /* 1271 식단 세트는 쿠폰 없이 상품 배송비(8만 원 이상 무료)로 무료배송 — 쿠폰 안내를 붙이지 않는다 (2026-10-21) */
     if (/[?&]idx=1271(?:&|$)/.test(location.search)) return;
     function patch() {
-      qsa('#prod_options a[onclick*="selectRequireOption"], #prod_options a[onclick*="selectOptionalOption"]').forEach(function(anchor) {
+      qsa(ydOptSel('#prod_options ')).forEach(function(anchor) {
         var name = ((anchor.querySelector('.margin-bottom-lg') || anchor).textContent || '').replace(/\s+/g, ' ').trim();
         var note = anchor.querySelector('.yd-option-coupon-note');
         if (!/무료배송/.test(name)) {
@@ -2805,7 +2828,7 @@
       return text ? numberFrom(text) : null;
     };
     var unitLabelFromAnchor = function(a){
-      var el = a && a.querySelector('.option_badge');
+      var el = a && (a.querySelector('.option_badge') || ((a.closest && a.closest('.dropdown-item')) ? a.closest('.dropdown-item').querySelector('.option_badge') : null));
       var match = normalizeT(el ? el.textContent : '').match(/^(100g|1팩)(?:당)?\s*([0-9,]+)원$/);
       if (!match) return '';
       return match[1] + '당 ' + String(Number(match[2].replace(/,/g, ''))).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '원';
@@ -2819,7 +2842,7 @@
       else if (/순수\s*단백|그릴드\s*포크|돈다리살/.test(rawTitle)) fam = { k: 'soonsu', unit: '순수단백', label: '순수단백', theme: 'yd-bs-family-soonsu' };
       else if (/단백밥|단백질\s*도시락|제육|불고기|함박|훈제오리|닭가슴살|단백질/.test(rawTitle)) fam = { k: 'danbaekbap', unit: '단백밥', label: '단백밥', theme: '' };
       else fam = { k: 'generic', unit: '상품', label: '', theme: '' };
-      var reqNames = Array.from(document.querySelectorAll('#prod_options a[onclick*="selectRequireOption"]')).map(optionNameOf);
+      var reqNames = Array.from(document.querySelectorAll(ydOptSel('#prod_options ', 'Require'))).map(optionNameOf);
       var ov = FLOW_OVERRIDES[flowIdx] || {};
       var hasReq = function(re) { return reqNames.some(function(n) { return re.test(n); }); };
       /* 밥도감+단백밥 혼합 상품(672·1264, 옵션명 '[01 밥도감] …'·'[13 단백밥] …')도 도시락 종류 탭으로 그린다 (2026-10-01 대표 지시) */
@@ -2896,9 +2919,9 @@
     function buildCatalog() {
       var groups = [], itemInfo = new Map();
       document.querySelectorAll('#prod_options .form-select-wrap').forEach(function(wrap, wrapIndex) {
-        var anchors = Array.from(wrap.querySelectorAll('a[onclick*="selectRequireOption"], a[onclick*="selectOptionalOption"]'));
+        var anchors = Array.from(wrap.querySelectorAll(ydOptSel('')));
         if (!anchors.length) return;
-        var kind = (anchors[0].getAttribute('onclick') || '').indexOf('selectRequireOption') !== -1 ? 'Require' : 'Optional';
+        var kind = ydOptOnclick(anchors[0]).indexOf('selectRequireOption') !== -1 ? 'Require' : 'Optional';
         /* 조합형: 선택 후 토글 텍스트가 선택값으로 바뀌므로 부팅 시 캐시한 라벨을 우선 사용 */
         var rawLabel = wrapLabels[wrapIndex] ||
                        normalizeT(wrap.previousElementSibling ? wrap.previousElementSibling.textContent : '') ||
@@ -2922,7 +2945,7 @@
     }
 
     var nativeLink = function(kind, name) {
-      return Array.from(document.querySelectorAll('#prod_options a[onclick*="select' + kind + 'Option"]')).find(function(a) { return optionNameOf(a) === name; });
+      return Array.from(document.querySelectorAll(ydOptSel('#prod_options ', kind))).find(function(a) { return optionNameOf(a) === name; });
     };
     var labelOfRow = function(row) {
       var el = row.querySelector('.area_tit span');
@@ -3804,7 +3827,7 @@
     function initialiseFlow() {
       var source = document.querySelector('#prod_detail .goods_wrapper');
       var selected = document.getElementById('prod_selected_options');
-      var optionReady = document.querySelector('#prod_options a[onclick*="selectRequireOption"], #prod_options a[onclick*="selectOptionalOption"]');
+      var optionReady = document.querySelector(ydOptSel('#prod_options '));
       if (flowBooted) return;
       if (!source || !selected || !optionReady) {
         bootAttempts += 1;
@@ -9719,7 +9742,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.206] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.207] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
