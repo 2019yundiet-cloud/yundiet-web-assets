@@ -2,10 +2,10 @@
 (function() {
   'use strict';
 
-  if (window.__YD_FOOTER_V3_209__) {
+  if (window.__YD_FOOTER_V3_210__) {
     return;
   }
-  window.__YD_FOOTER_V3_209__ = true;
+  window.__YD_FOOTER_V3_210__ = true;
 
   const CONFIG = {
     BEST_URL: 'https://www.yundiet.com/best',
@@ -134,7 +134,7 @@
   }
 
   /* ── 자체 검증 (콘솔에서 YD_CHECK() 실행) ── */
-  const ydStatus = { version: '3.209', page: location.pathname, features: {} };
+  const ydStatus = { version: '3.210', page: location.pathname, features: {} };
   function ydMark(key, ok, note) {
     ydStatus.features[key] = { ok: !!ok, note: note || '' };
   }
@@ -9747,7 +9747,7 @@
     window.setTimeout(function() {
       Object.keys(ydStatus.features).forEach(function(key) {
         if (!ydStatus.features[key].ok) {
-          console.warn('[YD v3.209] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
+          console.warn('[YD v3.210] 미적용 감지: ' + key + ' — ' + ydStatus.features[key].note + ' (YD_CHECK()로 상세 확인)');
         }
       });
     }, 6000);
@@ -9846,6 +9846,7 @@
         '.yd-pp-terms{background:#fff;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.6;border:1px solid #e6e2d6}.yd-pp-terms li{margin:6px 0}' +
         '.yd-pp-msg{margin-top:12px;font-size:14px;font-weight:700}.yd-pp-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.yd-pp-kpi div{background:#fff;border-radius:12px;padding:12px;border:1px solid #e6e2d6}.yd-pp-kpi b{display:block;font-size:18px;margin-top:4px}.yd-pp-kpi small{font-size:12px;color:#6b6f60}' +
         '.yd-pp-link{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #e6e2d6;border-radius:12px;padding:8px;margin-bottom:8px}.yd-pp-link img{width:44px;height:44px;border-radius:8px;object-fit:cover}.yd-pp-link span{flex:1;font-size:13px;font-weight:700;min-width:0}.yd-pp-link button{background:#2a341e;color:#fff;border:0;border-radius:8px;padding:9px 12px;font-size:13px;cursor:pointer;flex:none}' +
+        '.yd-pp-tip{background:#f4f7ee;border:1px solid #d9e3c8;border-radius:12px;padding:12px 14px;margin:4px 0 10px;font-size:13px;line-height:1.6;color:#2a341e}.yd-pp-tip b.t{display:block;font-size:14px;margin-bottom:4px}.yd-pp-tip ol{margin:4px 0 6px;padding-left:20px}.yd-pp-tip p{margin:4px 0 0;font-size:12px;color:#6b6f60}' +
         '.yd-pp table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:13px}.yd-pp td,.yd-pp th{padding:10px 8px;border-bottom:1px solid #eee;text-align:left}' +
         '.yd-pp-day{background:#fff;border:1px solid #e6e2d6;border-radius:12px;margin-bottom:8px;overflow:hidden}.yd-pp-day summary{display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr;gap:6px;align-items:center;padding:13px 14px;cursor:pointer;font-size:13px;list-style:none}.yd-pp-day summary::-webkit-details-marker{display:none}.yd-pp-day summary .fee{font-weight:800;color:#2a341e;text-align:right}.yd-pp-day[open] summary{background:#f1efe6}.yd-pp-od{display:flex;justify-content:space-between;gap:10px;padding:11px 14px;border-top:1px solid #eee;font-size:13px}.yd-pp-od p{margin:3px 0 0;line-height:1.4}.yd-pp-od small{color:#6b6f60;font-size:11px}.yd-pp-od .r{text-align:right;flex:none;display:flex;flex-direction:column;gap:2px;align-items:flex-end}.yd-pp .st{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#eee;color:#555}.yd-pp .st.ok{background:#e6f07a;color:#2a341e}.yd-pp-mt td small{display:block;font-size:11px;color:#6b6f60;margin-top:2px}.yd-pp-mt{min-width:520px}' +
         '.yd-pp .st.no{background:#fde2dd;color:#b3261e}.yd-pp .st.big{font-size:13px;padding:5px 12px}.yd-pp-mtab{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.yd-pp-mtab button{border:1px solid #d8d4c8;background:#fff;border-radius:18px;padding:7px 14px;font-size:13px;cursor:pointer}.yd-pp-mtab button.on{background:#2a341e;color:#e6f07a;border-color:#2a341e;font-weight:700}.yd-pp-mc{background:#fff;border:1px solid #e6e2d6;border-radius:14px;padding:14px;margin-bottom:10px}.yd-pp-mc .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.yd-pp-mc .g{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.yd-pp-mc .g small{display:block;font-size:11px;color:#6b6f60}.yd-pp-mc .g b{font-size:15px}@media(max-width:520px){.yd-pp-mc .g{grid-template-columns:repeat(2,1fr)}}' +
@@ -9958,6 +9959,12 @@
             var u = 'https://www.yundiet.com/shop_view/' + p[0] + '?idx=' + p[0] + '&ref=' + d.ref;  // 10/20: 메타가 읽는 도메인 + 상품별 경로(인스타 '제품 추가' 오표시 수리)
             return '<div class="yd-pp-link"><img src="' + p[3] + '" alt=""><span>' + esc(p[1]) + '</span><button type="button" data-u="' + esc(u) + '">링크 복사</button></div>';
           }).join('') +
+          '<div class="yd-pp-tip"><b class="t">💡 제품 태그로 올리는 방법</b><ol>' +
+            '<li>위에서 올릴 제품의 <b>링크 복사</b>를 눌러요.</li>' +
+            '<li>릴스(또는 피드)를 올릴 때 마지막 <b>공유</b> 화면에서 <b>제품 추가</b>(또는 제품 링크 추가)를 눌러요.</li>' +
+            '<li>복사한 링크를 붙여넣고, 제품 이름이 뜨면 선택해서 <b>완료</b>를 눌러요.</li>' +
+            '<li>공유하면 영상 아래에 제품 카드가 붙고, 이걸로 생긴 구매는 내 실적으로 잡혀요.</li></ol>' +
+            '<p>제품 하나당 링크 하나예요. 영상에 나온 제품의 링크를 골라 주세요.<br>\'제품 추가\'가 안 보이면 DM으로 말씀 주세요. 프로필 링크에 붙이는 방법을 안내해 드려요.</p></div>' +
           '<p style="font-size:12px;color:#6b6f60">다른 상품도 주소 끝에 <b>&amp;ref=' + esc(d.ref) + '</b>를 붙이면 내 실적으로 잡혀요.</p>' +
           '<h2>월별 정산 내역</h2>' + monthsHtml(d.orders, d.payouts || []) +
           '<h2>월별 상세 보기</h2><div class="yd-pp-mtab"></div><div class="yd-pp-mcard"></div><div class="yd-pp-olist"></div>' +
